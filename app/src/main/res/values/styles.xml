@@ -1,0 +1,85 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Base application theme. -->
+    <style name="LightTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/adapter_color</item>
+        <item name="colorPrimaryDark">@color/darker_notfi</item>
+        <item name="colorAccent">@color/downloaded</item>
+        <item name="android:textColor">@color/play_fragment_bars</item>
+        <item name="android:colorBackground">@android:color/white</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+    </style>
+
+    <style name="SearchViewTheme" parent="Widget.AppCompat.ActionBar">
+        <item name="android:textColorHint">@color/grey</item>
+        <item name="android:editTextColor">@color/light_black</item>
+        <item name="android:icon">@color/light_black</item>
+        <item name="colorAccent">@color/play_tab_underline</item>
+        <item name="android:fontFamily">sans-serif-light</item>
+    </style>
+
+    <style name="AppThemeLauncher" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/toolbar_color</item>
+        <item name="android:statusBarColor">@color/transparent</item>
+        <item name="android:windowBackground">@drawable/splash_screen</item>
+    </style>
+
+    <style name="BlackTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/toolbar_color</item>
+        <item name="colorPrimaryDark">@color/darker_notfi</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="colorAccent">@color/grey</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+    </style>
+
+    <style name="PreferenceScreen">
+        <item name="android:textColorSecondary">@color/light_grey</item>
+        <item name="colorPrimaryDark">@color/darker_notfi</item>
+        <item name="colorAccent">@color/downloaded</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="SelectableItemTheme">
+        <item name="colorControlHighlight">@color/selectable</item>
+    </style>
+
+    <style name="SelectableItemBackground">
+        <item name="android:theme">@style/SelectableItemTheme</item>
+        <item name="android:background">?selectableItemBackgroundBorderless</item>
+    </style>
+
+    <style name="ItemBackground">
+        <item name="android:theme">@style/SelectableItemTheme</item>
+        <item name="android:background">?selectableItemBackground</item>
+    </style>
+
+    <style name="DialogDark" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@color/play_fragment_bars</item>
+        <item name="android:textColorPrimary">@color/suggestions</item>
+        <item name="textColorAlertDialogListItem">@color/suggestions</item>
+    </style>
+
+    <style name="DialogLight" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@color/suggestions</item>
+    </style>
+
+    <style name="PlaylistTheme">
+        <item name="colorControlHighlight">@color/light_black</item>
+    </style>
+
+    <style name="PlaylistBackground">
+        <item name="android:theme">@style/PlaylistTheme</item>
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="SeekbarColor" parent="Widget.AppCompat.SeekBar">
+        <item name="colorAccent">@color/suggestions</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+</resources>

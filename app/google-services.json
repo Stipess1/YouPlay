@@ -1,0 +1,43 @@
+{
+  "project_info": {
+    "project_number": "409069901707",
+    "firebase_url": "https://youplay-c1efb.firebaseio.com",
+    "project_id": "youplay-c1efb",
+    "storage_bucket": "youplay-c1efb.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409069901707:android:7dbff812224fb272",
+        "android_client_info": {
+          "package_name": "com.hfad.youplay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "409069901707-p4mg0svfr9ioufsv1vumaautkjbtuj99.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb5OB_6__lQszS8_lV_-Lr4yDL0fmuiXc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      },
+      "admob_app_id": "ca-app-pub-8163593086331416~1012493107"
+    }
+  ],
+  "configuration_version": "1"
+}

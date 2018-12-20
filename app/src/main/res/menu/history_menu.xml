@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/latest"
+        android:title="@string/order_latest"
+        android:enabled="true"/>
+
+    <item android:id="@+id/oldest"
+        android:title="@string/order_oldest"
+        android:enabled="true"/>
+
+    <item android:id="@+id/settings"
+        android:title="@string/settings"
+        android:enabled="true"/>
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        app:showAsAction="always|collapseActionView"
+        android:title="Search"
+        app:actionViewClass="android.support.v7.widget.SearchView" />
+</menu>
