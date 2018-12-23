@@ -16,6 +16,8 @@ public class YouPlayWeb extends AsyncTask<Void, Void, String> {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36";
     private static String LINK = "https://youplayandroid.com/version/version.json";
     private Listener listener;
+    private boolean error = false;
+    private Exception e;
 
     public void setListener(Listener listener)
     {
@@ -41,7 +43,8 @@ public class YouPlayWeb extends AsyncTask<Void, Void, String> {
         }
         catch (Exception e)
         {
-            listener.onError(e);
+            this.e = e;
+            error = true;
             Log.d("YouPlayWeb", e.getMessage());
             return null;
         }
@@ -50,6 +53,11 @@ public class YouPlayWeb extends AsyncTask<Void, Void, String> {
 
     @Override
     protected void onPostExecute(String version) {
+        if(error)
+        {
+            listener.onError(e);
+            error = false;
+        }
         listener.onConnected(version);
     }
 

@@ -523,8 +523,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         if(!adapter.getState())
         {
             OkDownload.with().downloadDispatcher().cancelAll();
-            if(audioService.exoPlayer.getPlayWhenReady())
-                audioService.exoPlayer.stop();
+            if(AudioService.getInstance().exoPlayer.getPlayWhenReady())
+                AudioService.getInstance().exoPlayer.stop();
 
             if(URLUtil.isValidUrl(pjesma.getPath()))
                 pjesma.setPath("");

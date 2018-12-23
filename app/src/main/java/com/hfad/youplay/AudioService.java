@@ -33,6 +33,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.NotificationTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.exoplayer2.C;
@@ -487,16 +488,20 @@ public class AudioService extends Service
      */
     private void setMusic(String path)
     {
-        Uri uri = Uri.parse(path);
-        DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "YouPlay"), null);
-        ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-        MediaSource mediaSource = new ExtractorMediaSource(uri, dataSourceFactory, extractorsFactory, null, null);
-        exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
+        // Ako stream zavrsi i prebaci na drugu pjesmu dok je activity unisten
+        if(path != null)
+        {
+            Uri uri = Uri.parse(path);
+            DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "YouPlay"), null);
+            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
+            MediaSource mediaSource = new ExtractorMediaSource(uri, dataSourceFactory, extractorsFactory, null, null);
+            exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
 
-        exoPlayer.prepare(mediaSource);
-        exoPlayer.setPlayWhenReady(true);
+            exoPlayer.prepare(mediaSource);
+            exoPlayer.setPlayWhenReady(true);
 
-        Answers.getInstance().logCustom(new CustomEvent("Songs played"));
+            Answers.getInstance().logCustom(new CustomEvent("Songs played"));
+        }
     }
 
     public void updateNotification(String title, String image)
@@ -601,7 +606,7 @@ public class AudioService extends Service
                     if(pos+1 < musicList.size())
                     {
                         music = musicList.get(pos+1);
-                        if(music != null)
+                        if(music != null && music.getPath() != null)
                             playSong();
                         break;
                     }

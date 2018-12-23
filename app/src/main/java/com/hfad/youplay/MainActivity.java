@@ -611,10 +611,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 if(playFragment.isSlided())
                 {
                     ConstraintLayout layout = findViewById(R.id.play_list_layout);
-
-                    layout.getLayoutParams().height -= size;
-
-                    layout.setLayoutParams(layout.getLayoutParams());
+                    if(layout != null)
+                    {
+                        layout.getLayoutParams().height -= size;
+                        layout.setLayoutParams(layout.getLayoutParams());
+                    }
                     adLoaded = true;
                 }
             }
