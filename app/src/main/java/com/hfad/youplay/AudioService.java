@@ -619,7 +619,7 @@ public class AudioService extends Service
                 if(station.getId().equals(this.station.getId()))
                 {
                     pos = stations.indexOf(station);
-                    if(pos+1 <= stations.size())
+                    if(pos+1 < stations.size())
                     {
                         this.station = stations.get(pos+1);
                         playSong();
