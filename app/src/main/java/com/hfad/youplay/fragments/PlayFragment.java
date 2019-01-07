@@ -491,6 +491,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void setCurrent(final int position)
     {
+        Log.d(TAG, "SetCurrent pos: " + position);
         this.position = position;
 
         recyclerView.scrollToPosition(position);
@@ -708,7 +709,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     params.topToBottom = R.id.play_pause_layout;
 
                     layout.setLayoutParams(params);
-                    setCurrent(position);
+                    recyclerView.scrollToPosition(position);
                 }
             });
             va.start();
@@ -1011,15 +1012,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         durationTimeCurrent.setText(R.string.you_temp_time);
         onItemClicked.setMusic(pjesma);
 
-
-//        runnable = () -> {
-//            Activity activity = getActivity();
-//            if(activity instanceof MainActivity)
-//                if(userClick)
-//                    ((MainActivity)getActivity()).pager.setCurrentItem(0, true);
-//        };
-//        handler.postDelayed(runnable, 150);
-
     }
 
     public void setSong(final Music pjesma)
@@ -1135,6 +1127,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     @Override
     public void deleteProgress(int length, String title) {
+
+    }
+
+    @Override
+    public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
 
     }
 

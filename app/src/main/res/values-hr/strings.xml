@@ -9,7 +9,6 @@
     <string name="no_internet_connection">Nema internetske veze</string>
     <string name="rationale_cancel">Odustani</string>
     <string name="headphones">Slušalice isključene</string>
-    <string name="songs">Pjesme</string>
     <string name="songs_language">Pjesma</string>
     <string name="you_play">Pjesma</string>
     <string name="now_playing">Dodaj u trenutno</string>
@@ -83,4 +82,14 @@
     <string name="download_update_error">Došlo je do pogreške prilikom preuzimanja ažurirane verzije.</string>
     <string name="refresh_error">Došlo je do pogreške, oslobodite prostora</string>
     <string name="download_error">Došlo je do pogreške, provjerite da li ima internetske veze</string>
+    <string name="send_email">Pošalji email</string>
+    <string name="pref_appearance">Izgled</string>
+    <string name="pref_navigation">Navigacija</string>
+    <string name="pref_navigation_summary">Kada je omogućeno navigacija se neće prikazati u zaslonu za reproduciranje.</string>
+    <plurals name="songs">
+        <item quantity="one">%d Pjesma</item>
+        <item quantity="few">%d Pjesme</item>
+        <item quantity="other">%d Pjesmi</item>
+    </plurals>
+    <string name="playlist_created">Playlista %s napravljena</string>
 </resources>

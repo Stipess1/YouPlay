@@ -17,6 +17,7 @@
         android:padding="8dp"
         android:textColor="@color/black"
         android:textSize="16sp"
+        android:ellipsize="end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/auto_query"
         app:layout_constraintStart_toStartOf="parent"

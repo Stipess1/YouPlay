@@ -202,14 +202,9 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     }
                     StringBuilder stringBuilder = new StringBuilder();
                     FirstViewHolder firstViewHolder = (FirstViewHolder) holder;
-                    if(data.size() > 1)
-                        stringBuilder.append(data.size()).append(" ").append(context.getResources().getString(R.string.songs));
-                    else
-                        stringBuilder.append(data.size()).append(" ").append(context.getResources().getString(R.string.songs_language));
 
-                    firstViewHolder.songCount.setText(stringBuilder);
+                    firstViewHolder.songCount.setText(context.getResources().getQuantityString(R.plurals.songs, data.size(), data.size()));
                     firstViewHolder.songCount.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-                    stringBuilder = new StringBuilder();
                     stringBuilder.append(Utils.convertDuration(milis)).append(" ").append(context.getResources().getString(R.string.song_mins));
                     firstViewHolder.songsDuration.setText(stringBuilder);
                     firstViewHolder.songsDuration.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
@@ -375,6 +370,14 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     {
         data.clear();
         data.addAll(youPlayDatabase.getData());
+        notifyFilterData(data);
+        notifyDataSetChanged();
+    }
+
+    public void refreshList(List<Music> pjesme)
+    {
+        data.clear();
+        data.addAll(pjesme);
         notifyFilterData(data);
         notifyDataSetChanged();
     }

@@ -153,7 +153,10 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
                 holder.itemView.setBackgroundColor(context.getResources().getColor(R.color.black));
                 holder.title.setEllipsize(TextUtils.TruncateAt.END);
                 holder.title.setSelected(false);
-                holder.duration.setTextColor(context.getResources().getColor(R.color.suggestions));
+                if(pjesma.getDownloaded() == 1)
+                    holder.duration.setTextColor(context.getResources().getColor(R.color.suggestions));
+                else
+                    holder.duration.setTextColor(context.getResources().getColor(R.color.grey));
             }
             else
             {

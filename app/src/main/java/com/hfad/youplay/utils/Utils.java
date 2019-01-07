@@ -121,7 +121,7 @@ public class Utils {
         }
         else
         {
-            long secs = Integer.parseInt(regex[1]);
+            long secs = Integer.parseInt(regex[0]);
 
             return secs * 1000;
         }
@@ -131,7 +131,7 @@ public class Utils {
     {
         int seconds = (int) (milis / 1000) % 60;
         int minutes = (int) ((milis / (1000*60)) % 60);
-        int hours   = (int) ((milis / (1000*60*60)) % 24);
+        int hours   = (int) ((milis / (1000*60*60)));
         if(hours == 0)
         {
             return String.format("%d:%02d", minutes, seconds);

@@ -61,7 +61,7 @@ import java.util.ArrayList;
 
 import static com.hfad.youplay.utils.Constants.*;
 
-public class AudioService extends Service
+public class AudioService extends Service implements AudioManager.OnAudioFocusChangeListener
 {
 
     private static final String TAG = AudioService.class.getSimpleName();
@@ -70,9 +70,9 @@ public class AudioService extends Service
     public static String SONG = "song";
     public static String ACTION = "action";
     public static String LIST = "list";
-    public static String UPDATE_LIST = "update";
 
     public SimpleExoPlayer exoPlayer;
+    private AudioManager audioManager;
     private static final int NOTIFICATION_ID = 333;
 
     public RemoteViews remoteViews;
@@ -96,6 +96,7 @@ public class AudioService extends Service
     private NetworkStateListener networkStateListener;
 
     private boolean wasPlaying = false;
+    private boolean isLoss = false;
     private static AudioService instance;
     private boolean isStream = false;
     private boolean isDestroyed;
@@ -177,6 +178,8 @@ public class AudioService extends Service
         mediaSessionCompat.setCallback(mController);
         mediaSessionCompat.setActive(true);
 
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
         exoPlayer = ExoPlayerFactory.newSimpleInstance(this,new DefaultRenderersFactory(this) ,new DefaultTrackSelector(), new DefaultLoadControl());
 
         remoteViews = new RemoteViews(getApplication().getPackageName(), R.layout.custom_notification);
@@ -188,10 +191,8 @@ public class AudioService extends Service
 
         registerReceiver(outputListener, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
         registerReceiver(networkStateListener, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
-//        registerReceiver(outputListener, new IntentFilter(Intent.ACTION_MEDIA_BUTTON));
 
         startForegroundService();
-        phoneListener();
 
         instance = this;
 
@@ -341,9 +342,11 @@ public class AudioService extends Service
      */
     public Notification initNotification(String text, String image)
     {
-
         if(exoPlayer.getPlayWhenReady())
+        {
+            audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", R.drawable.pause);
+        }
         else
             remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", R.drawable.play);
 
@@ -386,7 +389,7 @@ public class AudioService extends Service
             else
             {
 
-                Glide.with(this).asBitmap().load(fileImage).apply(new RequestOptions().override(80,120)).into(new SimpleTarget<Bitmap>() {
+                Glide.with(this).asBitmap().load(fileImage).apply(new RequestOptions().override(60,100)).into(new SimpleTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         NotificationTarget target = new NotificationTarget(getApplicationContext()
@@ -450,38 +453,6 @@ public class AudioService extends Service
         return builder.build();
     }
 
-    private void phoneListener()
-    {
-        stateListener = new PhoneStateListener(){
-            @Override
-            public void onCallStateChanged(int state, String incomingNumber) {
-                if(state == TelephonyManager.CALL_STATE_RINGING && exoPlayer.getPlayWhenReady())
-                {
-                    if(serviceCallback != null)
-                    {
-                        serviceCallback.callback(PLAY_PAUSE);
-                        updateNotification("","");
-                        wasPlaying = true;
-                    }
-                }
-                else if(state == TelephonyManager.CALL_STATE_IDLE && wasPlaying)
-                {
-                    if(serviceCallback != null)
-                    {
-                        serviceCallback.callback(PLAY_PAUSE);
-                        updateNotification("","");
-                        wasPlaying = false;
-                    }
-                }
-                super.onCallStateChanged(state, incomingNumber);
-            }
-        };
-
-        telephonyManager = (TelephonyManager) getApplicationContext().getSystemService(Context.TELEPHONY_SERVICE);
-        telephonyManager.listen(stateListener, PhoneStateListener.LISTEN_CALL_STATE);
-
-    }
-
     /**
      * Postavlja pjesmu ili postaju po dobivenoj lokaciji pjesme/postaje
      * @param path lokacija pjesme
@@ -506,8 +477,8 @@ public class AudioService extends Service
 
     public void updateNotification(String title, String image)
     {
+        isLoss = false;
         notification = initNotification(title, image);
-
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager != null)
             manager.notify(NOTIFICATION_ID, notification);
@@ -570,6 +541,53 @@ public class AudioService extends Service
 
         }
         return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onAudioFocusChange(int focus)
+    {
+        Log.d(TAG," AUdioFocus change: " + focus);
+        switch (focus)
+        {
+            case AudioManager.AUDIOFOCUS_GAIN:
+                if(!exoPlayer.getPlayWhenReady() && wasPlaying && !isLoss)
+                {
+                    if(serviceCallback != null)
+                        serviceCallback.callback(PLAY_PAUSE);
+                    else
+                        playPauseSong();
+
+                    updateNotification("","");
+                    wasPlaying = false;
+                }
+                    break;
+            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                if(exoPlayer.getPlayWhenReady())
+                {
+                    if(serviceCallback != null)
+                        serviceCallback.callback(PLAY_PAUSE);
+                    else
+                        playPauseSong();
+
+                    updateNotification("","");
+                    wasPlaying = true;
+                }
+                break;
+
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    if(exoPlayer.getPlayWhenReady())
+                    {
+                        if(serviceCallback != null)
+                            serviceCallback.callback(PLAY_PAUSE);
+                        else
+                            playPauseSong();
+
+                        updateNotification("","");
+                        wasPlaying = true;
+                        isLoss = true;
+                    }
+                    break;
+        }
     }
 
     private void playSong()
@@ -671,6 +689,7 @@ public class AudioService extends Service
         if(manager != null)
             manager.cancelAll();
 
+        audioManager.abandonAudioFocus(this);
         exoPlayer.stop();
         exoPlayer.release();
         stateListener = null;

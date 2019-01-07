@@ -30,7 +30,6 @@
     <string name="cannot_find_table">An error has occurred while opening a playlist</string>
     <string name="error">An error has occurred</string>
 
-    <string name="songs">Songs</string>
     <string name="songs_language">Song</string>
     <string name="auto_query">auto</string>
 
@@ -56,7 +55,6 @@
     <string name="settings">Settings</string>
     <string name="show_suggestions">Show list</string>
     <string name="current_version">Version</string>
-    <string name="changelog">Changelog</string>
     <string name="delete">Delete</string>
 
     <!--Playlist-->
@@ -66,6 +64,7 @@
     <string name="playlist_exists">Playlist already exists</string>
     <string name="playlist_enter_name">Enter the name</string>
     <string name="playlist_added">Song added to playlist</string>
+    <string name="playlist_created">Playlist %s created</string>
 
     <!--Radio-->
     <string name="radio_bitrate">kbps</string>
@@ -75,12 +74,17 @@
     <string name="radio_stations">Stations: </string>
 
     <!--Preferences-->
-    <string name="switch_key">Theme</string>
+    <string name="switch_key" translatable="false">Theme</string>
     <string name="switch_theme">Theme</string>
+    <string name="pref_appearance">Appearance</string>
+    <string name="pref_navigation">Navigation</string>
+    <string name="pref_navigation_summary">When enabled navigation bar won\'t show in play screen</string>
     <string name="switch_summary">Changes the theme</string>
     <string name="check_download">Download</string>
     <string name="check_download_title">Download</string>
-    <string name="check_download_desc">speed up download speed</string>
+    <string name="check_download_desc">Speed up download speed</string>
+    <string name="send_email">Send an email</string>
+    <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
 
     <string name="pref_download">Downloads</string>
     <string name="cache_summary">When enabled YouPlay will automatically cache song to the device.</string>
@@ -90,6 +94,7 @@
     <string name="version_summary">Check for new update.</string>
     <string name="version_newest">Up To Date</string>
     <string name="version_newest_summary">You have the latest version of YouPlay installed.</string>
+    <string name="about">About</string>
 
     <string name="version_update">New Version Available</string>
     <string name="version_update_summary">A new version of YouPlay is available. Version %s will be installed.</string>
@@ -97,6 +102,10 @@
     <string name="downloading">Downloading</string>
     <string name="download_update_error">An error has occurred while trying to download an update.</string>
     <string name="download_error">An error has ouccurred, check if there is internet connection</string>
+    <plurals name="songs">
+        <item quantity="one">%d Song</item>
+        <item quantity="other">%d Songs</item>
+    </plurals>
 
     <!--Config-->
     <string name="config_changed">Configuration changed, restart the application</string>
@@ -134,7 +143,6 @@
         <item>@string/playlist_rename</item>
     </string-array>
 
-    <string name="title_activity_settings">SettingsActivity</string>
-    <string name="about">About</string>
+    <string name="title_activity_settings" translatable="false">SettingsActivity</string>
 
 </resources>

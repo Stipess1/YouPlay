@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        android:title="@string/switch_theme">
+        android:title="@string/pref_appearance">
         <SwitchPreference
             android:id="@+id/switch_pref"
             android:key="@string/switch_key"
@@ -10,6 +10,14 @@
             android:fontFamily="sans-serif-light"
             android:summary="@string/switch_summary"
             android:title="@string/switch_theme"/>
+
+        <SwitchPreference
+            android:id="@+id/navigation"
+            android:key="navigation"
+            android:defaultValue="false"
+            android:fontFamily="sans-serif-light"
+            android:summary="@string/pref_navigation_summary"
+            android:title="@string/pref_navigation"/>
     </PreferenceCategory>
 
 <PreferenceCategory
@@ -49,6 +57,11 @@
         android:key="website"
         android:title="@string/website"
         android:summary="https://youplayandroid.com/"/>
+
+    <PreferenceScreen
+        android:key="send_email"
+        android:title="@string/send_email"
+        android:summary="stipess@youplayandroid.com"/>
 
 </PreferenceCategory>
 

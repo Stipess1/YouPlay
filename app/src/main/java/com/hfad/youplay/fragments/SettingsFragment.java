@@ -101,6 +101,13 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
             return false;
         });
 
+        PreferenceScreen sendMail = (PreferenceScreen) findPreference(Constants.SEND_EMAIL);
+        sendMail.setOnPreferenceClickListener(preference -> {
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "stipess@youplayandroid.com", null));
+            startActivity(Intent.createChooser(emailIntent, getResources().getString(R.string.send_email)));
+            return false;
+        });
+
         PreferenceScreen website = (PreferenceScreen) findPreference(Constants.WEBSITE);
         website.setOnPreferenceClickListener(preference -> {
             Intent website1 = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE));

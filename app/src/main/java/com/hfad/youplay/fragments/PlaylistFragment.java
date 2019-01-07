@@ -162,7 +162,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
                     {
                         dialog.dismiss();
                         imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
-                        Snackbar.make(getView(), "Playlist " + playlistTitle.getText() + " created", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getView(), getResources().getString(R.string.playlist_created, playlistTitle.getText()), Snackbar.LENGTH_SHORT).show();
                         YouPlayDatabase.getInstance(getContext()).createPlaylist(playlistTitle.getText().toString());
                         playlists.clear();
                         playlists.addAll(YouPlayDatabase.getInstance(getContext()).getAllPlaylists());

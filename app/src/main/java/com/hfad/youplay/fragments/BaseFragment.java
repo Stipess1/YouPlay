@@ -44,7 +44,7 @@ public abstract class BaseFragment extends Fragment{
             if(activity instanceof MainActivity)
                 ((MainActivity)getActivity()).pager.setCurrentItem(0, true);
         };
-        handler.postDelayed(runnable, 150);
+        handler.postDelayed(runnable, 200);
 
     }
 

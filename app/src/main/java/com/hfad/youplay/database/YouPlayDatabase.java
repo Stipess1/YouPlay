@@ -541,13 +541,32 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                    Music pjesma = new Music();
                    pjesma.setTitle(data.getString(data.getColumnIndex("TITLE")));
                    pjesma.setAuthor(data.getString(data.getColumnIndex("AUTHOR")));
-                   pjesma.setDuration(data.getString(data.getColumnIndex("DURATION")));
                    pjesma.setId(data.getString(data.getColumnIndex("ID")));
                    pjesma.setViews(data.getString(data.getColumnIndex("VIEWS")));
                    pjesma.setDownloaded(data.getInt(data.getColumnIndex("DOWNLOADED")));
                    pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
-                   music.add(pjesma);
 
+                   /*
+                   Posto sam bio prepametan i spremljo duzinu pjesme u string jer youtube tako prikazuje
+                   onda cemo ovako oduzet jednu sekund i stavit u listu.
+                    */
+                   String split = data.getString(data.getColumnIndex("DURATION"));
+                   String [] formatted = split.split(":");
+                   int convert = Integer.parseInt(formatted[1]);
+                   int first = Integer.parseInt(formatted[0]);
+                   convert = convert - 1;
+                   if(convert < 0)
+                   {
+                       convert = 59;
+                       first = first - 1;
+                   }
+                   String duration;
+                   if(convert < 10)
+                       duration = Integer.toString(first) +":0"+ Integer.toString(convert);
+                   else
+                       duration = Integer.toString(first) +":"+ Integer.toString(convert);
+                   pjesma.setDuration(duration);
+                   music.add(pjesma);
                }
                while(data.moveToNext());
 
@@ -563,8 +582,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                 Constants.APP_NAME + File.separator + Constants.DATABASE, "youplay.db");
 
         SQLiteDatabase db = SQLiteDatabase.openOrCreateDatabase(databaseFile.getPath(), null);
-        //
-//        SQLiteDatabase db = this.getReadableDatabase();
+
         Cursor cursor = db.query(Constants.TABLE_NAME,
                 new String[] {Constants.DOWNLOADED},
                 Constants.ID + " = ?",
@@ -675,7 +693,4 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         db.close();
     }
 
-
-
-    // Kasnije napravit private class gdje bi se sa AsyncTask stavljao podatke u bazu
 }

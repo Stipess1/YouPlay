@@ -5,6 +5,8 @@ import android.os.AsyncTask;
 
 import com.hfad.youplay.Ilisteners.OnDataChanged;
 import com.hfad.youplay.music.Music;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.hfad.youplay.utils.Constants.DOWNLOADED;
@@ -58,7 +60,10 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
                     publishProgress(i, pjesme.get(i).getTitle());
                 }
             }
-
+            else if(type == UpdateType.GET)
+            {
+                pjesme.addAll(db.getData());
+            }
         }
         if(database != null)
             database.close();
@@ -75,13 +80,24 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
     @Override
     protected void onPostExecute(Void aVoid)
     {
-        if(onDataChanged != null)
+        if(onDataChanged != null && pjesme == null)
             onDataChanged.dataChanged(type, databaseName, pjesma);
+        else if(onDataChanged != null)
+            onDataChanged.dataChanged(type, pjesme);
+
+    }
+
+    @Override
+    protected void onPreExecute() {
+        if(type == UpdateType.GET)
+            onDataChanged.dataChanged(type, null);
     }
 
     public enum UpdateType
     {
         ADD,
+        // Dohvati sve pjesme iz SQL
+        GET,
 
         REMOVE,
 
@@ -103,6 +119,16 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
 
         db = YouPlayDatabase.getInstance();
 
+    }
+
+    // Koristiti kada dohvacamo pjesme
+    public DatabaseHandler(UpdateType type, OnDataChanged dataChanged, String databaseName)
+    {
+        this.type = type;
+        this.databaseName = databaseName;
+        this.pjesme = new ArrayList<>();
+        this.onDataChanged = dataChanged;
+        db = YouPlayDatabase.getInstance();
     }
 
     public DatabaseHandler(Music pjesma, String tableName, String databaseName, UpdateType type)

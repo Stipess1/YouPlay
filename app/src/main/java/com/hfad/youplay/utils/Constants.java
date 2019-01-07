@@ -64,6 +64,7 @@ public class Constants {
     public static final String CACHE_MODE = "cache_mode";
     public static final String WEBSITE = "website";
     public static final String VERSION_CHECK = "version_check";
+    public static final String SEND_EMAIL = "send_email";
 
     public static final String DOWNLOAD_LINK = "https://youplayandroid.com/download/YouPlay.apk";
 

@@ -38,6 +38,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.webkit.URLUtil;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -84,9 +85,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private TextView addToQ;
     private TextView addToPlaylist;
     private TextView delete;
+    private TextView history;
+    private SearchView searchView;
     private AudioService audioService;
     private MenuItem searchItem;
-    // private SearchView searchView;
+    private ProgressBar barLoading;
     private List<Music> queueList;
     private YouPlayDatabase db;
     private ActionBar actionBar;
@@ -120,6 +123,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         addToQ       = view.findViewById(R.id.add_to_queue);
         addToPlaylist= view.findViewById(R.id.add_to_playlist);
         delete       = view.findViewById(R.id.delete_selected);
+        barLoading   = view.findViewById(R.id.history_list_loading);
+        history      = view.findViewById(R.id.empty_history);
         ConstraintLayout layout = view.findViewById(R.id.history_container);
 
         handler = new Handler();
@@ -143,7 +148,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
         toolbar.inflateMenu(R.menu.history_menu);
         searchItem = toolbar.getMenu().findItem(R.id.action_search);
-        SearchView searchView = (SearchView) searchItem.getActionView();
+        searchView = (SearchView) searchItem.getActionView();
         searchView.setQueryHint(getResources().getString(R.string.search_history));
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -245,6 +250,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                     String left = position + "/" + listSize;
                     size.setText(left);
                 }
+
+                @Override
+                public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+
+                }
             }).execute();
         }
     }
@@ -270,7 +280,19 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
     }
 
-//    @Override
+    @Override
+    public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+        if(type == DatabaseHandler.UpdateType.GET && pjesme == null)
+            barLoading.setVisibility(View.VISIBLE);
+        else
+        {
+            adapter.refreshList(pjesme);
+            barLoading.setVisibility(View.GONE);
+            checkIfEmpty();
+        }
+    }
+
+    //    @Override
 //    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
 //    {
 //        inflater.inflate(R.menu.history_menu, menu);
@@ -475,7 +497,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                 Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
         }
 
-        checkIfEmpty();
     }
 
     /**
@@ -508,7 +529,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
     public void checkIfEmpty()
     {
-        TextView history = getView().findViewById(R.id.empty_history);
         history.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
         if(musicList.size() > 0)
             history.setVisibility(View.GONE);
@@ -529,9 +549,15 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             if(URLUtil.isValidUrl(pjesma.getPath()))
                 pjesma.setPath("");
 
-            setPlayScreen();
+            if(searchView.getQuery().length() > 0)
+            {
+                searchView.setQuery("", true);
+                getSearchView().collapseActionView();
+            }
 
+            adapter.notifyFilterData(musicList);
             onItemClicked.onMusicClick(pjesma, musicList);
+            setPlayScreen();
         }
     }
 
@@ -614,6 +640,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
                         @Override
                         public void deleteProgress(int length, String title) {
+
+                        }
+
+                        @Override
+                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
 
                         }
                     }).execute();

@@ -72,6 +72,9 @@ import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
 import com.liulishuo.okdownload.core.listener.DownloadListener1;
 import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
 
+import org.codechimp.apprater.AppRater;
+import org.codechimp.apprater.GoogleMarket;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -120,8 +123,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     };
 
     public static final String[] PERMISSIONS = {Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_PHONE_STATE};
+            Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     private ServiceConnection connection;
 
@@ -144,9 +146,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     @Override
     protected void onPause() {
+        hideKeyboard();
+        super.onPause();
+    }
+
+    private void hideKeyboard()
+    {
         if(imm != null && getCurrentFocus() != null)
             imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
-        super.onPause();
     }
 
     @Override
@@ -197,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 AudioService.getInstance().setDestroyed(false);
                 audioService.setCallback(MainActivity.this);
 
-                Log.d(TAG, "On Service connected");
                 historyFragment.initAudioService();
                 playFragment.initAudioService();
                 playFragment.setListeners();
@@ -278,15 +284,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 switch (position)
                 {
                     case 0:
-                        tabLayout.setBackgroundColor(getResources().getColor(R.color.play_fragment_bars));
+                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplication());
+                        boolean nav = preferences.getBoolean("navigation", false);
 
-                        tabLayout.getTabAt(position).setIcon(R.drawable.music_pressed);
-                        tabLayout.getTabAt(1).setIcon(R.drawable.history);
-                        tabLayout.getTabAt(2).setIcon(R.drawable.playlist);
-                        tabLayout.getTabAt(4).setIcon(R.drawable.search);
-                        tabLayout.getTabAt(3).setIcon(R.drawable.radio);
+                        if(nav)
+                            tabLayout.setVisibility(View.GONE);
+                        else
+                        {
+                            tabLayout.setBackgroundColor(getResources().getColor(R.color.play_fragment_bars));
+
+                            tabLayout.getTabAt(position).setIcon(R.drawable.music_pressed);
+                            tabLayout.getTabAt(1).setIcon(R.drawable.history);
+                            tabLayout.getTabAt(2).setIcon(R.drawable.playlist);
+                            tabLayout.getTabAt(4).setIcon(R.drawable.search);
+                            tabLayout.getTabAt(3).setIcon(R.drawable.radio);
+                        }
                         break;
                     case 1:
+                        tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
@@ -297,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
                         break;
                     case 2:
+                        tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
@@ -306,6 +322,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         tabLayout.getTabAt(position).setIcon(R.drawable.playlist_pressed);
                         break;
                     case 3:
+                        tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
                         tabLayout.getTabAt(1).setIcon(R.drawable.history);
@@ -316,6 +333,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
                         break;
                     case 4:
+                        tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
                         tabLayout.getTabAt(1).setIcon(R.drawable.history);
@@ -445,7 +463,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             });
             builder.create().show();
 
-
+        }
+        else{
+            AppRater.setMarket(new GoogleMarket());
+            AppRater.setPackageName("com.hfad.youplay");
+            AppRater.app_launched(this);
         }
     }
 
@@ -501,8 +523,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                             | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivity(intent);
                 }
-                if(cause == EndCause.ERROR)
-                    realCause.printStackTrace();
 
 
             }
@@ -741,8 +761,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         FragmentManager fm = getSupportFragmentManager();
 
         if(playFragment.isSlided())
+        {
             playFragment.slide();
-
+            return true;
+        }
         if(keyCode == KeyEvent.KEYCODE_BACK && pager.getCurrentItem() == 1 && !historyFragment.adapter.getState())
         {
             if(historyFragment.getSearchView().isActionViewExpanded())
