@@ -2,6 +2,7 @@ package com.hfad.youplay;
 
 import android.Manifest;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -91,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
     public static final boolean noAdApp = true;
+    // Kada je false znaci da ova verzija nebi trebala bit na google playu.
+    public static final boolean isGooglePlay = false;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
 
@@ -101,7 +104,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private DefaultPlaylistFragment defaultPlaylistFragment;
     private RadioFragment radioFragment;
     private AudioService audioService;
-    private Intent intent;
     private boolean bound = false;
     public ViewPager pager;
     private AdView adView;
@@ -129,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     @Override
     protected void onStart() {
-        intent = new Intent(getApplication(), AudioService.class);
+        Intent intent = new Intent(getApplication(), AudioService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
         startService(intent);
         if(firstTime)
@@ -138,8 +140,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             firstTime = false;
         }
 
-//        if(internetConnection())
-//            initAds();
+        if(internetConnection() && !noAdApp)
+            initAds();
 
         super.onStart();
     }
@@ -427,7 +429,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     dialogInterface.dismiss();
 
                     final String[] downloadLink = new String[1];
-                    if(noAdApp)
+                    if(noAdApp && !isGooglePlay)
                     {
                         FirebaseApp.initializeApp(getApplicationContext());
                         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
@@ -450,8 +452,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     }
                     else
                     {
-                        downloadLink[0] = Constants.DOWNLOAD_LINK;
-                        download(downloadLink[0]);
+                        if(!isGooglePlay)
+                        {
+                            downloadLink[0] = Constants.DOWNLOAD_LINK;
+                            download(downloadLink[0]);
+                        }
                     }
                 }
             });
@@ -537,9 +542,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     public void initFiles()
     {
-        if(Utils.freeSpace(true) < 20)
+        if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists())
         {
-            Log.d(TAG, "NOt enough Space " + Utils.freeSpace(true));
             Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
             finishAffinity();
         }
@@ -618,6 +622,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private void initAds()
     {
+        Log.d(TAG, "Init Ads");
         MobileAds.initialize(this, "ca-app-pub-8163593086331416~1012493107");
         adView = findViewById(R.id.ad);
         AdRequest adRequest = new AdRequest.Builder().build();
@@ -760,7 +765,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     {
         FragmentManager fm = getSupportFragmentManager();
 
-        if(playFragment.isSlided())
+        if(playFragment.isSlided() && keyCode == KeyEvent.KEYCODE_BACK)
         {
             playFragment.slide();
             return true;
@@ -844,7 +849,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playFragment.playPauseSong(false);
                 break;
             case Constants.AD:
-//                initAds();
+                if(!noAdApp)
+                    initAds();
                 searchFragment.ifInternetConnection();
                 break;
             case Constants.EXIT:
@@ -870,15 +876,17 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         else
             theme.applyStyle(R.style.LightTheme, true);
 
-        historyFragment.setupActionBar();
-        historyFragment.refreshFragment();
-        defaultPlaylistFragment.setupActionBar();
-        defaultPlaylistFragment.refreshFragment();
-        searchFragment.refreshFragment();
-        radioFragment.setupActionBar();
-        radioFragment.refreshFragment();
-        tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
-
+        if(historyFragment != null)
+        {
+            historyFragment.setupActionBar();
+            historyFragment.refreshFragment();
+            defaultPlaylistFragment.setupActionBar();
+            defaultPlaylistFragment.refreshFragment();
+            searchFragment.refreshFragment();
+            radioFragment.setupActionBar();
+            radioFragment.refreshFragment();
+            tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
+        }
     }
 
     private class SectionsPagerAdapter extends FragmentPagerAdapter

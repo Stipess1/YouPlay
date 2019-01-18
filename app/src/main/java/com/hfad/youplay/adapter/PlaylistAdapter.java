@@ -175,8 +175,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             holder.duration.setText(pjesma.getDuration());
 
             if(FileManager.getPictureFile(pjesma.getId()).exists())
-                Glide.with(context).load(FileManager.getPictureFile(pjesma.getId())).thumbnail(0.1f).transition(new DrawableTransitionOptions().crossFade()).apply(new RequestOptions()
-                        .diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true).override(120, 90).format(DecodeFormat.PREFER_RGB_565)).into(holder.image);
+                Glide.with(context).load(FileManager.getPictureFile(pjesma.getId())).thumbnail(0.1f).apply(new RequestOptions()
+                        .diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(false).override(120, 90).dontAnimate()).into(holder.image);
             else
                 Glide.with(context).load(pjesma.getUrlImage()).apply(new RequestOptions().skipMemoryCache(true)).into(holder.image);
 

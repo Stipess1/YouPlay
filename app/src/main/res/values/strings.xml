@@ -65,6 +65,7 @@
     <string name="playlist_enter_name">Enter the name</string>
     <string name="playlist_added">Song added to playlist</string>
     <string name="playlist_created">Playlist %s created</string>
+    <string name="playlist_error">An error occurred while opening playlist %s</string>
 
     <!--Radio-->
     <string name="radio_bitrate">kbps</string>

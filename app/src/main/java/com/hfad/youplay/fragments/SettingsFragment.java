@@ -144,7 +144,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
                 public void onClick(DialogInterface dialogInterface, int i) {
 
                     final String[] downloadLink = new String[1];
-                    if(MainActivity.noAdApp)
+                    if(MainActivity.noAdApp && !MainActivity.isGooglePlay)
                     {
                         FirebaseApp.initializeApp(getContext());
                         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
@@ -166,8 +166,20 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
                     }
                     else
                     {
-                        downloadLink[0] = Constants.DOWNLOAD_LINK;
-                        download(downloadLink[0]);
+                        if(!MainActivity.isGooglePlay)
+                        {
+                            downloadLink[0] = Constants.DOWNLOAD_LINK;
+                            download(downloadLink[0]);
+                        }
+                        else
+                        {
+                            final String appPackageName = getActivity().getPackageName(); // getPackageName() from Context or Activity object
+                            try {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
+                            } catch (android.content.ActivityNotFoundException anfe) {
+                                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + appPackageName)));
+                            }
+                        }
                     }
                 }
             });

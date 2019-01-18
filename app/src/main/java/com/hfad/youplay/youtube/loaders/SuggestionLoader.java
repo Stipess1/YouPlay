@@ -3,6 +3,7 @@ package com.hfad.youplay.youtube.loaders;
 import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONArray;
@@ -69,6 +70,7 @@ public class SuggestionLoader extends AsyncTaskLoader<List<String>>
                                 String suggestion = ((JSONArray) array.get(j)).getString(0);
                                 String encodeString = StringEscapeUtils.unescapeHtml(suggestion);
                                 musics.add(encodeString);
+                                Log.d("SearchFragment", "Encoded string: " + encodeString);
                             }
                         }
                     }

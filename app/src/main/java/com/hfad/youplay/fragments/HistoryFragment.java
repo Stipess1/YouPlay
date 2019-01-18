@@ -96,9 +96,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private DividerItemDecoration dividerItemDecoration;
     private boolean queue = false;
 
-    public Runnable runnable;
-    public Handler handler;
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState)
     {
@@ -127,7 +124,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         history      = view.findViewById(R.id.empty_history);
         ConstraintLayout layout = view.findViewById(R.id.history_container);
 
-        handler = new Handler();
         layout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
         recyclerView.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));

@@ -2,6 +2,7 @@ package com.hfad.youplay.database;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.hfad.youplay.Ilisteners.OnDataChanged;
 import com.hfad.youplay.music.Music;
@@ -56,6 +57,7 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
             {
                 for(int i = 0; i < pjesme.size(); i++)
                 {
+                    Log.d("DatabaseHandler", "Deleting " + pjesme.get(i).getTitle());
                     db.deleteData(pjesme.get(i).getId());
                     publishProgress(i, pjesme.get(i).getTitle());
                 }
@@ -80,10 +82,10 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
     @Override
     protected void onPostExecute(Void aVoid)
     {
-        if(onDataChanged != null && pjesme == null)
+        if(onDataChanged != null)
             onDataChanged.dataChanged(type, databaseName, pjesma);
-        else if(onDataChanged != null)
-            onDataChanged.dataChanged(type, pjesme);
+//        else if(onDataChanged != null)
+//            onDataChanged.dataChanged(type, pjesme);
 
     }
 

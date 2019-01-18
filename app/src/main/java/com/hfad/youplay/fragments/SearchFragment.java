@@ -114,35 +114,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
         setupActionBar();
-
-        db = YouPlayDatabase.getInstance(getContext());
-        return view;
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        musicClicked = (OnItemClicked) getActivity();
-    }
-
-    public void initAudioService()
-    {
-        audioService = AudioService.getInstance();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState)
-    {
-        recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(RecyclerView recyclerView, int newState)
-            {
-                if(recyclerView.getScrollState() == RecyclerView.SCROLL_STATE_DRAGGING)
-                    searchView.clearFocus();
-
-            }
-        });
-
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
@@ -169,6 +140,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             else
                                 noResult.setVisibility(View.VISIBLE);
 
+                            Log.d(TAG, "Internet suggestion");
                             progressBar.setVisibility(View.GONE);
 
                             musicList.clear();
@@ -203,6 +175,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
             @Override
             public boolean onQueryTextChange(final String query)
             {
+                Log.d(TAG, "QueryTextChange");
                 if(ifInternetConnection())
                 {
                     if(query.length() > 2)
@@ -227,6 +200,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                                 suggestions.clear();
                                 suggestions.addAll(data);
                                 suggestionAdapter.notifyDataSetChanged();
+                                Log.d(TAG, "Query notify " + suggestions.size());
                             }
 
                             @Override
@@ -249,6 +223,33 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                     recyclerView.setVisibility(View.GONE);
                 }
                 return false;
+            }
+        });
+        db = YouPlayDatabase.getInstance(getContext());
+        return view;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        musicClicked = (OnItemClicked) getActivity();
+    }
+
+    public void initAudioService()
+    {
+        audioService = AudioService.getInstance();
+    }
+
+    @Override
+    public void onViewCreated(@NonNull final View view, @Nullable Bundle savedInstanceState)
+    {
+        recyclerView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState)
+            {
+                if(recyclerView.getScrollState() == RecyclerView.SCROLL_STATE_DRAGGING)
+                    searchView.clearFocus();
+
             }
         });
 

@@ -23,8 +23,6 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -55,9 +53,11 @@ import com.hfad.youplay.listeners.NetworkStateListener;
 import com.hfad.youplay.music.Music;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.FileManager;
+import com.hfad.youplay.utils.NotificationId;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.hfad.youplay.utils.Constants.*;
 
@@ -73,23 +73,20 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     public SimpleExoPlayer exoPlayer;
     private AudioManager audioManager;
-    private static final int NOTIFICATION_ID = 333;
+    private static final int NOTIFICATION_ID = NotificationId.getID();
 
     public RemoteViews remoteViews;
     private ArrayList<Music> musicList;
     // Ovu listu dohvacamo kada se aplikacija ponovno pokrene ili activity.
     // Zbog toga sto musicList moze biti izmjesan ili sl.
-    private ArrayList<Music> realMusic;
+    private ArrayList<Music> realMusic = new ArrayList<>();
     private ArrayList<Station> stations;
     private Music music;
     private Station station;
     private Notification notification;
     private NotificationManager manager;
-    private NotificationCompat.Builder builder;
     private ServiceCallback serviceCallback;
     private Player.EventListener eventListener;
-    private static TelephonyManager telephonyManager;
-    private static PhoneStateListener stateListener;
     MediaControllerCompat mediaControllerCompat;
 
     private AudioOutputListener outputListener;
@@ -425,7 +422,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         PendingIntent cancel_btn = PendingIntent.getBroadcast(getApplicationContext(), 114, cancel, 0);
         remoteViews.setOnClickPendingIntent(R.id.cancel_button, cancel_btn);
 
-        builder = new NotificationCompat.Builder(this)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_notification_icon)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(false)
@@ -692,9 +689,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         audioManager.abandonAudioFocus(this);
         exoPlayer.stop();
         exoPlayer.release();
-        stateListener = null;
         instance = null;
-        telephonyManager = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);
         super.onDestroy();

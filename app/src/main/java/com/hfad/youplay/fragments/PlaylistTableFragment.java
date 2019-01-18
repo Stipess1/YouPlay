@@ -39,7 +39,7 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     private static final String TAG = PlaylistTableFragment.class.getSimpleName();
 
     private RecyclerView recyclerView;
-    private String title;
+    private String title = "";
     private List<Music> data;
     private DividerItemDecoration dividerItemDecoration;
     private OnItemClicked onItemClicked;
@@ -75,6 +75,7 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
                             break;
                         case DIALOG_TABLE_DELETE:
                             view.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_out));
+                            data.remove(pjesma);
                             videoAdapter.deleteMusic(position);
                             YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, position);
                             Snackbar.make(getView(), getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT).show();
@@ -122,7 +123,12 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_playlist_table, container, false);
         recyclerView = view.findViewById(R.id.playlist_recyclerView);
-        data = YouPlayDatabase.getInstance(getContext()).getDataTable(title);
+        try{
+            data = YouPlayDatabase.getInstance(getContext()).getDataTable(title);
+        }catch (SQLiteException e)
+        {
+            Toast.makeText(getContext(), getString(R.string.playlist_error, title), Toast.LENGTH_SHORT).show();
+        }
 
         recyclerView.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
         view.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));

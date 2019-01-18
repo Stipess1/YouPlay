@@ -487,7 +487,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         {
             do
             {
-                if(cursor.getString(0).equals(title.replaceAll(" ", "_")))
+                if(cursor.getString(0).toLowerCase().equals(title.replaceAll(" ", "_").toLowerCase()))
                 {
                     cursor.close();
                     base.close();

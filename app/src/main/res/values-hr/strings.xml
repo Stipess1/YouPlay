@@ -92,4 +92,5 @@
         <item quantity="other">%d Pjesmi</item>
     </plurals>
     <string name="playlist_created">Playlista %s napravljena</string>
+    <string name="playlist_error">Došlo je do pogreške prilikom otvaranja playliste %s</string>
 </resources>
