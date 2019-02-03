@@ -1,11 +1,13 @@
 package com.hfad.youplay.fragments;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -17,6 +19,7 @@ import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,6 +71,7 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
     private ActionBar actionBar;
     private DividerItemDecoration dividerItemDecoration;
     private OnItemClicked onItemClicked;
+    private boolean offset;
 
     public RadioFragment() {
         // Required empty public constructor
@@ -87,6 +91,7 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
 
     public void refreshFragment()
     {
+        Log.d(TAG, "Refresh");
         if(getActivity() != null)
             getActivity().getSupportFragmentManager().beginTransaction().detach(this).attach(this).commitAllowingStateLoss();
     }
@@ -102,12 +107,6 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
 
             View customToolbar = LayoutInflater.from(getContext()).inflate(R.layout.toolbar_layout, null);
             actionBar.setCustomView(customToolbar);
-
-            if(getView() != null)
-            {
-                TextView textView = getView().findViewById(R.id.toolbar_title);
-                textView.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-            }
         }
     }
 
@@ -157,14 +156,6 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         recyclerView.removeItemDecoration(dividerItemDecoration);
         recyclerView.addItemDecoration(dividerItemDecoration);
 
-//        searchCountry.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-        linearLayout.setBackgroundColor(getResources().getColor(ThemeManager.getLineSeperatorTheme()));
-//        historyBar.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-//        connection.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-
-        if(getView() != null)
-            getView().setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
-
         if(history.isEmpty())
             refreshList();
 
@@ -211,10 +202,33 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         if(internetConnection())
         {
             searchCountry.setVisibility(View.GONE);
+            offsetRecyclerView();
             countryExtract();
         }
         else
             Toast.makeText(getContext(), getResources().getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
+    }
+
+    public void offsetRecyclerView()
+    {
+        if(getView() != null && !offset)
+        {
+            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) recyclerView.getLayoutParams();
+
+            params.topToBottom = R.id.bar_layout;
+            recyclerView.setLayoutParams(params);
+
+            offset = true;
+        }
+        else if(getView() != null && offset)
+        {
+            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) recyclerView.getLayoutParams();
+
+            params.topToBottom = R.id.app_layout;
+            recyclerView.setLayoutParams(params);
+
+            offset = false;
+        }
     }
 
     private boolean internetConnection() {
@@ -343,19 +357,20 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
     }
 
     @Override
-    public void onInfoClicked(Station station)
+    public void onInfoClicked(final Station station)
     {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(station.getName())
-                .setItems(R.array.you_radio_dialog, (dialogInterface, i) ->
-                {
-                   if(i == DIALOG_NOW_PLAYING)
-                       onItemClicked.stream(station, stationsList);
-                   else if(i == DIALOG_TABLE_DELETE)
-                   {
-                       radioAdapter.deleteRadio(station);
-                       Snackbar.make(getView(), getResources().getString(R.string.radio_deleted), Snackbar.LENGTH_SHORT).show();
-                   }
+                .setItems(R.array.you_radio_dialog, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        if (i == DIALOG_NOW_PLAYING)
+                            onItemClicked.stream(station, stationsList);
+                        else if (i == DIALOG_TABLE_DELETE) {
+                            radioAdapter.deleteRadio(station);
+                            Snackbar.make(getView(), RadioFragment.this.getResources().getString(R.string.radio_deleted), Snackbar.LENGTH_SHORT).show();
+                        }
+                    }
                 });
 
         builder.create().show();

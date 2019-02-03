@@ -5,32 +5,43 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.webkit.URLUtil;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.NumberPicker;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,6 +53,7 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.hfad.youplay.AudioService;
@@ -59,6 +71,7 @@ import com.hfad.youplay.radio.Country;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.Constants;
 import com.hfad.youplay.utils.FileManager;
+import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.UrlLoader;
 import com.hfad.youplay.youtube.loaders.YoutubeMusicLoader;
@@ -75,6 +88,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+
+import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.hfad.youplay.utils.Constants.APP_NAME;
 import static com.hfad.youplay.utils.Constants.FORMAT;
@@ -94,9 +110,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private FrameLayout play_pause;
     private FrameLayout shuffle;
     private FrameLayout replayF;
-    private FrameLayout slide_up;
+    private FrameLayout volume;
+    private FrameLayout alarm;
     private ProgressBar bar;
     private ProgressBar suggestionBar;
+    private Spinner spinner;
     public TextView currentlyTitle, durationTime, durationTimeCurrent, autoPlay;
     public SeekBar seekbar;
     public static Runnable runnable;
@@ -106,13 +124,16 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     public int position;
     private int lastPost;
     private int currentProgress;
-    private boolean userClick = true;
     private boolean wasPlaying = false;
     private boolean replay = false;
     private PlaylistAdapter adapter;
     private ArrayList<Station> stations;
     private LinearLayoutManager linearLayoutManager;
     private OnItemClicked onItemClicked;
+    // Spinner
+    private ArrayList<String> lists = new ArrayList<>();
+    private ArrayAdapter<String> spinnerAdapter;
+    private AsyncTask databaseHandler;
 
     private String getYoutubeLink;
     private RecyclerView recyclerView;
@@ -125,6 +146,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private AudioService audioService;
     private YouPlayDatabase db;
     private boolean deleteMedia;
+    private boolean alarmEnded;
+    // trenutno ime table u spinneru
+    private String currentTable = "";
 
     public static Music currentlyPlayingSong;
 
@@ -143,10 +167,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         return shuffled;
     }
 
-    public void setUserClick(boolean userClick)
-    {
-        this.userClick = userClick;
-    }
 
     public boolean isSlided() {
         return slided;
@@ -175,6 +195,17 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         replayF.setOnClickListener(this);
         autoPlay = view.findViewById(R.id.autoplay);
         autoPlay.setOnClickListener(this);
+        volume   = view.findViewById(R.id.volume);
+        volume.setOnClickListener(this);
+        FrameLayout addToPlaylist = view.findViewById(R.id.add_playlist);
+        addToPlaylist.setOnClickListener(this);
+        alarm = view.findViewById(R.id.alarm);
+        alarm.setOnClickListener(this);
+
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        int streamVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        if(streamVolume == 0)
+            volume.setForeground(getResources().getDrawable(R.drawable.volume_mute));
 
         ConstraintLayout playFragment = view.findViewById(R.id.play_fragment);
         playFragment.setOnClickListener(this);
@@ -199,7 +230,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             musicList.addAll(audioService.getRealMusic());
         }
 
-
         adapter = new PlaylistAdapter(getContext(), R.layout.play_fragment_list, tempList, PlaylistAdapter.ListType.SUGGESTIONS);
 
         if(audioService != null && audioService.getStations() != null && audioService.getIsStream())
@@ -213,15 +243,15 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         recyclerView        = view.findViewById(R.id.play_suggestion_list);
         bar                 = view.findViewById(R.id.play_loading_bar);
         suggestionBar       = view.findViewById(R.id.suggestion_loading_bar);
+        spinner             = view.findViewById(R.id.spinner);
 
         currentlyTitle.setSelected(true);
-        slide_up = view.findViewById(R.id.slide_up_list);
-        slide_up.setOnClickListener(this);
         adapter.setListner(this, this);
         recyclerView.setAdapter(adapter);
         linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+
 
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -262,8 +292,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                if(!slided && newState == RecyclerView.SCROLL_STATE_DRAGGING &&
-                        linearLayoutManager.findFirstVisibleItemPosition() != 0)
+                if(!slided && newState == RecyclerView.SCROLL_STATE_DRAGGING)
                     slide();
             }
         });
@@ -272,31 +301,141 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(audioService != null && audioService.getEventListener() != null)
         {
             Log.d(TAG, "AudioService listener");
-            AudioService.getInstance().exoPlayer.removeListener(audioService.getEventListener());
-            AudioService.getInstance().setListenerAdded(false);
+            audioService.exoPlayer.removeListener(audioService.getEventListener());
+            audioService.setListenerAdded(false);
             setListeners();
         }
 
         if(audioService != null && audioService.getMusicList() != null && !audioService.getIsStream())
         {
-            setCurrent(AudioService.getInstance().getCurrentSongPos());
+            setCurrent(audioService.getCurrentSongPos());
             Log.d(TAG, "AudioService listener musiclist");
             setDestroyedScreenSong();
         }
         else if(audioService != null && audioService.getIsStream() && audioService.getStations() != null)
         {
-            setCurrent(AudioService.getInstance().getCurrentStreamPos());
+            setCurrent(audioService.getCurrentStreamPos());
             setDestroyedScreenStream();
         }
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                String table = spinner.getSelectedItem().toString();
+                TextView selectedText = (TextView) adapterView.getChildAt(0);
+                if(selectedText != null)
+                    selectedText.setTextColor(Color.WHITE);
+                if(table.equals("---")) return;
+                if(databaseHandler != null) databaseHandler.cancel(true);
+
+                if(!table.equals(getResources().getString(R.string.you_history)) && !currentTable.equals(table))
+                {
+                    currentTable = table;
+                    audioService.setCurrentTable(currentTable);
+                    suggestionBar.setVisibility(View.VISIBLE);
+                    databaseHandler = new DatabaseHandler(DatabaseHandler.UpdateType.GET, new OnDataChanged() {
+                        @Override
+                        public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
+
+                        }
+
+                        @Override
+                        public void deleteProgress(int length, String title) {
+
+                        }
+
+                        @Override
+                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                            if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
+                            {
+                                suggestionBar.setVisibility(View.GONE);
+                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, table);
+                            }
+                            suggestionBar.setVisibility(View.GONE);
+                        }
+                    },YouPlayDatabase.PLAYLIST_DB ,table).execute();
+                }
+                else if(!currentTable.equals(table))
+                {
+                    currentTable = table;
+                    audioService.setCurrentTable(currentTable);
+                    suggestionBar.setVisibility(View.VISIBLE);
+                    databaseHandler = new DatabaseHandler(DatabaseHandler.UpdateType.GET, new OnDataChanged() {
+                        @Override
+                        public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
+
+                        }
+
+                        @Override
+                        public void deleteProgress(int length, String title) {
+
+                        }
+
+                        @Override
+                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                            if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
+                            {
+                                suggestionBar.setVisibility(View.GONE);
+                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, getResources().getString(R.string.you_history));
+                            }
+                            suggestionBar.setVisibility(View.GONE);
+                        }
+                    }, YouPlayDatabase.YOUPLAY_DB, "SONGS").execute();
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
 //        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        if(lists.isEmpty() && EasyPermissions.hasPermissions(getContext(), MainActivity.PERMISSIONS))
+        {
+            lists.addAll(db.getAllPlaylists());
+            lists.add(0, "---");
+            lists.add(1, getResources().getString(R.string.you_history));
+            spinnerAdapter = new ArrayAdapter<>(getContext(),
+                    android.R.layout.simple_spinner_item, lists);
+
+            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(spinnerAdapter);
+
+            if(!currentTable.equals(""))
+                setSpinner(currentTable);
+        }
+    }
+
+    public void refreshSpinnerList()
+    {
+        lists.clear();
+        lists.addAll(db.getAllPlaylists());
+        lists.add(0, "---");
+        lists.add(1, getResources().getString(R.string.you_history));
+        spinnerAdapter.notifyDataSetChanged();
+    }
+
+    public void setSpinner(String table)
+    {
+        int position = lists.indexOf(table);
+        currentTable = table;
+        audioService.setCurrentTable(currentTable);
+        spinner.setSelection(position);
+    }
+
     /*
-    Nakon što se activity unisti pjesma dalje moze nastavit svirat, ova funkcija ce postavit
-    sliku, ime pjesme itd. nakon što se ponovno pokrene aplikacija.
-     */
+        Nakon što se activity unisti pjesma dalje moze nastavit svirat, ova funkcija ce postavit
+        sliku, ime pjesme itd. nakon što se ponovno pokrene aplikacija.
+         */
     private void setDestroyedScreenSong()
     {
         currentlyPlayingSong = audioService.getMusic();
@@ -314,6 +453,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         else
             play_pause.setForeground(getResources().getDrawable(R.drawable.play));
 
+
         replay = audioService.isReplay();
         autoPlaybool = audioService.isAutoPlaybool();
 
@@ -328,10 +468,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             autoPlay.setTextColor(getResources().getColor(R.color.suggestions));
 
         seekbar.setMax((int)audioService.exoPlayer.getDuration());
+        seekbar.setProgress((int) audioService.exoPlayer.getCurrentPosition());
+        if(audioService.isAlarm())
+            alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
         if(currentlyPlayingSong.getDownloaded() == 1)
             seekbar.setSecondaryProgress(seekbar.getMax());
 
         durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
+        currentTable = audioService.getCurrentTable();
         playCycle();
     }
 
@@ -350,6 +494,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         ((MainActivity)getActivity()).pager.setCurrentItem(0);
 
+        if(audioService.isAlarm())
+            alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
+
         if(audioService.exoPlayer.getPlayWhenReady())
             play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
         else
@@ -357,6 +504,28 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
         playCycle();
+    }
+
+    /**
+     * Povecaj ili smanji jacinu zvuka pjesme
+     * @param code keyCode broj
+     */
+    public void setVolume(int code)
+    {
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+
+        if(code == KeyEvent.KEYCODE_VOLUME_UP)
+        {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, AudioManager.FLAG_SHOW_UI);
+            this.volume.setForeground(getResources().getDrawable(R.drawable.volume_up));
+        }
+        else
+        {
+            audioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, AudioManager.FLAG_SHOW_UI);
+            int volume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+            if(volume == 0)
+                this.volume.setForeground(getResources().getDrawable(R.drawable.volume_mute));
+        }
     }
 
     @Override
@@ -407,6 +576,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(!db.ifItemExists(pjesma.getId()) && pjesma.getDownloaded() == 0)
         {
             Log.d(TAG, "Prvi if");
+            setSpinner("---");
             downloadSong(pjesma, true);
         }
         // Kad dodamo iz url valid i kad pritisenmo na ne skinutu pjesmu radi samo jedanput.
@@ -416,6 +586,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             deleteAndDownload(pjesma);
             if(!tempList.equals(pjesme))
                 adapter.reloadList(pjesme);
+            setSpinner("---");
         }
         else
         {
@@ -571,11 +742,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         lastPost = position;
                         position = 0;
                         setCurrent(position);
-                        Log.d(TAG, "Lists1: " + musicList.size() + " " + tempList.size());
                         musicList.clear();
-                        Log.d(TAG, "Lists2: " + musicList.size() + " " + tempList.size());
                         musicList.addAll(getTempList());
-                        Log.d(TAG, "Lists3: " + musicList.size() + " " + tempList.size());
                         Collections.shuffle(getTempList());
                         checkShuffle();
                     }
@@ -588,9 +756,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     audioService.setMusicList(getTempList());
                 }
                 break;
-            case R.id.slide_up_list:
-                slide();
-                break;
             case R.id.play_fragment:
                 if(slided)
                     slide();
@@ -598,7 +763,87 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             case R.id.autoplay:
                 autoPlay();
                 break;
+            case R.id.volume:
+                if(getContext() != null)
+                {
+                    AudioManager audio = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+                    audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI);
+                }
+                break;
+            case R.id.add_playlist:
+                if(currentlyPlayingSong != null)
+                    buildPlaylistDialog(currentlyPlayingSong);
+                break;
+            case R.id.alarm:
+                if(audioService.getAlarmCount() > 0 && audioService.isAlarm())
+                {
+                    audioService.setAlarm(false);
+                    alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
+                    Toast.makeText(getContext(), getResources().getString(R.string.alarm_disabled), Toast.LENGTH_SHORT).show();
+                }
+                else
+                    buildAlarmDialog();
+                break;
         }
+    }
+
+    private void buildPlaylistDialog(final Music pjesma)
+    {
+        final List<String> titles = YouPlayDatabase.getInstance(getContext()).getAllPlaylists();
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(getResources().getString(R.string.add_to_playlist))
+                .setItems(titles.toArray(new CharSequence[titles.size()]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String title = titles.get(i);
+                        YouPlayDatabase.getInstance(PlayFragment.this.getContext()).insertInTable(pjesma, title);
+                        Snackbar.make(PlayFragment.this.getView(), PlayFragment.this.getResources().getString(R.string.playlist_added), Snackbar.LENGTH_SHORT).show();
+                        onItemClicked.refreshPlaylist();
+                    }
+                });
+        builder.create().show();
+    }
+
+    private void buildAlarmDialog()
+    {
+        NumberPicker numberPicker = new NumberPicker(getContext());
+        numberPicker.setMaxValue(20);
+        numberPicker.setMinValue(1);
+
+        FrameLayout frameLayout = new FrameLayout(getActivity());
+        FrameLayout.LayoutParams params = new  FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        params.leftMargin  = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+        params.rightMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+
+        numberPicker.setLayoutParams(params);
+        frameLayout.addView(numberPicker);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle(getResources().getString(R.string.set_alarm))
+                .setMessage(getResources().getString(R.string.alarm_pick))
+                .setPositiveButton(getResources().getString(R.string.rationale_ok), null)
+                .setNegativeButton(getResources().getString(R.string.rationale_cancel), null);
+
+        builder.setView(frameLayout);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(audioService != null)
+                {
+                    audioService.setAlarmCount(numberPicker.getValue());
+                    audioService.setAlarm(true);
+                    alarm.setForeground(getResources().getDrawable(R.drawable.alarm_set));
+                    dialog.dismiss();
+                    Toast.makeText(getContext(), getResources().getString(R.string.alarm_set), Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
     }
 
     private int getPosition()
@@ -657,8 +902,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         if(!slided)
         {
-            slide_up.setForeground(getResources().getDrawable(R.drawable.ic_expand_more));
-
             currentHeight = layout.getHeight();
 
             float heightPixels = (float) metrics.heightPixels;
@@ -673,18 +916,19 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             ValueAnimator va = ValueAnimator.ofFloat(currentHeight, layoutHeight);
             va.setDuration(400);
             va.setInterpolator(new AccelerateDecelerateInterpolator());
-            va.addUpdateListener(valueAnimator -> {
-                float height = (float) valueAnimator.getAnimatedValue();
-                params.height = (int) height;
-                layout.requestLayout();
+            va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    float height = (float) valueAnimator.getAnimatedValue();
+                    params.height = (int) height;
+                    layout.requestLayout();
+                }
             });
             va.start();
             slided = true;
         }
         else
         {
-            slide_up.setForeground(getResources().getDrawable(R.drawable.ic_expand_less));
-
             if(MainActivity.size > 0 && MainActivity.adLoaded)
             {
                 layoutHeight = layout.getLayoutParams().height;
@@ -696,10 +940,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             ValueAnimator va = ValueAnimator.ofFloat(layoutHeight, currentHeight);
             va.setDuration(400);
             va.setInterpolator(new AccelerateDecelerateInterpolator());
-            va.addUpdateListener(valueAnimator -> {
-                float height = (float) valueAnimator.getAnimatedValue();
-                params.height = (int) height;
-                layout.requestLayout();
+            va.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    float height = (float) valueAnimator.getAnimatedValue();
+                    params.height = (int) height;
+                    layout.requestLayout();
+                }
             });
             va.addListener(new AnimatorListenerAdapter() {
 
@@ -898,28 +1145,65 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
                 @Override
                 public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+                    AudioService audioService = AudioService.getInstance();
                     switch (playbackState)
                     {
+                        case Player.STATE_IDLE:
+                            Log.d(TAG, "PlaywhenReady: " + playWhenReady);
+                            break;
                         case Player.STATE_ENDED:
-                            if(!AudioService.getInstance().isDestroyed())
+                            if(!audioService.isDestroyed())
                             {
                                 if(autoPlaybool)
                                 {
-                                    userClick = false;
-                                    Log.d(TAG, "Next song is called");
-                                    nextSong();
+                                    if(audioService.isAlarm())
+                                    {
+                                        audioService.setAlarmCount(audioService.getAlarmCount()-1);
+                                        if(audioService.getAlarmCount() == 0)
+                                        {
+                                            playPauseSong(true);
+//                                            audioService.updateNotification("", "");
+                                            audioService.setAlarm(false);
+                                            mediaCompleted = true;
+                                            // Posto playwhenready vraca true moramo drugacije updatea notifikaciju.
+                                            alarmEnded = true;
+                                            audioService.setAlarmEnded(true);
+                                            alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
+                                            break;
+                                        }
+                                    }
+                                    if(!alarmEnded)
+                                        nextSong();
+                                    alarmEnded = false;
+                                    audioService.setAlarmEnded(false);
                                 }
                                 mediaCompleted = true;
                             }
                             else
                             {
-                                if(AudioService.getInstance().isAutoPlaybool())
-                                    AudioService.getInstance().nextSong();
 
+                                if(audioService.isAutoPlaybool())
+                                {
+                                    if(audioService.isAlarm())
+                                    {
+                                        audioService.setAlarmCount(audioService.getAlarmCount()-1);
+                                        if(audioService.getAlarmCount() == 0)
+                                        {
+                                            audioService.playPauseSong();
+                                            audioService.updateNotification("","");
+                                            audioService.setAlarm(false);
+                                            audioService.setAlarmEnded(true);
+                                            break;
+                                        }
+                                    }
+                                    if(!audioService.isAlarmEnded())
+                                        audioService.nextSong();
+                                    audioService.setAlarmEnded(false);
+                                }
                             }
                             break;
                         case Player.STATE_READY:
-                            if(!AudioService.getInstance().isDestroyed())
+                            if(!audioService.isDestroyed())
                             {
                                 bar.setVisibility(View.GONE);
                                 if(audioService.getIsStream())
@@ -940,7 +1224,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                             }
                             break;
                         case Player.STATE_BUFFERING:
-                            if(!AudioService.getInstance().isDestroyed())
+                            if(!audioService.isDestroyed())
                                 bar.setVisibility(View.VISIBLE);
                             break;
                     }
@@ -976,8 +1260,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
                 }
             });
-            AudioService.getInstance().exoPlayer.addListener(audioService.getEventListener());
-            AudioService.getInstance().setListenerAdded(true);
+            audioService.exoPlayer.addListener(audioService.getEventListener());
+            audioService.setListenerAdded(true);
         }
     }
 
@@ -1008,6 +1292,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         Glide.with(this).load(FileManager.getPictureFile(pjesma.getId())).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
 
         seekbar.setProgress(0);
+        suggestionBar.setVisibility(View.GONE);
+        if(databaseHandler != null) databaseHandler.cancel(true);
         play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
         currentlyTitle.setText(pjesma.getTitle());
         durationTime.setText(pjesma.getDuration());
@@ -1034,17 +1320,23 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             if(audioService.exoPlayer.getPlayWhenReady())
             {
                 seekbar.setProgress((int) audioService.exoPlayer.getCurrentPosition());
-                runnable = () -> {
-                    if(durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
-                        playCycle();
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
+                            PlayFragment.this.playCycle();
 
+                    }
                 };
                 handler.postDelayed(runnable, 100);
 
-                runnable = () -> {
-                    if(durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
-                        durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
+                            durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
 
+                    }
                 };
                 handler.postDelayed(runnable, 1000);
             }
@@ -1137,7 +1429,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     }
 
-    private void download(Music pjesma)
+    private void download(final Music pjesma)
     {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         boolean fastDownload = preferences.getBoolean(getResources().getString(R.string.check_download), false);
@@ -1214,8 +1506,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
             DownloadTask songTask = songBuilder.build();
 
-            int songId = songTask.getId();
-            int imageId = task.getId();
+            final int songId = songTask.getId();
+            final int imageId = task.getId();
             DownloadListener listener = new DownloadListener1() {
                 @Override
                 public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {

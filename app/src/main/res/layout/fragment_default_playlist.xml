@@ -1,5 +1,4 @@
 <FrameLayout
-
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -27,7 +26,6 @@
                 android:fontFamily="sans-serif-light"
                 android:textAlignment="center"
                 android:textAllCaps="false"
-                android:textColor="@color/black"
                 android:text="@string/you_playlist"
                 android:textSize="20sp" />
         </android.support.v7.widget.Toolbar>

@@ -2,11 +2,13 @@ package com.hfad.youplay.fragments;
 
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.sqlite.SQLiteException;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -15,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hfad.youplay.Ilisteners.OnItemClicked;
@@ -64,23 +67,29 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     public void buildAlertDialog(final int position,final View view) {
 
         final Music pjesma = data.get(position);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(pjesma.getTitle())
-                .setItems(R.array.you_playlist_table_dialog, (dialogInterface, i) -> {
-                    switch (i)
-                    {
-                        case DIALOG_NOW_PLAYING:
-                            setCurrentSong(pjesma, position);
-                            dialogInterface.cancel();
-                            break;
-                        case DIALOG_TABLE_DELETE:
-                            view.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_out));
-                            data.remove(pjesma);
-                            videoAdapter.deleteMusic(position);
-                            YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, position);
-                            Snackbar.make(getView(), getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT).show();
-                            dialogInterface.cancel();
-                            break;
+                .setItems(R.array.you_playlist_table_dialog, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        switch (i) {
+                            case DIALOG_NOW_PLAYING:
+                                PlaylistTableFragment.this.setCurrentSong(pjesma, position);
+                                dialogInterface.cancel();
+                                break;
+                            case DIALOG_TABLE_DELETE:
+                                view.startAnimation(AnimationUtils.loadAnimation(PlaylistTableFragment.this.getContext(), android.R.anim.fade_out));
+                                data.remove(pjesma);
+                                videoAdapter.deleteMusic(position);
+                                YouPlayDatabase.getInstance(PlaylistTableFragment.this.getContext()).deleteTableMusic(title, position);
+                                Snackbar snackbar = Snackbar.make(PlaylistTableFragment.this.getView(), PlaylistTableFragment.this.getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT);
+                                View view = snackbar.getView();
+                                TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                                textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+                                snackbar.show();
+                                dialogInterface.cancel();
+                                break;
+                        }
                     }
                 });
         builder.create().show();
@@ -97,7 +106,7 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         if(database.ifItemExists(pjesma.getId()) && database.isDownloaded(pjesma.getId()))
         {
             pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
-            onItemClicked.onMusicClick(pjesma, data);
+            onItemClicked.onMusicClick(pjesma, data, title);
         }
         else
         {
@@ -153,7 +162,8 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     @Override
     public void onClick(Music pjesma, View view)
     {
-        onItemClicked.onMusicClick(pjesma, data);
+        onItemClicked.onMusicClick(pjesma, data, title);
+        setPlayScreen();
     }
 
     public void refreshAdapter()

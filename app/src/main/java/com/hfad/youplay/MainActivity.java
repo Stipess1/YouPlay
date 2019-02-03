@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -38,6 +39,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import com.applovin.sdk.AppLovinPrivacySettings;
+import com.applovin.sdk.AppLovinSdk;
 import com.crashlytics.android.Crashlytics;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
@@ -52,6 +55,8 @@ import com.google.firebase.storage.StorageReference;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnThemeChanged;
 import com.hfad.youplay.adapter.RadioAdapter;
+import com.hfad.youplay.apprater.AppRater;
+import com.hfad.youplay.apprater.GoogleMarket;
 import com.hfad.youplay.database.YouPlayDatabase;
 import com.hfad.youplay.fragments.DefaultPlaylistFragment;
 import com.hfad.youplay.fragments.HistoryFragment;
@@ -72,9 +77,6 @@ import com.liulishuo.okdownload.core.cause.EndCause;
 import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
 import com.liulishuo.okdownload.core.listener.DownloadListener1;
 import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
-
-import org.codechimp.apprater.AppRater;
-import org.codechimp.apprater.GoogleMarket;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -149,6 +151,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     protected void onPause() {
         hideKeyboard();
+        if(adView != null && !noAdApp)
+            adView.pause();
         super.onPause();
     }
 
@@ -170,6 +174,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             setTheme(R.style.LightTheme);
 
         super.onCreate(savedInstanceState);
+        AppLovinSdk.initializeSdk(getApplicationContext());
+        AppLovinPrivacySettings.setHasUserConsent(true, getApplicationContext());
         Fabric.with(this, new Crashlytics());
         Crashlytics.setUserEmail(EMAIL);
         FirebaseApp.initializeApp(this);
@@ -231,18 +237,22 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(pager);
         tabLayout.setBackgroundColor(getResources().getColor(R.color.light_black));
-        onThemeChanged();
+//        onThemeChanged();
         registerListeners();
+
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        if(historyFragment.isAdded() && playFragment.isAdded() && radioFragment.isAdded())
+        if(historyFragment != null)
         {
-            getSupportFragmentManager().putFragment(outState, Constants.HISTORY_FRAGMENT, historyFragment);
-            getSupportFragmentManager().putFragment(outState, Constants.PLAY_FRAGMENT, playFragment);
-            getSupportFragmentManager().putFragment(outState, Constants.RADIO_FRAGMENT, radioFragment);
+            if(historyFragment.isAdded() && playFragment.isAdded() && radioFragment.isAdded())
+            {
+                getSupportFragmentManager().putFragment(outState, Constants.HISTORY_FRAGMENT, historyFragment);
+                getSupportFragmentManager().putFragment(outState, Constants.PLAY_FRAGMENT, playFragment);
+                getSupportFragmentManager().putFragment(outState, Constants.RADIO_FRAGMENT, radioFragment);
+            }
         }
     }
 
@@ -263,6 +273,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         size = -1;
         OkDownload.with().downloadDispatcher().cancelAll();
         ThemeManager.setOnThemeChanged(null);
+        if(adView != null && !noAdApp)
+            adView.destroy();
         super.onDestroy();
 
     }
@@ -376,6 +388,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     public void checkPermissions(String... permissions)
     {
+        Log.d("Permissions", "Permissions: " + EasyPermissions.hasPermissions(this, permissions));
         if(EasyPermissions.hasPermissions(this, permissions))
         {
             initFiles();
@@ -393,7 +406,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             web.setListener(new YouPlayWeb.Listener() {
                 @Override
                 public void onConnected(String version) {
-                    if(version != null)
+                    if(version != null && getApplication() != null)
                         buildAlertDialog(Utils.needsUpdate(version), version);
                 }
 
@@ -418,9 +431,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private void buildAlertDialog(boolean needsUpdate, String version)
     {
 
-        if(needsUpdate)
+        if(needsUpdate && !isGooglePlay)
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this, ThemeManager.getDialogTheme());
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getResources().getString(R.string.version_update))
                     .setMessage(getResources().getString(R.string.version_update_summary, version));
             builder.setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
@@ -480,7 +493,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     {
         DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
         DownloadTask downloadTask = task.build();
-        ProgressDialog downloadDialog = new ProgressDialog(MainActivity.this);
+        final ProgressDialog downloadDialog = new ProgressDialog(MainActivity.this);
         downloadTask.enqueue(new DownloadListener1() {
             @Override
             public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
@@ -515,7 +528,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             @Override
             public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
                 downloadDialog.dismiss();
-                if(cause == EndCause.COMPLETED)
+                if(cause == EndCause.COMPLETED && getApplication() != null)
                 {
                     downloadDialog.dismiss();
                     Uri apkURI = (Build.VERSION.SDK_INT >= 24)
@@ -566,6 +579,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
         catch (Exception e)
         {
+            Log.d("Exception", e.getMessage());
             Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
             finishAffinity();
         }
@@ -578,12 +592,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void onMusicClick(Music pjesma, List<Music> pjesme)
+    public void onMusicClick(Music pjesma, List<Music> pjesme, String table)
     {
-        playFragment.setUserClick(true);
         if(playFragment.getShuffled())
             playFragment.checkShuffle();
 
+        playFragment.setSpinner(table);
         playFragment.setMusic(pjesma, pjesme);
 
     }
@@ -617,6 +631,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         {
             pager.getAdapter().notifyDataSetChanged();
         }
+        if(adView != null && !noAdApp)
+            adView.resume();
         putCurrentIcon();
     }
 
@@ -626,12 +642,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         MobileAds.initialize(this, "ca-app-pub-8163593086331416~1012493107");
         adView = findViewById(R.id.ad);
         AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
         adView.setAdListener(new AdListener(){
             @Override
             public void onAdLoaded() {
+                super.onAdLoaded();
                 adView.setVisibility(View.VISIBLE);
-                size = AdSize.SMART_BANNER.getHeightInPixels(getApplicationContext());
+                size = AdSize.BANNER.getHeightInPixels(getApplicationContext());
 
                 if(playFragment.isSlided())
                 {
@@ -646,6 +662,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             }
 
         });
+        adView.loadAd(adRequest);
 
     }
 
@@ -746,6 +763,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 {
                     radioFragment.radioAdapter.setHistoryList();
                     radioFragment.searchCountry.setVisibility(View.VISIBLE);
+                    radioFragment.offsetRecyclerView();
                     fm.popBackStack();
                 }
                 else
@@ -763,6 +781,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
+        Log.d("PlayFragKey", " ON KEY DOWN ");
         FragmentManager fm = getSupportFragmentManager();
 
         if(playFragment.isSlided() && keyCode == KeyEvent.KEYCODE_BACK)
@@ -785,23 +804,25 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             onBackPressed();
             return true;
         }
-        else
+        else if(keyCode == KeyEvent.KEYCODE_BACK)
         {
-            if(keyCode == KeyEvent.KEYCODE_BACK)
-            {
-                pager.setCurrentItem(1, true);
-                return true;
-            }
-            return false;
-        }
+            pager.setCurrentItem(1, true);
+            return true;
 
+        }
+        if(keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+        {
+            playFragment.setVolume(keyCode);
+            return true;
+        }
+        return false;
     }
 
     @Override
     public void stream(Station station, ArrayList<Station> stations)
     {
         audioService.isStream(true);
-        playFragment.setUserClick(true);
+        playFragment.setSpinner("---");
         playFragment.refreshList(stations);
         playFragment.setStream(station, stations);
     }
@@ -838,11 +859,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         switch (callback)
         {
             case Constants.NEXT:
-                playFragment.setUserClick(false);
                 playFragment.nextSong();
                 break;
             case Constants.PREVIOUS:
-                playFragment.setUserClick(false);
                 playFragment.previousSong();
                 break;
             case Constants.PLAY_PAUSE:
@@ -865,6 +884,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     public void pauseSong() {
         if(audioService.exoPlayer.getPlayWhenReady())
             playFragment.playPauseSong(true);
+    }
+
+    // Kada se napravi lista u playlist fragmenut ova se funkcija zove.
+    @Override
+    public void refreshSpinnerAdapter() {
+        playFragment.refreshSpinnerList();
     }
 
     @Override

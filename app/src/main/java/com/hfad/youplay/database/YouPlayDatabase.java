@@ -167,10 +167,23 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         factory.close();
     }
 
+    /**
+     * Zna se desit da korisnik obriše database dok aplikacija jos radi tako da svakim put cemo
+     * provjeriti dali database postoji ako ne zovemo createDatabaseIfNotExists(); da napravi
+     * @param database ime baze
+     * @return vrati mjesto baze
+     */
     private String getPath(String database)
     {
-        return new File(Environment.getExternalStorageDirectory() + File.separator +
-                Constants.APP_NAME + File.separator + Constants.DATABASE, database).getAbsolutePath();
+        Log.d(TAG, "Napravi bazu folder");
+        if(FileManager.getDatabaseFolder().exists())
+            FileManager.getDatabaseFolder().mkdirs();
+
+        File base = new File(Environment.getExternalStorageDirectory() + File.separator +
+                Constants.APP_NAME + File.separator + Constants.DATABASE, database);
+
+
+        return base.getAbsolutePath();
     }
     /*
     dodavamo u playlistTables ime playliste
@@ -414,7 +427,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         songValues.put(Constants.TITLE, music.getTitle());
         songValues.put(Constants.AUTHOR, music.getAuthor());
         songValues.put(Constants.DURATION, music.getDuration());
-        songValues.put(Constants.DOWNLOADED, 1);
+        songValues.put(Constants.DOWNLOADED, music.getDownloaded());
         songValues.put(Constants.VIEWS, music.getViews());
 
         SQLiteDatabase db = getDatabase(PLAYLIST_DB);
@@ -571,7 +584,9 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                while(data.moveToNext());
 
            }
-        data.close();
+           if(data != null)
+                data.close();
+
         db.close();
         return music;
     }

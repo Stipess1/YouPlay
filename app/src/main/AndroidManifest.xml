@@ -37,6 +37,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="com.applovin.adview.AppLovinInterstitialActivity" android:configChanges="orientation|screenSize"/>
+        <activity android:name="com.applovin.adview.AppLovinConfirmationActivity" android:configChanges="orientation|screenSize"/>
+
         <provider
             android:authorities="com.hfad.youplay.provider"
             android:name="android.support.v4.content.FileProvider"
@@ -46,6 +49,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
+
+        <meta-data android:name="applovin.sdk.key"
+            android:value="RR2iSZgJvTDE9FxAZZvaXdwPXoBkTtDVvv9ZJHFFzG5bJsJPMnhEeOqVor0a6eAk00IfhuK6RmID6_N-xBW16H"  />
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="20abb64c19512844bef79078690b2fa5a9d9426c" />
@@ -65,7 +72,8 @@
             android:exported="false" />
 
         <activity android:name=".SettingsActivity"
-            android:theme="@style/LightTheme">
+            android:theme="@style/LightTheme"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".MainActivity" />

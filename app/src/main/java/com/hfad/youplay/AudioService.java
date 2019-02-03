@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
@@ -17,10 +18,12 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.media.VolumeProviderCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
@@ -40,6 +43,7 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
@@ -88,6 +92,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private ServiceCallback serviceCallback;
     private Player.EventListener eventListener;
     MediaControllerCompat mediaControllerCompat;
+    private int alarmCount = 0;
+    private String currentTable = "";
 
     private AudioOutputListener outputListener;
     private NetworkStateListener networkStateListener;
@@ -102,6 +108,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private boolean replay = false;
     private boolean autoPlaybool = true;
     private boolean shuffled = false;
+    private boolean alarm = false;
+    private boolean alarmEnded = false;
 
 
     public AudioService()
@@ -214,6 +222,40 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     public void setEventListener(Player.EventListener eventListener) {
         this.eventListener = eventListener;
+    }
+
+    public boolean isAlarmEnded() {
+        return alarmEnded;
+    }
+
+    public void setAlarmEnded(boolean alarmEnded) {
+        this.alarmEnded = alarmEnded;
+    }
+
+    public String getCurrentTable()
+    {
+        return currentTable;
+    }
+
+    public void setCurrentTable(String currentTable)
+    {
+        this.currentTable = currentTable;
+    }
+
+    public int getAlarmCount() {
+        return alarmCount;
+    }
+
+    public void setAlarmCount(int alarmCount) {
+        this.alarmCount = alarmCount;
+    }
+
+    public boolean isAlarm() {
+        return alarm;
+    }
+
+    public void setAlarm(boolean alarm) {
+        this.alarm = alarm;
     }
 
     public boolean isReplay() {
@@ -425,6 +467,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_notification_icon)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setAutoCancel(false)
                 .setCustomContentView(remoteViews)
                 .setOngoing(true);
@@ -502,20 +545,20 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     playSong();
                     break;
                 case NEXT_SONG:
-                    if(serviceCallback != null)
+                    if(!isDestroyed())
                         serviceCallback.callback(NEXT);
                     else
                         nextSong();
                     break;
                 case PREVIOUS_SONG:
-                    if(serviceCallback != null)
+                    if(!isDestroyed())
                         serviceCallback.callback(PREVIOUS);
                     else
                         previousSong();
                     break;
                 case PLAY_PAUSE_SONG:
 
-                    if(serviceCallback != null)
+                    if(!isDestroyed())
                         serviceCallback.callback(PLAY_PAUSE);
                     else
                         playPauseSong();
@@ -524,11 +567,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     break;
                 case EXIT_APP:
                     stopSelf();
-                    if(serviceCallback != null)
+                    if(!isDestroyed())
                         serviceCallback.callback(EXIT);
                     break;
                 case ADS:
-                    if(serviceCallback != null)
+                    if(!isDestroyed())
                         serviceCallback.callback(AD);
                     break;
                 default:
@@ -543,7 +586,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     @Override
     public void onAudioFocusChange(int focus)
     {
-        Log.d(TAG," AUdioFocus change: " + focus);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         switch (focus)
         {
             case AudioManager.AUDIOFOCUS_GAIN:
@@ -567,7 +610,15 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                         playPauseSong();
 
                     updateNotification("","");
-                    wasPlaying = true;
+                    switch (audioManager.getMode())
+                    {
+                        case AudioManager.MODE_RINGTONE:
+                            case AudioManager.MODE_IN_CALL:
+                                wasPlaying = true;
+                                break;
+                    }
+                    if(preferences.getBoolean("sound_mode", false))
+                        wasPlaying = true;
                 }
                 break;
 
@@ -601,7 +652,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         }
     }
 
-    private void playPauseSong()
+    public void playPauseSong()
     {
         if(exoPlayer.getPlayWhenReady())
             exoPlayer.setPlayWhenReady(false);

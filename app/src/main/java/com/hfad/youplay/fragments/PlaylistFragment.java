@@ -2,12 +2,15 @@ package com.hfad.youplay.fragments;
 
 
 import android.app.Service;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,8 +21,10 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnPlaylistSelected;
 import com.hfad.youplay.MainActivity;
 import com.hfad.youplay.R;
@@ -49,9 +54,16 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
     private RecyclerView recyclerView;
     private DividerItemDecoration dividerItemDecoration;
     public PlaylistTableFragment playlistTableFragment;
+    private OnItemClicked onItemClicked;
 
     public PlaylistFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        onItemClicked = (OnItemClicked) getActivity();
     }
 
     @Override
@@ -62,7 +74,12 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
 
         recyclerView = view.findViewById(R.id.playlist_list);
         FloatingActionButton fab = view.findViewById(R.id.fab);
-        fab.setOnClickListener(view1 -> buildAlertDialog(0, view1));
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view1) {
+                buildAlertDialog(0, view1);
+            }
+        });
 
         if(EasyPermissions.hasPermissions(getContext(), MainActivity.PERMISSIONS))
             setupPlaylists();
@@ -125,7 +142,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
     @Override
     public void buildAlertDialog(final int position, View view)
     {
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Service.INPUT_METHOD_SERVICE);
+        final InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Service.INPUT_METHOD_SERVICE);
 
         if(view.getId() == R.id.fab)
         {
@@ -136,7 +153,12 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
 
             playlistTitle.requestFocus();
             // bez delay nezeli radit.
-            new Handler().postDelayed(() -> imm.showSoftInput(playlistTitle, InputMethodManager.SHOW_IMPLICIT), 120);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    imm.showSoftInput(playlistTitle, InputMethodManager.SHOW_IMPLICIT);
+                }
+            }, 120);
 
             FrameLayout frameLayout = new FrameLayout(getActivity());
             FrameLayout.LayoutParams params = new  FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -147,7 +169,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
             playlistTitle.setLayoutParams(params);
             frameLayout.addView(playlistTitle);
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(getResources().getString(R.string.new_playlist))
                     .setView(frameLayout)
                     .setPositiveButton(getResources().getString(R.string.rationale_ok), null)
@@ -155,87 +177,98 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
 
             final AlertDialog dialog = builder.create();
             dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view12 -> {
-                if(!playlistTitle.toString().isEmpty() && playlistTitle.length() > 1 && playlistTitle.length() <= 25)
-                {
-                    if(!YouPlayDatabase.getInstance(getContext()).tableExists(playlistTitle.getText().toString()))
-                    {
-                        dialog.dismiss();
-                        imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
-                        Snackbar.make(getView(), getResources().getString(R.string.playlist_created, playlistTitle.getText()), Snackbar.LENGTH_SHORT).show();
-                        YouPlayDatabase.getInstance(getContext()).createPlaylist(playlistTitle.getText().toString());
-                        playlists.clear();
-                        playlists.addAll(YouPlayDatabase.getInstance(getContext()).getAllPlaylists());
-                        playlistAdapter.setPlaylists(playlists);
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view12) {
+                    if (!playlistTitle.toString().isEmpty() && playlistTitle.length() > 1 && playlistTitle.length() <= 25) {
+                        if (!YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).tableExists(playlistTitle.getText().toString())) {
+                            dialog.dismiss();
+                            imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
+                            Snackbar snackbar = Snackbar.make(getView(), PlaylistFragment.this.getResources().getString(R.string.playlist_created, playlistTitle.getText()), Snackbar.LENGTH_SHORT);
+                            View view = snackbar.getView();
+                            TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                            textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+                            snackbar.show();
+                            YouPlayDatabase.getInstance(getContext()).createPlaylist(playlistTitle.getText().toString());
+                            playlists.clear();
+                            playlists.addAll(YouPlayDatabase.getInstance(getContext()).getAllPlaylists());
+                            playlistAdapter.setPlaylists(playlists);
+                            onItemClicked.refreshSpinnerAdapter();
+                        } else {
+                            Toast.makeText(getContext(), getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        Toast.makeText(getContext(), getResources().getString(R.string.playlist_enter_name), Toast.LENGTH_SHORT).show();
                     }
-                    else
-                    {
-                        Toast.makeText(getContext(), getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
-                    }
-                }
-                else
-                {
-                    Toast.makeText(getContext(), getResources().getString(R.string.playlist_enter_name), Toast.LENGTH_SHORT).show();
                 }
             });
 
-            dialog.setOnDismissListener(dialogInterface -> {
-                imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
+            dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                @Override
+                public void onDismiss(DialogInterface dialogInterface) {
+                    imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
+                }
             });
         }
         else
         {
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(playlists.get(position))
-                    .setItems(getResources().getStringArray(R.array.you_playlist_dialog), (dialogInterface, i) -> {
-                        if(i == DIALOG_PLAYLIST_DELETE)
-                        {
-                            YouPlayDatabase.getInstance(getContext()).deletePlaylistTable(playlists.get(position), position);
-                            playlists.remove(position);
-                            playlistAdapter.removePlaylistSong(position);
-                            Snackbar.make(getView(), getResources().getString(R.string.playlist_deleted), Snackbar.LENGTH_SHORT).show();
-                        }
-                        else if(i == DIALOG_PLAYLIST_RENAME)
-                        {
-                            final EditText playlistTitle = new EditText(getContext());
-                            playlistTitle.setHint(getResources().getString(R.string.playlist_name));
-                            playlistTitle.setMaxLines(1);
-                            playlistTitle.setSingleLine(true);
-                            playlistTitle.requestFocus();
+                    .setItems(getResources().getStringArray(R.array.you_playlist_dialog), new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            if (i == DIALOG_PLAYLIST_DELETE) {
+                                YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).deletePlaylistTable(playlists.get(position), position);
+                                playlists.remove(position);
+                                playlistAdapter.removePlaylistSong(position);
+                                onItemClicked.refreshSpinnerAdapter();
+                                Snackbar snackbar = Snackbar.make(getView(), PlaylistFragment.this.getResources().getString(R.string.playlist_deleted), Snackbar.LENGTH_SHORT);
+                                View view = snackbar.getView();
+                                TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                                textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+                                snackbar.show();
+                            } else if (i == DIALOG_PLAYLIST_RENAME) {
+                                final EditText playlistTitle = new EditText(PlaylistFragment.this.getContext());
+                                playlistTitle.setHint(PlaylistFragment.this.getResources().getString(R.string.playlist_name));
+                                playlistTitle.setMaxLines(1);
+                                playlistTitle.setSingleLine(true);
+                                playlistTitle.requestFocus();
 
-                            FrameLayout frameLayout = new FrameLayout(getActivity());
-                            FrameLayout.LayoutParams params = new  FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                FrameLayout frameLayout = new FrameLayout(PlaylistFragment.this.getActivity());
+                                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
-                            params.leftMargin  = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
-                            params.rightMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+                                params.leftMargin = PlaylistFragment.this.getResources().getDimensionPixelSize(R.dimen.dialog_margin);
+                                params.rightMargin = PlaylistFragment.this.getResources().getDimensionPixelSize(R.dimen.dialog_margin);
 
-                            playlistTitle.setLayoutParams(params);
-                            frameLayout.addView(playlistTitle);
+                                playlistTitle.setLayoutParams(params);
+                                frameLayout.addView(playlistTitle);
 
-                            final AlertDialog.Builder rename = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
-                            rename.setTitle(playlists.get(position))
-                                    .setView(frameLayout)
-                                    .setPositiveButton(getResources().getString(R.string.rationale_ok), null)
-                                    .setNegativeButton(getResources().getString(R.string.rationale_cancel), null);
+                                final AlertDialog.Builder rename = new AlertDialog.Builder(PlaylistFragment.this.getContext());
+                                rename.setTitle(playlists.get(position))
+                                        .setView(frameLayout)
+                                        .setPositiveButton(PlaylistFragment.this.getResources().getString(R.string.rationale_ok), null)
+                                        .setNegativeButton(PlaylistFragment.this.getResources().getString(R.string.rationale_cancel), null);
 
-                            final AlertDialog renameAlert = rename.create();
-                            renameAlert.show();
-                            renameAlert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view1 -> {
-                                if(!YouPlayDatabase.getInstance(getContext()).tableExists(playlistTitle.getText().toString()))
-                                {
-                                    YouPlayDatabase.getInstance(getContext()).renamePlaylist(playlists.get(position), playlistTitle.getText().toString());
-                                    playlists.clear();
-                                    playlists.addAll(YouPlayDatabase.getInstance(getContext()).getAllPlaylists());
-                                    playlistAdapter.setPlaylists(playlists);
-                                    renameAlert.dismiss();
-                                }
-                                else
-                                {
-                                    Toast.makeText(getContext(), getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
-                                }
-                            });
+                                final AlertDialog renameAlert = rename.create();
+                                renameAlert.show();
+                                renameAlert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view1) {
+                                        if (!YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).tableExists(playlistTitle.getText().toString())) {
+                                            YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).renamePlaylist(playlists.get(position), playlistTitle.getText().toString());
+                                            playlists.clear();
+                                            playlists.addAll(YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).getAllPlaylists());
+                                            playlistAdapter.setPlaylists(playlists);
+                                            onItemClicked.refreshSpinnerAdapter();
+                                            renameAlert.dismiss();
+                                        } else {
+                                            Toast.makeText(PlaylistFragment.this.getContext(), PlaylistFragment.this.getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
 
+                            }
                         }
                     });
             builder.create().show();
@@ -258,12 +291,15 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
         playlistTableFragment.setData(title);
 
         Handler handler = new Handler();
-        Runnable runnable = () -> {
-            FragmentTransaction ft = getActivity().getSupportFragmentManager().beginTransaction();
-            ft.replace(R.id.fragment_container, playlistTableFragment);
-            ft.addToBackStack("playlistTable");
-            ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
-            ft.commit();
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                FragmentTransaction ft = PlaylistFragment.this.getActivity().getSupportFragmentManager().beginTransaction();
+                ft.replace(R.id.fragment_container, playlistTableFragment);
+                ft.addToBackStack("playlistTable");
+                ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                ft.commit();
+            }
         };
         handler.postDelayed(runnable, 300);
 

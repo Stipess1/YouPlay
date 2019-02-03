@@ -4,15 +4,18 @@
 
     <item android:id="@+id/latest"
         android:title="@string/order_latest"
-        android:enabled="true"/>
+        android:enabled="true"
+        app:showAsAction="never"/>
 
     <item android:id="@+id/oldest"
         android:title="@string/order_oldest"
-        android:enabled="true"/>
+        android:enabled="true"
+        app:showAsAction="never"/>
 
     <item android:id="@+id/settings"
         android:title="@string/settings"
-        android:enabled="true"/>
+        android:enabled="true"
+        app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_search"

@@ -35,9 +35,16 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
         SQLiteDatabase database = null;
         if(databaseName.equals(YouPlayDatabase.PLAYLIST_DB))
         {
-            database = db.getDatabase(YouPlayDatabase.PLAYLIST_DB);
-            for(Music pjesma : pjesme)
-                db.insertInTable(pjesma, tableName);
+            if(type == UpdateType.GET)
+            {
+                pjesme.addAll(db.getDataTable(tableName));
+            }
+            else
+            {
+                database = db.getDatabase(YouPlayDatabase.PLAYLIST_DB);
+                for(Music pjesma : pjesme)
+                    db.insertInTable(pjesma, tableName);
+            }
         }
         else
         {
@@ -82,17 +89,19 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
     @Override
     protected void onPostExecute(Void aVoid)
     {
-        if(onDataChanged != null)
+        if(isCancelled()) return;
+
+        if(onDataChanged != null && type != UpdateType.GET)
             onDataChanged.dataChanged(type, databaseName, pjesma);
+        else if(onDataChanged != null)
+            onDataChanged.dataChanged(type, pjesme);
 //        else if(onDataChanged != null)
 //            onDataChanged.dataChanged(type, pjesme);
-
     }
 
     @Override
     protected void onPreExecute() {
-        if(type == UpdateType.GET)
-            onDataChanged.dataChanged(type, null);
+
     }
 
     public enum UpdateType
@@ -124,10 +133,11 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
     }
 
     // Koristiti kada dohvacamo pjesme
-    public DatabaseHandler(UpdateType type, OnDataChanged dataChanged, String databaseName)
+    public DatabaseHandler(UpdateType type, OnDataChanged dataChanged, String databaseName, String tableName)
     {
         this.type = type;
         this.databaseName = databaseName;
+        this.tableName = tableName;
         this.pjesme = new ArrayList<>();
         this.onDataChanged = dataChanged;
         db = YouPlayDatabase.getInstance();

@@ -37,6 +37,10 @@
     <string name="text_new">New</string>
     <string name="playlist_name">Enter the name</string>
     <string name="changes_saved">Changes saved.</string>
+    <string name="set_alarm">Set alarm</string>
+    <string name="alarm_pick">Pick how many song should be played</string>
+    <string name="alarm_set">Alarm set</string>
+    <string name="alarm_disabled">Alarm disabled</string>
 
     <string name="now_playing">Add To Now Playing</string>
     <string name="add_queue">Add To Queue</string>
@@ -53,7 +57,7 @@
     <string name="al_oldest">Order is already set to oldest</string>
 
     <string name="settings">Settings</string>
-    <string name="show_suggestions">Show list</string>
+    <string name="show_suggestions" translatable="false">Show list</string>
     <string name="current_version">Version</string>
     <string name="delete">Delete</string>
 
@@ -80,10 +84,10 @@
     <string name="pref_appearance">Appearance</string>
     <string name="pref_navigation">Navigation</string>
     <string name="pref_navigation_summary">When enabled navigation bar won\'t show in play screen</string>
-    <string name="switch_summary">Changes the theme</string>
+    <string name="switch_summary">Change to dark theme</string>
     <string name="check_download">Download</string>
     <string name="check_download_title">Download</string>
-    <string name="check_download_desc">Speed up download speed</string>
+    <string name="check_download_desc">Speed up download speed (sometimes song won\'t be downloaded)</string>
     <string name="send_email">Send an email</string>
     <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
 
@@ -96,6 +100,14 @@
     <string name="version_newest">Up To Date</string>
     <string name="version_newest_summary">You have the latest version of YouPlay installed.</string>
     <string name="about">About</string>
+    <string name="pref_sound">Sound</string>
+    <string name="pref_focus_mode">Audio Focus</string>
+    <string name="pref_focus_summary">Continue playing after interruptions (e.g. Facebook video)</string>
+    <string name="apprater_dialog_title">Rate %s</string>
+    <string name="apprater_rate_message">If you enjoy using this app, please take a moment to rate it. Thanks for your support!</string>
+    <string name="apprater_rate">Rate Now</string>
+    <string name="apprater_later">Later</string>
+    <string name="apprater_no_thanks">No thanks</string>
 
     <string name="version_update">New Version Available</string>
     <string name="version_update_summary">A new version of YouPlay is available. Version %s will be installed.</string>

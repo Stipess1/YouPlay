@@ -20,49 +20,59 @@
             android:title="@string/pref_navigation"/>
     </PreferenceCategory>
 
-<PreferenceCategory
-    android:title="@string/pref_download">
-    <CheckBoxPreference
-        android:id="@+id/faster_download"
-        android:key="@string/check_download"
-        android:defaultValue="false"
-        android:fontFamily="sans-serif-light"
-        android:summary="@string/check_download_desc"
-        android:title="@string/check_download_title"/>
+    <PreferenceCategory
+        android:title="@string/pref_download">
+        <CheckBoxPreference
+            android:id="@+id/faster_download"
+            android:key="@string/check_download"
+            android:defaultValue="false"
+            android:fontFamily="sans-serif-light"
+            android:summary="@string/check_download_desc"
+            android:title="@string/check_download_title"/>
 
-    <CheckBoxPreference
-        android:id="@+id/cache_mode"
-        android:key="cache_mode"
-        android:defaultValue="true"
-        android:title="@string/cache_mode"
-        android:summary="@string/cache_summary">
+        <CheckBoxPreference
+            android:id="@+id/cache_mode"
+            android:key="cache_mode"
+            android:defaultValue="true"
+            android:title="@string/cache_mode"
+            android:summary="@string/cache_summary">
 
-    </CheckBoxPreference>
+        </CheckBoxPreference>
 
-</PreferenceCategory>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_sound">
+
+        <CheckBoxPreference
+            android:key="sound_mode"
+            android:defaultValue="false"
+            android:title="@string/pref_focus_mode"
+            android:summary="@string/pref_focus_summary"/>
+    </PreferenceCategory>
 
 
-<PreferenceCategory
-    android:title="@string/about">
-    <PreferenceScreen
-        android:key="@string/current_version"
-        android:title="@string/current_version"/>
+    <PreferenceCategory
+        android:title="@string/about">
+        <PreferenceScreen
+            android:key="@string/current_version"
+            android:title="@string/current_version"/>
 
-    <PreferenceScreen
-        android:key="version_check"
-        android:title="@string/version_check"
-        android:summary="@string/version_summary"/>
+        <PreferenceScreen
+            android:key="version_check"
+            android:title="@string/version_check"
+            android:summary="@string/version_summary"/>
 
-    <PreferenceScreen
-        android:key="website"
-        android:title="@string/website"
-        android:summary="https://youplayandroid.com/"/>
+        <PreferenceScreen
+            android:key="website"
+            android:title="@string/website"
+            android:summary="https://youplayandroid.com/"/>
 
-    <PreferenceScreen
-        android:key="send_email"
-        android:title="@string/send_email"
-        android:summary="stipess@youplayandroid.com"/>
+        <PreferenceScreen
+            android:key="send_email"
+            android:title="@string/send_email"
+            android:summary="stipess@youplayandroid.com"/>
 
-</PreferenceCategory>
+    </PreferenceCategory>
 
 </PreferenceScreen>

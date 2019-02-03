@@ -2,6 +2,8 @@ package com.hfad.youplay.adapter;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -66,7 +68,7 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             radioMusics.clear();
             radioMusics.addAll(array);
         }
-
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
         notifyDataSetChanged();
         recyclerView.scrollToPosition(0);
     }
@@ -79,18 +81,21 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         {
             countries.addAll(array);
         }
+        recyclerView.setLayoutManager(new GridLayoutManager(context, 3));
         notifyDataSetChanged();
     }
 
     public void setListCountry()
     {
         this.firstList = List.COUNTRIES;
+        recyclerView.setLayoutManager(new GridLayoutManager(context, 3));
         notifyDataSetChanged();
     }
 
     public void setHistoryList()
     {
         this.firstList = List.HISTORY_LIST;
+        recyclerView.setLayoutManager(new LinearLayoutManager(context));
         notifyDataSetChanged();
     }
 
@@ -164,15 +169,10 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             Station station = radioMusics.get(position);
             ViewHolder viewHolder = (ViewHolder) holder;
             viewHolder.name.setText(station.getName());
-            viewHolder.name.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             String bitrate = station.getBitRate() + " " + context.getResources().getString(R.string.radio_bitrate);
             viewHolder.bitRate.setText(bitrate);
-            viewHolder.bitRate.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolder.country.setText(station.getCountry());
-            viewHolder.country.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolder.info.setVisibility(View.GONE);
-
-            viewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
 
             if(!station.getIcon().equals(""))
                 Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.mipmap.ic_launcher)).into(viewHolder.image);
@@ -181,28 +181,20 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         }
         else if(firstList == List.HISTORY_LIST)
         {
-            Station station = history.get(position);
+            final Station station = history.get(position);
             ViewHolder viewHolder = (ViewHolder) holder;
             viewHolder.name.setText(station.getName());
-            viewHolder.name.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             String bitrate = station.getBitRate() + " " + context.getResources().getString(R.string.radio_bitrate);
             viewHolder.bitRate.setText(bitrate);
-            viewHolder.bitRate.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolder.country.setText(station.getCountry());
-            viewHolder.country.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolder.info.setVisibility(View.VISIBLE);
 
-            if(ThemeManager.getDebug().equals(ThemeManager.DARK_THEME))
-                viewHolder.info.setImageResource(R.drawable.info_dark);
-            else
-                viewHolder.info.setImageResource(R.drawable.info);
-
-            viewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-
-            viewHolder.info.setOnClickListener(view -> {
-                if(listener != null)
-                {
-                    listener.onInfoClicked(station);
+            viewHolder.info.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (listener != null) {
+                        listener.onInfoClicked(station);
+                    }
                 }
             });
 
@@ -219,13 +211,13 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             Country country = countries.get(position);
             ViewHolderCountry viewHolderCountry = (ViewHolderCountry) holder;
             viewHolderCountry.country.setText(country.getName());
-            viewHolderCountry.country.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
+//            viewHolderCountry.country.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
 
-            viewHolderCountry.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
+//            viewHolderCountry.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
 
             String count = context.getResources().getString(R.string.radio_stations) + country.getStationCount();
             viewHolderCountry.stationCount.setText(count);
-            viewHolderCountry.stationCount.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
+//            viewHolderCountry.stationCount.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolderCountry.itemView.setTag(country);
         }
     }

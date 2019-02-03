@@ -43,15 +43,14 @@ public class SuggestionAdapter extends RecyclerView.Adapter<SuggestionAdapter.Vi
     public void onBindViewHolder(ViewHolder holder, int position)
     {
         final String Q = query.get(position);
-        holder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-        holder.suggestion.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-
         holder.suggestion.setText(Q);
 
-        holder.autoQuery.setOnClickListener(view -> {
-            if(listener != null)
-            {
-                listener.onAutoClick(Q);
+        holder.autoQuery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (listener != null) {
+                    listener.onAutoClick(Q);
+                }
             }
         });
 

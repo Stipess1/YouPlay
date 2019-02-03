@@ -204,11 +204,8 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     FirstViewHolder firstViewHolder = (FirstViewHolder) holder;
 
                     firstViewHolder.songCount.setText(context.getResources().getQuantityString(R.plurals.songs, data.size(), data.size()));
-                    firstViewHolder.songCount.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
                     stringBuilder.append(Utils.convertDuration(milis)).append(" ").append(context.getResources().getString(R.string.song_mins));
                     firstViewHolder.songsDuration.setText(stringBuilder);
-                    firstViewHolder.songsDuration.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-                    firstViewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
                     break;
                 case 1:
                     final int pos = (data.size() > 1) ? position - 1: position;
@@ -218,13 +215,9 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     StringBuilder stringBuilder1 = new StringBuilder();
                     stringBuilder1.append(list.getViews()).append(" ").append(context.getResources().getString(R.string.you_view));
                     viewHolder.title.setText(list.getTitle());
-                    viewHolder.title.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
                     viewHolder.author.setText(list.getAuthor());
-                    viewHolder.author.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
                     viewHolder.view.setText(stringBuilder1);
-                    viewHolder.view.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
                     viewHolder.duration.setText(list.getDuration());
-                    viewHolder.duration.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
 
                     Glide.with(context).load(FileManager.getPictureFile(list.getId())).thumbnail( 0.1f ).apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE).
                             skipMemoryCache(true).format(DecodeFormat.PREFER_RGB_565).override(480,360)).into(viewHolder.image);
@@ -234,17 +227,12 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     else
                         viewHolder.downloaded.setText("");
 
-                    if(ThemeManager.getDebug().equals("Dark"))
-                        viewHolder.info.setImageResource(R.drawable.info_dark);
-                    else
-                        viewHolder.info.setImageResource(R.drawable.info);
-
                     if(!setEdit)
                     {
                         viewHolder.info.setVisibility(View.VISIBLE);
                         viewHolder.downloaded.setVisibility(View.VISIBLE);
                         viewHolder.dragDrop.setVisibility(View.GONE);
-                        viewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
+                        viewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getUnselectedTheme()));
                     }
                     else
                     {
@@ -252,14 +240,16 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                         viewHolder.dragDrop.setVisibility(View.VISIBLE);
                         viewHolder.itemView.setOnClickListener(this);
 
-                        viewHolder.dragDrop.setOnTouchListener((view, motionEvent) -> {
-                            if(motionEvent.getAction() == MotionEvent.ACTION_MOVE ||
-                                    motionEvent.getAction() == MotionEvent.ACTION_DOWN)
-                            {
-                                touchHelper.startDrag(viewHolder);
-                                return true;
+                        viewHolder.dragDrop.setOnTouchListener(new View.OnTouchListener() {
+                            @Override
+                            public boolean onTouch(View view, MotionEvent motionEvent) {
+                                if (motionEvent.getAction() == MotionEvent.ACTION_MOVE ||
+                                        motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                                    touchHelper.startDrag(viewHolder);
+                                    return true;
+                                }
+                                return false;
                             }
-                            return false;
                         });
 
                         if(selected.contains(list))
@@ -268,10 +258,12 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                             viewHolder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getUnselectedTheme()));
                     }
 
-                    viewHolder.info.setOnClickListener(view -> {
-                        if(listener != null)
-                        {
-                            listener.onInfoClicked(pos, viewHolder.info);
+                    viewHolder.info.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            if (listener != null) {
+                                listener.onInfoClicked(pos, viewHolder.info);
+                            }
                         }
                     });
                     viewHolder.itemView.setTag(list);
@@ -298,6 +290,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void disableEdit()
     {
         setEdit = false;
+        selected.clear();
         notifyDataSetChanged();
     }
 

@@ -4,48 +4,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/adapter_color"
+    android:background="?attr/ViewBackground"
     android:focusableInTouchMode="true">
 
     <android.support.v7.widget.SearchView
         android:id="@+id/search_song"
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:descendantFocusability="beforeDescendants"
         android:theme="@style/SearchViewTheme"
         app:iconifiedByDefault="false"
-        app:queryHint="@string/you_search_hint"
-        app:searchHintIcon="@color/black"
-        android:descendantFocusability="beforeDescendants"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/bar_layout"/>
-
-    <android.support.design.widget.AppBarLayout
-        android:id="@+id/bar_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <!--<android.support.v7.widget.Toolbar xmlns:android="http://schemas.android.com/apk/res/android"-->
-            <!--android:id="@+id/toolbar"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="50dp">-->
-
-            <!--<TextView-->
-                <!--android:id="@+id/toolbar_title"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_gravity="center"-->
-                <!--android:layout_marginBottom="8dp"-->
-                <!--android:layout_marginTop="8dp"-->
-                <!--android:fontFamily="sans-serif-light"-->
-                <!--android:text="@string/you_search"-->
-                <!--android:textAlignment="center"-->
-                <!--android:textAllCaps="false"-->
-                <!--android:textColor="@color/black"-->
-                <!--android:textSize="20sp" />-->
-        <!--</android.support.v7.widget.Toolbar>-->
-
-    </android.support.design.widget.AppBarLayout>
+        app:layout_constraintTop_toTopOf="parent"
+        app:queryHint="@string/you_search_hint"
+        app:searchHintIcon="@color/black" />
 
     <ProgressBar
         android:id="@+id/progress"
@@ -108,7 +81,6 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp"
-        android:foreground="?android:attr/selectableItemBackground"
         android:orientation="vertical"
         android:scrollbars="vertical"
         android:visibility="visible"

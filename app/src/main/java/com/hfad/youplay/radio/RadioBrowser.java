@@ -63,6 +63,7 @@ public class RadioBrowser extends Browser
                         String name = object.getString("name");
                         int stationCount = object.getInt("stationcount");
                         Country country = new Country();
+
                         country.setName(name);
                         country.setStationCount(stationCount);
                         countries.add(country);

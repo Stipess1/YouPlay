@@ -74,17 +74,9 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(list.getViews()).append(" ").append(context.getResources().getString(R.string.you_view));
         holder.title.setText(list.getTitle());
-        holder.title.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
         holder.author.setText(list.getAuthor());
-        holder.author.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
         holder.view.setText(stringBuilder);
-        holder.view.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
         holder.duration.setText(list.getDuration());
-        holder.duration.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-
-        holder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-
-        Log.d("SearchFragment", "Inside onbind viewHolder " + list.getDownloaded());
 
         if(list.getDownloaded() == 1)
             holder.downloaded.setText(R.string.you_downloaded);
@@ -93,15 +85,12 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
 
         Glide.with(context).load(list.getUrlImage()).apply(new RequestOptions().override(120, 90)).into(holder.image);
 
-        if(ThemeManager.getDebug().equals("Dark"))
-            holder.info.setImageResource(R.drawable.info_dark);
-        else
-            holder.info.setImageResource(R.drawable.info);
-
-        holder.info.setOnClickListener(view -> {
-            if(listener != null)
-            {
-                listener.onInfoClicked(holder.getAdapterPosition(), view);
+        holder.info.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (listener != null) {
+                    listener.onInfoClicked(holder.getAdapterPosition(), view);
+                }
             }
         });
 

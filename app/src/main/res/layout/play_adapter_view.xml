@@ -128,7 +128,7 @@
             android:layout_marginBottom="23dp"
             android:layout_marginEnd="8dp"
             style="@style/SelectableItemBackground"
-            android:src="@drawable/info"
+            android:src="?attr/info_button"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

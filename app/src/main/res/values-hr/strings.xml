@@ -54,9 +54,9 @@
     <string name="radio_stations">"Postaja: "</string>
     <string name="radio_bitrate">kbps</string>
     <string name="switch_theme">Tema</string>
-    <string name="switch_summary">Mijenja izgled aplikacije</string>
+    <string name="switch_summary">Mijenja izgled aplikacije u tamno</string>
     <string name="no_space">Nema dovoljno prostora na uređaju</string>
-    <string name="check_download_desc">Ubrzaj skidanje pjesama</string>
+    <string name="check_download_desc">Ubrzaj skidanje pjesama (ponekad pjesma se neće preuzeti)</string>
     <string name="check_download_title">Preuzimanje</string>
     <string name="cant_extract">Dogodila se greška pri preuzimanju</string>
     <string name="open_youtube">Otvori u…</string>
@@ -93,4 +93,16 @@
     </plurals>
     <string name="playlist_created">Playlista %s napravljena</string>
     <string name="playlist_error">Došlo je do pogreške prilikom otvaranja playliste %s</string>
+    <string name="set_alarm">Postavi alarm</string>
+    <string name="alarm_pick">Odaberi koliko pjesama će biti reproducirano</string>
+    <string name="alarm_set">Alarm postavljen</string>
+    <string name="alarm_disabled">Alarm uklonjen</string>
+    <string name="pref_sound">Zvuk</string>
+    <string name="pref_focus_mode">Audio Fokus</string>
+    <string name="pref_focus_summary">Nastavi reproducirati nakon prekidanja (npr. Facebook video, Instagram…)</string>
+    <string name="apprater_dialog_title">Ocijeni %s</string>
+    <string name="apprater_rate_message">Ukoliko uživate koristiti ovu aplikaciju, molim vas odvojite trenutak za ocjenjivanje. Hvala na vašoj podršci.</string>
+    <string name="apprater_rate">Ocijeni sada</string>
+    <string name="apprater_later">Kasnije</string>
+    <string name="apprater_no_thanks">Ne hvala</string>
 </resources>

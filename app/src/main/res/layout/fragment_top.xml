@@ -5,7 +5,6 @@
     android:id="@+id/history_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/adapter_color"
     android:orientation="vertical">
 
     <android.support.design.widget.AppBarLayout
@@ -71,7 +70,6 @@
         android:paddingBottom="5dp"
         android:paddingTop="5dp"
         android:text="@string/add_queue"
-        android:textColor="@color/black"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -87,7 +85,6 @@
         android:paddingBottom="5dp"
         android:paddingTop="5dp"
         android:text="@string/add_to_playlist"
-        android:textColor="@color/black"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toEndOf="@+id/add_to_queue" />
@@ -103,7 +100,6 @@
         android:paddingBottom="5dp"
         android:paddingTop="5dp"
         android:text="@string/delete"
-        android:textColor="@color/black"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

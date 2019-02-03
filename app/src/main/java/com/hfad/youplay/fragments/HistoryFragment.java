@@ -4,6 +4,7 @@ package com.hfad.youplay.fragments;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteDiskIOException;
@@ -209,16 +210,16 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         else if(id == R.id.delete_selected)
         {
             view.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_out));
-            AlertDialog.Builder dialog = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+            AlertDialog.Builder dialog = new AlertDialog.Builder(getContext());
             View dialogView = getLayoutInflater().inflate(R.layout.delete_dialog, null);
 
-            TextView name = dialogView.findViewById(R.id.deleting_title);
-            TextView size = dialogView.findViewById(R.id.deleting_size);
+            final TextView name = dialogView.findViewById(R.id.deleting_title);
+            final TextView size = dialogView.findViewById(R.id.deleting_size);
             dialog.setView(dialogView);
 
-            int listSize = adapter.getAll().size();
+            final int listSize = adapter.getAll().size();
 
-            AlertDialog alert = dialog.create();
+            final AlertDialog alert = dialog.create();
             alert.show();
 
             new DatabaseHandler(adapter.getAll(),
@@ -227,7 +228,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                     DatabaseHandler.UpdateType.REMOVE_LIST).setDataChangedListener(new OnDataChanged() {
                 @Override
                 public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
-                    if(type == DatabaseHandler.UpdateType.REMOVE_LIST)
+                    if(type == DatabaseHandler.UpdateType.REMOVE_LIST && !AudioService.getInstance().isDestroyed())
                     {
                         alert.dismiss();
                         adapter.refreshList();
@@ -258,7 +259,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     @Override
     public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma)
     {
-        if(type == DatabaseHandler.UpdateType.REMOVE)
+        if(type == DatabaseHandler.UpdateType.REMOVE && !AudioService.getInstance().isDestroyed())
         {
             Snackbar.make(getView(), getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT).show();
             pjesma.setDownloaded(0);
@@ -278,13 +279,16 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
     @Override
     public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
-        if(type == DatabaseHandler.UpdateType.GET && pjesme == null)
-            barLoading.setVisibility(View.VISIBLE);
-        else
+        if(!AudioService.getInstance().isDestroyed())
         {
-            adapter.refreshList(pjesme);
-            barLoading.setVisibility(View.GONE);
-            checkIfEmpty();
+            if(type == DatabaseHandler.UpdateType.GET && pjesme == null)
+                barLoading.setVisibility(View.VISIBLE);
+            else
+            {
+                adapter.refreshList(pjesme);
+                barLoading.setVisibility(View.GONE);
+                checkIfEmpty();
+            }
         }
     }
 
@@ -319,7 +323,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         params.bottomMargin = 0;
 
         adapter.disableEdit();
-        Snackbar.make(getView(), getResources().getString(R.string.changes_saved), Snackbar.LENGTH_SHORT).show();
+        Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.changes_saved), Snackbar.LENGTH_SHORT);
+        View view = snackbar.getView();
+        TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+        snackbar.show();
     }
 
     private void addToQueue(Music pjesma)
@@ -338,7 +346,13 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         tempList.addAll(queueList);
 
         onItemClicked.refreshSuggestions(tempList, queue);
-        Snackbar.make(getView(), getResources().getString(R.string.song_in_queue), Snackbar.LENGTH_SHORT).show();
+
+        Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.song_in_queue), Snackbar.LENGTH_SHORT);
+        View view = snackbar.getView();
+        TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+        textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+        snackbar.show();
+
     }
 
     private void addToQueue(List<Music> data)
@@ -367,7 +381,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         return false;
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
@@ -393,6 +406,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             {
                 Toast.makeText(getContext(), getResources().getString(R.string.al_latest), Toast.LENGTH_SHORT).show();
             }
+            return true;
         }
         else if(id == R.id.oldest)
         {
@@ -415,11 +429,13 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             {
                 Toast.makeText(getContext(), getResources().getString(R.string.al_oldest), Toast.LENGTH_SHORT).show();
             }
+            return true;
         }
         else if(id == R.id.settings)
         {
             Intent intent = new Intent(getContext(), SettingsActivity.class);
             startActivity(intent);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -436,12 +452,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
             View customToolbar = LayoutInflater.from(getContext()).inflate(R.layout.toolbar_layout, null);
             actionBar.setCustomView(customToolbar);
-
-            if(getView() != null)
-            {
-                TextView textView = getView().findViewById(R.id.toolbar_title);
-                textView.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-            }
         }
     }
 
@@ -492,7 +502,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             else
                 Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
         }
-
+        checkIfEmpty();
     }
 
     /**
@@ -552,7 +562,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             }
 
             adapter.notifyFilterData(musicList);
-            onItemClicked.onMusicClick(pjesma, musicList);
+            onItemClicked.onMusicClick(pjesma, musicList, getResources().getString(R.string.you_history));
             setPlayScreen();
         }
     }
@@ -561,45 +571,48 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     public void buildAlertDialog(final int position, final View view)
     {
         final Music pjesma = musicList.get(position);
+        if(pjesma == null) return;
 
-        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+        final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(pjesma.getTitle())
-                .setItems(getResources().getStringArray(R.array.you_history_dialog), (dialogInterface, i) -> {
-                    switch (i)
-                    {
-                        case DIALOG_NOW_PLAYING:
-                            onItemClicked.onMusicClick(pjesma, musicList);
-                            break;
-                        case DIALOG_ADD_QUEUE:
-                           addToQueue(pjesma);
-                            break;
-                        case DIALOG_PLAYLIST:
-                            buildPlaylistDialog(pjesma);
-                            break;
-                        case DIALOG_YOUTUBE:
-                            Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + pjesma.getId()));
-                            Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + pjesma.getId()));
-                            try {
-                                getContext().startActivity(appIntent);
-                            } catch (ActivityNotFoundException ex) {
-                                getContext().startActivity(webIntent);
-                            }
-                            finally {
-                                onItemClicked.pauseSong();
-                            }
-                            break;
-                        case DIALOG_DELETE:
-                            view.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_out));
-                            musicList.remove(pjesma);
-                            adapter.deleteMusic(position);
-                            adapter.notifyFilterData(musicList);
-                            new DatabaseHandler(pjesma,
-                                    TABLE_NAME,
-                                    YouPlayDatabase.YOUPLAY_DB,
-                                    DatabaseHandler.UpdateType.REMOVE).setDataChangedListener(this).execute();
-                            checkIfEmpty();
-                            break;
+                .setItems(getResources().getStringArray(R.array.you_history_dialog), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        switch (i) {
+                            case DIALOG_NOW_PLAYING:
+                                onItemClicked.onMusicClick(pjesma, musicList, getResources().getString(R.string.you_history));
+                                break;
+                            case DIALOG_ADD_QUEUE:
+                                HistoryFragment.this.addToQueue(pjesma);
+                                break;
+                            case DIALOG_PLAYLIST:
+                                HistoryFragment.this.buildPlaylistDialog(pjesma);
+                                break;
+                            case DIALOG_YOUTUBE:
+                                Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + pjesma.getId()));
+                                Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + pjesma.getId()));
+                                try {
+                                    HistoryFragment.this.getContext().startActivity(appIntent);
+                                } catch (ActivityNotFoundException ex) {
+                                    HistoryFragment.this.getContext().startActivity(webIntent);
+                                } finally {
+                                    onItemClicked.pauseSong();
+                                }
+                                break;
+                            case DIALOG_DELETE:
+                                view.startAnimation(AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_out));
+                                musicList.remove(pjesma);
+                                adapter.deleteMusic(position);
+                                searchView.setQuery("", true);
+                                getSearchView().collapseActionView();
+                                adapter.notifyFilterData(musicList);
+                                new DatabaseHandler(pjesma,
+                                        TABLE_NAME,
+                                        YouPlayDatabase.YOUPLAY_DB,
+                                        DatabaseHandler.UpdateType.REMOVE).setDataChangedListener(HistoryFragment.this).execute();
+                                break;
 
+                        }
                     }
                 });
         AlertDialog alertDialog = builder.create();
@@ -609,13 +622,16 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private void buildPlaylistDialog(final Music pjesma)
     {
         final List<String> titles = YouPlayDatabase.getInstance(getContext()).getAllPlaylists();
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(getResources().getString(R.string.add_to_playlist))
-                .setItems(titles.toArray(new CharSequence[titles.size()]), (dialogInterface, i) -> {
-                    String title = titles.get(i);
-                    YouPlayDatabase.getInstance(getContext()).insertInTable(pjesma, title);
-                    Snackbar.make(getView(), getResources().getString(R.string.playlist_added), Snackbar.LENGTH_SHORT).show();
-                    onItemClicked.refreshPlaylist();
+                .setItems(titles.toArray(new CharSequence[titles.size()]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String title = titles.get(i);
+                        YouPlayDatabase.getInstance(HistoryFragment.this.getContext()).insertInTable(pjesma, title);
+                        Snackbar.make(HistoryFragment.this.getView(), HistoryFragment.this.getResources().getString(R.string.playlist_added), Snackbar.LENGTH_SHORT).show();
+                        onItemClicked.refreshPlaylist();
+                    }
                 });
         builder.create().show();
     }
@@ -623,27 +639,31 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private void buildPlaylistDialog(final List<Music> data)
     {
         final List<String> titles = db.getAllPlaylists();
-        AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle(getResources().getString(R.string.add_to_playlist))
-                .setItems(titles.toArray(new CharSequence[titles.size()]), (dialogInterface, i) -> {
-                    String title = titles.get(i);
-                    new DatabaseHandler(data, title, YouPlayDatabase.PLAYLIST_DB, DatabaseHandler.UpdateType.ADD).setDataChangedListener(new OnDataChanged() {
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
-                            onItemClicked.refreshPlaylist();
-                            resetAdapter();
-                        }
+                .setItems(titles.toArray(new CharSequence[titles.size()]), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String title = titles.get(i);
+                        new DatabaseHandler(data, title, YouPlayDatabase.PLAYLIST_DB, DatabaseHandler.UpdateType.ADD).setDataChangedListener(new OnDataChanged() {
+                            @Override
+                            public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
+                                onItemClicked.refreshPlaylist();
+                                if(!AudioService.getInstance().isDestroyed())
+                                    resetAdapter();
+                            }
 
-                        @Override
-                        public void deleteProgress(int length, String title) {
+                            @Override
+                            public void deleteProgress(int length, String title) {
 
-                        }
+                            }
 
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                            @Override
+                            public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
 
-                        }
-                    }).execute();
+                            }
+                        }).execute();
+                    }
                 });
         builder.create().show();
     }
@@ -658,7 +678,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     public void onLongClick(Music pjesma, View view)
     {
         FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.addToBackStack("History");
+        fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
 
         adapter.setEdit(TABLE_NAME, pjesma);

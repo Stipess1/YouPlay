@@ -1,6 +1,5 @@
 package com.hfad.youplay.utils;
 
-import android.graphics.Color;
 
 import com.hfad.youplay.Ilisteners.OnThemeChanged;
 import com.hfad.youplay.R;
@@ -35,36 +34,12 @@ public class ThemeManager
             themeChanged.onThemeChanged();
     }
 
-    public static int getDialogTheme()
-    {
-        if(theme == Theme.DARK_THEME)
-            return R.style.DialogDark;
-
-        return R.style.DialogLight;
-    }
-
-    public static int getToolbarTheme()
-    {
-        if(theme == Theme.DARK_THEME)
-            return R.color.toolbar_color;
-
-        return R.color.adapter_color;
-    }
-
     public static String getDebug()
     {
         if(theme == Theme.DARK_THEME)
             return DARK_THEME;
         else
             return LIGHT_THEME;
-    }
-
-    public static int getLineSeperatorTheme()
-    {
-        if(theme == Theme.DARK_THEME)
-            return R.color.play_fragment;
-
-        return R.color.suggestions;
     }
 
     public static int getTheme()
@@ -83,17 +58,9 @@ public class ThemeManager
         return R.color.black;
     }
 
-    public static int getAboutFontTheme()
-    {
-        if(theme == Theme.DARK_THEME)
-            return R.color.about_color;
-
-        return R.color.black;
-    }
-
     public static int getSnackbarFont()
     {
-        return R.color.adapter_color;
+        return R.color.white;
     }
 
     public static int getSelectedTheme()
@@ -109,7 +76,7 @@ public class ThemeManager
         if (theme == Theme.DARK_THEME)
             return R.color.play_fragment_bars;
 
-        return R.color.adapter_color;
+        return R.color.white;
     }
     public static int getDividerColor()
     {

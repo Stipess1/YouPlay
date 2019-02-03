@@ -45,7 +45,6 @@ public class YouPlayWeb extends AsyncTask<Void, Void, String> {
         {
             this.e = e;
             error = true;
-            Log.d("YouPlayWeb", e.getMessage());
             return null;
         }
         return null;

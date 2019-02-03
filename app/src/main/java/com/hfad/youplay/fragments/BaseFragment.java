@@ -39,10 +39,13 @@ public abstract class BaseFragment extends Fragment{
 
     public void setPlayScreen()
     {
-        runnable = () -> {
-            Activity activity = getActivity();
-            if(activity instanceof MainActivity)
-                ((MainActivity)getActivity()).pager.setCurrentItem(0, true);
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                Activity activity = BaseFragment.this.getActivity();
+                if (activity instanceof MainActivity)
+                    ((MainActivity) BaseFragment.this.getActivity()).pager.setCurrentItem(0, true);
+            }
         };
         handler.postDelayed(runnable, 200);
 

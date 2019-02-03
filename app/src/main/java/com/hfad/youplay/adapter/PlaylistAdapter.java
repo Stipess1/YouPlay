@@ -197,17 +197,16 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
 
 
             holder.title.setText(title);
-            holder.title.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-            holder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-            if(ThemeManager.getDebug().equals("Dark"))
-                holder.info.setImageResource(R.drawable.info_dark);
-            else
-                holder.info.setImageResource(R.drawable.info);
+//            holder.title.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
+//            holder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
 
-            holder.info.setOnClickListener(view -> {
-                if(listener != null)
-                {
-                    listener.onInfoClicked(title, view);
+
+            holder.info.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (listener != null) {
+                        listener.onInfoClicked(title, view);
+                    }
                 }
             });
 

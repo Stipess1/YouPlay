@@ -12,8 +12,7 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="23dp"
         android:fontFamily="sans-serif-light"
-        android:textSize="16sp"
-        android:textColor="@color/black" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/songs_duration"
@@ -22,6 +21,5 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:fontFamily="sans-serif-light"
-        android:textSize="16sp"
-        android:textColor="@color/black" />
+        android:textSize="16sp" />
 </RelativeLayout>

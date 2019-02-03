@@ -173,7 +173,7 @@
             android:id="@+id/frameLayout2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <FrameLayout
+            <android.support.constraint.ConstraintLayout
 
                 android:layout_width="match_parent"
                 android:layout_height="39dp"
@@ -183,35 +183,94 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
+                <!--<FrameLayout-->
+                    <!--android:id="@+id/slide_up_list"-->
+                    <!--style="@style/SelectableItemBackground"-->
+                    <!--android:layout_width="25dp"-->
+                    <!--android:layout_height="25dp"-->
+                    <!--android:layout_gravity="center"-->
+                    <!--android:layout_marginStart="8dp"-->
+                    <!--android:layout_marginTop="8dp"-->
+                    <!--android:layout_marginEnd="8dp"-->
+                    <!--android:layout_marginBottom="8dp"-->
+                    <!--android:foreground="@drawable/ic_expand_less"-->
+                    <!--app:layout_constraintBottom_toBottomOf="parent"-->
+                    <!--app:layout_constraintEnd_toEndOf="parent"-->
+                    <!--app:layout_constraintStart_toStartOf="parent"-->
+                    <!--app:layout_constraintTop_toTopOf="parent" />-->
+
                 <FrameLayout
-                    android:id="@+id/slide_up_list"
+                    android:id="@+id/volume"
                     style="@style/SelectableItemBackground"
-                    android:layout_width="25dp"
-                    android:layout_height="25dp"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="3dp"
-                    android:layout_marginTop="3dp"
-                    android:foreground="@drawable/ic_expand_less"
-                    app:layout_constraintBottom_toTopOf="@+id/play_suggestion_list"
-                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:foreground="@drawable/volume_up"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <FrameLayout
+                    android:id="@+id/add_playlist"
+                    style="@style/SelectableItemBackground"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:foreground="@drawable/add_to_playlist"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/volume"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <FrameLayout
+                    android:id="@+id/alarm"
+                    style="@style/SelectableItemBackground"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical|start"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:foreground="@drawable/alarm_add"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/add_playlist"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <Spinner
+                    android:id="@+id/spinner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|center_vertical"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:theme="@style/BlackTheme"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/autoplay"
+                    app:layout_constraintStart_toEndOf="@+id/alarm"
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
                     android:id="@+id/autoplay"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="right"
-                    android:layout_marginBottom="10dp"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="8dp"
                     android:fontFamily="sans-serif-light"
                     android:text="@string/autoplay"
                     android:textColor="@color/seekbar_progress"
                     app:layout_constraintBottom_toTopOf="@+id/play_suggestion_list"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
-            </FrameLayout>
+            </android.support.constraint.ConstraintLayout>
         </android.support.design.widget.AppBarLayout>
 
         <android.support.v7.widget.RecyclerView

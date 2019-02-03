@@ -4,6 +4,7 @@ package com.hfad.youplay.fragments;
 import android.app.Service;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -28,6 +29,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.LayoutAnimationController;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -140,13 +142,14 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             else
                                 noResult.setVisibility(View.VISIBLE);
 
-                            Log.d(TAG, "Internet suggestion");
+                            Log.d(TAG, "Internet suggestion " + data.size());
                             progressBar.setVisibility(View.GONE);
 
                             musicList.clear();
                             musicList.addAll(data);
 
-                            videoAdapter.notifyDataSetChanged();
+//                            videoAdapter.notifyDataSetChanged();
+                            runLayoutAnimation();
                             recyclerView.smoothScrollToPosition(0);
 
                             recyclerView.setVisibility(View.VISIBLE);
@@ -185,6 +188,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             recyclerView.swapAdapter(null, true);
                             recyclerView.setAdapter(suggestionAdapter);
                             recyclerView.removeItemDecoration(dividerItemDecoration);
+                            recyclerView.setLayoutAnimation(null);
                             swapAdapter = true;
                         }
 
@@ -227,6 +231,20 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         });
         db = YouPlayDatabase.getInstance(getContext());
         return view;
+    }
+
+    private void runLayoutAnimation()
+    {
+        if(recyclerView.getAdapter() != null)
+        {
+            final Context context = recyclerView.getContext();
+            final LayoutAnimationController controller =
+                    AnimationUtils.loadLayoutAnimation(context, R.anim.animation_fall_down);
+
+            recyclerView.setLayoutAnimation(controller);
+            recyclerView.getAdapter().notifyDataSetChanged();
+            recyclerView.scheduleLayoutAnimation();
+        }
     }
 
     @Override
@@ -304,14 +322,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                 searchEditText.setTextColor(getResources().getColor(R.color.white));
                 searchEditText.setHintTextColor(getResources().getColor(R.color.white));
             }
-
-//            dividerItemDecoration.setDrawable(getActivity().getResources().getDrawable(ThemeManager.getDividerColor()));
-//            recyclerView.removeItemDecoration(dividerItemDecoration);
-//            recyclerView.addItemDecoration(dividerItemDecoration);
-            internet.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getFontTheme()));
-            noResult.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getFontTheme()));
-
-            getView().setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
         }
     }
 
@@ -393,7 +403,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId()))
         {
             audioService.exoPlayer.setPlayWhenReady(false);
-            musicClicked.onMusicClick(pjesma, null);
+            musicClicked.onMusicClick(pjesma, null, "---");
         }
         else
         {
@@ -414,22 +424,24 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
     public void buildAlertDialog(int position, View view)
     {
         final Music pjesma = musicList.get(position);
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity(), ThemeManager.getDialogTheme());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle(pjesma.getTitle())
-                .setItems(R.array.you_search_dialog, (dialogInterface, i) -> {
-                    switch (i)
-                    {
-                        case DIALOG_NOW_PLAYING:
-                            setPlayingIfNotDownloaded(pjesma);
-                            break;
-                        case 1:
-                            Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + pjesma.getId()));
-                            Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + pjesma.getId()));
-                            try {
-                                getContext().startActivity(appIntent);
-                            } catch (ActivityNotFoundException ex) {
-                                getContext().startActivity(webIntent);
-                            }
+                .setItems(R.array.you_search_dialog, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        switch (i) {
+                            case DIALOG_NOW_PLAYING:
+                                SearchFragment.this.setPlayingIfNotDownloaded(pjesma);
+                                break;
+                            case 1:
+                                Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + pjesma.getId()));
+                                Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + pjesma.getId()));
+                                try {
+                                    SearchFragment.this.getContext().startActivity(appIntent);
+                                } catch (ActivityNotFoundException ex) {
+                                    SearchFragment.this.getContext().startActivity(webIntent);
+                                }
+                        }
                     }
                 });
         builder.create().show();

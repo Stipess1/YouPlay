@@ -56,9 +56,6 @@ public class DefaultPlaylistFragment extends BaseFragment {
 
             View customToolbar = LayoutInflater.from(getContext()).inflate(R.layout.toolbar_layout, null);
             actionBar.setCustomView(customToolbar);
-
-            TextView textView = getView().findViewById(R.id.toolbar_title);
-            textView.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
         }
     }
 
@@ -86,8 +83,6 @@ public class DefaultPlaylistFragment extends BaseFragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(getView() != null)
-            getView().setBackgroundColor(ContextCompat.getColor(getContext(), ThemeManager.getTheme()));
     }
 
 

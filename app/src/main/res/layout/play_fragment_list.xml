@@ -25,7 +25,6 @@
         android:ellipsize="end"
         android:fontFamily="sans-serif-light"
         android:maxLines="1"
-        android:textColor="@color/suggestions"
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/playlist_duration"
@@ -42,7 +41,6 @@
         android:layout_marginTop="8dp"
         android:textSize="15sp"
         android:fontFamily="sans-serif-thin"
-        android:textColor="@color/suggestions"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

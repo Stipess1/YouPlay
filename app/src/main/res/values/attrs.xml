@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="ViewBackground" format="reference"/>
+    <attr name="spinner" format="reference"/>
+    <attr name="info_button" format="reference"/>
+    <attr name="tabLayout" format="reference"/>
+</resources>

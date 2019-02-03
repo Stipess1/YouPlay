@@ -4,7 +4,6 @@
     android:layout_height="wrap_content"
     android:layout_width="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:background="@color/adapter_color"
     android:orientation="horizontal"
     android:foreground="?android:attr/selectableItemBackground">
 
@@ -15,7 +14,6 @@
         android:fontFamily="sans-serif-light"
         android:foreground="?android:attr/selectableItemBackground"
         android:padding="8dp"
-        android:textColor="@color/black"
         android:textSize="16sp"
         android:ellipsize="end"
         app:layout_constraintBottom_toBottomOf="parent"

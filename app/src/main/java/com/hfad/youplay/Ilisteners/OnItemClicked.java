@@ -11,7 +11,7 @@ public interface OnItemClicked {
     // zove onClick u history fragmentu.
     void onMusicClick(Music pjesma);
 
-    void onMusicClick(Music pjesma, List<Music> pjesme);
+    void onMusicClick(Music pjesma, List<Music> pjesme, String table);
 
     void refresh(Music pjesma);
 
@@ -28,4 +28,6 @@ public interface OnItemClicked {
     void refreshSearchList(Music pjesma);
 
     void pauseSong();
+
+    void refreshSpinnerAdapter();
 }

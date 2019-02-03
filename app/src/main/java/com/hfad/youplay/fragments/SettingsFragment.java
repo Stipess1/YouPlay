@@ -31,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.hfad.youplay.AudioService;
 import com.hfad.youplay.BuildConfig;
 import com.hfad.youplay.Ilisteners.OnThemeChanged;
 import com.hfad.youplay.MainActivity;
@@ -81,53 +82,70 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
         screen.setSummary(BuildConfig.VERSION_NAME);
 
         PreferenceScreen versionCheck = (PreferenceScreen) findPreference(Constants.VERSION_CHECK);
-        versionCheck.setOnPreferenceClickListener(preference -> {
+        versionCheck.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
 
-            YouPlayWeb web = new YouPlayWeb();
-            web.setListener(new YouPlayWeb.Listener() {
-                @Override
-                public void onConnected(String version) {
-                    if(version != null)
-                        buildAlertDialog(Utils.needsUpdate(version), version);
-                }
+                YouPlayWeb web = new YouPlayWeb();
+                web.setListener(new YouPlayWeb.Listener() {
+                    @Override
+                    public void onConnected(String version) {
+                        if (version != null && !AudioService.getInstance().isDestroyed())
+                            buildAlertDialog(Utils.needsUpdate(version), version);
+                    }
 
-                @Override
-                public void onError(Exception e) {
-                    Toast.makeText(getContext(), getResources().getString(R.string.download_error), Toast.LENGTH_SHORT).show();
-                }
-            });
+                    @Override
+                    public void onError(Exception e) {
+                        if(!AudioService.getInstance().isDestroyed())
+                            Toast.makeText(getContext(), getResources().getString(R.string.download_error), Toast.LENGTH_SHORT).show();
+                    }
+                });
 
-            web.execute();
-            return false;
+                web.execute();
+                return false;
+            }
         });
 
         PreferenceScreen sendMail = (PreferenceScreen) findPreference(Constants.SEND_EMAIL);
-        sendMail.setOnPreferenceClickListener(preference -> {
-            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "stipess@youplayandroid.com", null));
-            startActivity(Intent.createChooser(emailIntent, getResources().getString(R.string.send_email)));
-            return false;
+        sendMail.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts("mailto", "stipess@youplayandroid.com", null));
+                startActivity(Intent.createChooser(emailIntent, SettingsFragment.this.getResources().getString(R.string.send_email)));
+                return false;
+            }
         });
 
         PreferenceScreen website = (PreferenceScreen) findPreference(Constants.WEBSITE);
-        website.setOnPreferenceClickListener(preference -> {
-            Intent website1 = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE));
-            startActivity(website1);
-            return true;
+        website.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Intent website1 = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE));
+                startActivity(website1);
+                return true;
+            }
         });
 
-        listener = (sharedPreferences, s) -> {
-            if(s.equals(getString(R.string.switch_key)))
-            {
-                SwitchPreference switchPreference = (SwitchPreference) findPreference(getString(R.string.switch_key));
+        listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+                if (s.equals(SettingsFragment.this.getString(R.string.switch_key))) {
+                    SwitchPreference switchPreference = (SwitchPreference) SettingsFragment.this.findPreference(SettingsFragment.this.getString(R.string.switch_key));
 
-                if(switchPreference.isChecked())
-                    ThemeManager.setTheme(ThemeManager.Theme.DARK_THEME);
-                else
-                    ThemeManager.setTheme(ThemeManager.Theme.LIGHT_THEME);
+                    if (switchPreference.isChecked())
+                        ThemeManager.setTheme(ThemeManager.Theme.DARK_THEME);
+                    else
+                        ThemeManager.setTheme(ThemeManager.Theme.LIGHT_THEME);
 
-                Handler handler = new Handler();
-                Runnable runnable = () -> onThemeChanged.onThemeChanged();
-                handler.postDelayed(runnable, 250);
+                    Handler handler = new Handler();
+                    Runnable runnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            onThemeChanged.onThemeChanged();
+                        }
+                    };
+                    handler.postDelayed(runnable, 250);
+                }
             }
         };
     }
@@ -136,7 +154,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
     {
         if(needsUpdate)
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(getResources().getString(R.string.version_update))
                     .setMessage(getResources().getString(R.string.version_update_summary, version));
             builder.setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
@@ -173,7 +191,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
                         }
                         else
                         {
-                            final String appPackageName = getActivity().getPackageName(); // getPackageName() from Context or Activity object
+                            String appPackageName = getActivity().getPackageName(); // getPackageName() from Context or Activity object
                             try {
                                 startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + appPackageName)));
                             } catch (android.content.ActivityNotFoundException anfe) {
@@ -193,7 +211,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
         }
         else
         {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), ThemeManager.getDialogTheme());
+            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(getResources().getString(R.string.version_newest))
                     .setMessage(getResources().getString(R.string.version_newest_summary));
             builder.setPositiveButton(R.string.rationale_ok, new DialogInterface.OnClickListener() {
@@ -210,7 +228,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
     {
         DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
         DownloadTask downloadTask = task.build();
-        ProgressDialog downloadDialog = new ProgressDialog(getContext());
+        final ProgressDialog downloadDialog = new ProgressDialog(getContext());
         downloadTask.enqueue(new DownloadListener1() {
             @Override
             public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
@@ -244,7 +262,8 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
             @Override
             public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
                 downloadDialog.cancel();
-                if(cause == EndCause.COMPLETED)
+
+                if(cause == EndCause.COMPLETED && !AudioService.getInstance().isDestroyed())
                 {
                     downloadDialog.cancel();
                     Uri apkURI = (Build.VERSION.SDK_INT >= 24)
