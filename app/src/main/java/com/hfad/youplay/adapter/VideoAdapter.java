@@ -5,6 +5,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
@@ -205,6 +206,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
                     firstViewHolder.songCount.setText(context.getResources().getQuantityString(R.plurals.songs, data.size(), data.size()));
                     stringBuilder.append(Utils.convertDuration(milis)).append(" ").append(context.getResources().getString(R.string.song_mins));
+                    firstViewHolder.layout.setOnClickListener(this);
                     firstViewHolder.songsDuration.setText(stringBuilder);
                     break;
                 case 1:
@@ -301,10 +303,14 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
     @Override
     public void onClick(View view) {
-        if(listener != null && !setEdit)
+        if(listener != null && !setEdit && view.getId() != R.id.history_shuffle)
         {
             Music pjesma = (Music) view.getTag();
             listener.onClick(pjesma, view);
+        }
+        else if(view.getId() == R.id.history_shuffle)
+        {
+            listener.onShuffle();
         }
         else
         {
@@ -324,9 +330,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         else
             selected.add(pjesma);
 
-        Log.d(TAG, "addifnotexists: " + pjesma.getTitle());
         notifyItemChanged(rowPos);
-//        notifyDataSetChanged();
     }
 
     @Override
@@ -421,6 +425,11 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         filterData.addAll(musicList);
     }
 
+    public List<Music> getFilterData()
+    {
+        return filterData;
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder
     {
         private TextView title;
@@ -452,12 +461,14 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     {
         private TextView songCount;
         private TextView songsDuration;
+        private ConstraintLayout layout;
 
         FirstViewHolder(View v)
         {
             super(v);
             songCount = v.findViewById(R.id.songs);
             songsDuration = v.findViewById(R.id.songs_duration);
+            layout = v.findViewById(R.id.history_shuffle);
         }
     }
 

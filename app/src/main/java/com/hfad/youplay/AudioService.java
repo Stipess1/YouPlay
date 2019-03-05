@@ -27,6 +27,7 @@ import android.support.v4.media.VolumeProviderCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.widget.RemoteViews;
 
 import com.bumptech.glide.Glide;
@@ -143,17 +144,17 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         MediaSessionCompat.Callback mController = new MediaSessionCompat.Callback() {
             @Override
             public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-//                KeyEvent event = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-//                if(event.getAction() == KeyEvent.ACTION_DOWN)
-//                {
-//                    if(serviceCallback != null)
-//                        serviceCallback.callback(PLAY_PAUSE);
-//                    else
-//                        playPauseSong();
-//
-//                    updateNotification("", "");
-//                    return true;
-//                }
+                KeyEvent event = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                if(event.getAction() == KeyEvent.ACTION_DOWN)
+                {
+                    if(serviceCallback != null)
+                        serviceCallback.callback(PLAY_PAUSE);
+                    else
+                        playPauseSong();
+
+                    updateNotification("", "");
+                    return true;
+                }
 
                 return super.onMediaButtonEvent(mediaButtonEvent);
             }
@@ -489,7 +490,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             builder.setChannelId(id);
         }
 
-        builder.setCustomContentView(remoteViews);
+//        builder.setCustomContentView(remoteViews);
         return builder.build();
     }
 
@@ -499,7 +500,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
      */
     private void setMusic(String path)
     {
-        // Ako stream zavrsi i prebaci na drugu pjesmu dok je activity unisten
+        // Ako stream zavrsi i prebaci na drugu pjesmu dok je activity unisten, a pjesma nije skinuta
         if(path != null)
         {
             Uri uri = Uri.parse(path);
@@ -532,33 +533,30 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             if(intent.getSerializableExtra(LIST) != null && intent.getSerializableExtra(SONG) != null && !isStream)
             {
                 musicList = (ArrayList<Music>) intent.getSerializableExtra(LIST);
-                realMusic = (ArrayList<Music>) intent.getSerializableExtra(LIST);
                 music = (Music) intent.getSerializableExtra(SONG);
             }
             else if(isStream && intent.getSerializableExtra(SONG) != null)
                 station = (Station) intent.getSerializableExtra(SONG);
-
-
             switch (intent.getIntExtra(ACTION,0))
             {
                 case PLAY_SONG:
                     playSong();
                     break;
                 case NEXT_SONG:
-                    if(!isDestroyed())
+                    if(serviceCallback != null)
                         serviceCallback.callback(NEXT);
                     else
                         nextSong();
                     break;
                 case PREVIOUS_SONG:
-                    if(!isDestroyed())
+                    if(serviceCallback != null)
                         serviceCallback.callback(PREVIOUS);
                     else
                         previousSong();
                     break;
                 case PLAY_PAUSE_SONG:
 
-                    if(!isDestroyed())
+                    if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
                     else
                         playPauseSong();
@@ -567,11 +565,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     break;
                 case EXIT_APP:
                     stopSelf();
-                    if(!isDestroyed())
+                    if(serviceCallback != null)
                         serviceCallback.callback(EXIT);
                     break;
                 case ADS:
-                    if(!isDestroyed())
+                    if(serviceCallback != null)
                         serviceCallback.callback(AD);
                     break;
                 default:
@@ -580,7 +578,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             }
 
         }
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
     @Override

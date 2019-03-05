@@ -86,4 +86,12 @@ public class ThemeManager
         return R.drawable.divider_light;
     }
 
+    public static int getDividerColorSearch()
+    {
+        if(theme == Theme.DARK_THEME)
+            return R.color.black;
+
+        return R.color.suggestions;
+    }
+
 }

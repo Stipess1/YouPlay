@@ -33,6 +33,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
+import android.system.ErrnoException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -46,6 +47,7 @@ import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -80,6 +82,7 @@ import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.fabric.sdk.android.Fabric;
@@ -93,8 +96,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = true;
-    // Kada je false znaci da ova verzija nebi trebala bit na google playu.
+    public static final boolean noAdApp = false;
+    // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
     public static final boolean isGooglePlay = false;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
@@ -107,8 +110,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private RadioFragment radioFragment;
     private AudioService audioService;
     private boolean bound = false;
+    private boolean isRunning = false;
     public ViewPager pager;
     private AdView adView;
+    private InterstitialAd interstitialAd;
+    private boolean closeApp = false;
     private YouPlayDatabase db;
     private InputMethodManager imm;
     // da nam otvori history prilikom prvom pokretanju
@@ -136,6 +142,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         Intent intent = new Intent(getApplication(), AudioService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
         startService(intent);
+        isRunning = true;
         if(firstTime)
         {
             pager.setCurrentItem(1);
@@ -150,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     @Override
     protected void onPause() {
+        isRunning = false;
         hideKeyboard();
         if(adView != null && !noAdApp)
             adView.pause();
@@ -237,7 +245,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(pager);
         tabLayout.setBackgroundColor(getResources().getColor(R.color.light_black));
-//        onThemeChanged();
         registerListeners();
 
     }
@@ -263,8 +270,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             unbindService(connection);
             bound = false;
         }
-//        if(intent != null)
-//            stopService(intent);
         if(audioService != null)
         {
             audioService.setDestroyed(true);
@@ -276,7 +281,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(adView != null && !noAdApp)
             adView.destroy();
         super.onDestroy();
-
     }
 
     public void registerListeners()
@@ -406,7 +410,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             web.setListener(new YouPlayWeb.Listener() {
                 @Override
                 public void onConnected(String version) {
-                    if(version != null && getApplication() != null)
+                    if(version != null && isRunning)
                         buildAlertDialog(Utils.needsUpdate(version), version);
                 }
 
@@ -555,10 +559,17 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     public void initFiles()
     {
-        if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists())
+        try
         {
-            Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
-            finishAffinity();
+            if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists())
+            {
+                Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
+                finishAffinity();
+            }
+        }
+        catch (Exception ignored)
+        {
+
         }
 
         File file = FileManager.getRootPath();
@@ -592,14 +603,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void onMusicClick(Music pjesma, List<Music> pjesme, String table)
+    public void onMusicClick(Music pjesma, List<Music> pjesme, String table, boolean shuffled)
     {
+        List<Music> temp = new ArrayList<>();
+        if(pjesme != null)
+            temp.addAll(pjesme);
         if(playFragment.getShuffled())
             playFragment.checkShuffle();
 
-        playFragment.setSpinner(table);
-        playFragment.setMusic(pjesma, pjesme);
+        if(shuffled)
+        {
+            playFragment.setMusicList(pjesme);
+            Collections.shuffle(temp);
+            pjesma = temp.get(0);
+            playFragment.setShuffled();
+        }
 
+        playFragment.setSpinner(table);
+        playFragment.setMusic(pjesma, temp);
     }
 
     @Override
@@ -640,6 +661,35 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     {
         Log.d(TAG, "Init Ads");
         MobileAds.initialize(this, "ca-app-pub-8163593086331416~1012493107");
+        interstitialAd = new InterstitialAd(this);
+        interstitialAd.setAdUnitId("ca-app-pub-8163593086331416/3017676666");
+        interstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                interstitialAd.loadAd(new AdRequest.Builder().build());
+                moveTaskToBack(true);
+            }
+
+            @Override
+            public void onAdFailedToLoad(int i) {
+                switch (i)
+                {
+                    case AdRequest.ERROR_CODE_NO_FILL:
+                        closeApp = true;
+                        break;
+                    case AdRequest.ERROR_CODE_NETWORK_ERROR:
+                        closeApp = true;
+                        break;
+                }
+            }
+
+            @Override
+            public void onAdLoaded() {
+                closeApp = false;
+            }
+        });
+        interstitialAd.loadAd(new AdRequest.Builder().build());
+
         adView = findViewById(R.id.ad);
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.setAdListener(new AdListener(){
@@ -783,20 +833,24 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     {
         Log.d("PlayFragKey", " ON KEY DOWN ");
         FragmentManager fm = getSupportFragmentManager();
+        int current = pager.getCurrentItem();
 
-        if(playFragment.isSlided() && keyCode == KeyEvent.KEYCODE_BACK)
+        if(playFragment.isSlided() && keyCode == KeyEvent.KEYCODE_BACK && current == 0)
         {
             playFragment.slide();
             return true;
         }
-        if(keyCode == KeyEvent.KEYCODE_BACK && pager.getCurrentItem() == 1 && !historyFragment.adapter.getState())
+        if(keyCode == KeyEvent.KEYCODE_BACK && current == 1 && !historyFragment.adapter.getState())
         {
             if(historyFragment.getSearchView().isActionViewExpanded())
             {
                 historyFragment.getSearchView().collapseActionView();
                 return true;
             }
-            moveTaskToBack(true);
+            if(!noAdApp && !closeApp)
+                buildExitAd();
+            else if(closeApp || noAdApp)
+                moveTaskToBack(true);
             return true;
         }
         else if(keyCode == KeyEvent.KEYCODE_BACK && fm.getBackStackEntryCount() != 0)
@@ -816,6 +870,15 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             return true;
         }
         return false;
+    }
+
+    private void buildExitAd()
+    {
+        if(interstitialAd != null)
+        {
+            interstitialAd.setImmersiveMode(false);
+            interstitialAd.show();
+        }
     }
 
     @Override
@@ -912,6 +975,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             radioFragment.refreshFragment();
             tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
         }
+
     }
 
     private class SectionsPagerAdapter extends FragmentPagerAdapter

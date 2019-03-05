@@ -1,11 +1,14 @@
 package com.hfad.youplay.youtube.loaders;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
+import com.hfad.youplay.AudioService;
+import com.hfad.youplay.extractor.Audio;
 import com.hfad.youplay.extractor.YoutubeExtractor;
 
 
@@ -13,22 +16,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class UrlLoader extends AsyncTaskLoader<List<String>>
+public class UrlLoader extends AsyncTask<Void,Void,List<String>>
 {
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36";
     private static final String TAG = UrlLoader.class.getSimpleName();
     private String getYoutubeLink;
+    private Listener listener;
 
-    public UrlLoader(Context context, String getYoutubeLink)
+    public UrlLoader(String getYoutubeLink)
     {
-        super(context);
         this.getYoutubeLink = getYoutubeLink;
     }
 
-    @Nullable
+    public interface Listener{
+        void postExecute(List<String> list);
+    }
+
     @Override
-    public List<String> loadInBackground()
-    {
+    protected List<String> doInBackground(Void... voids) {
         List<String> data = new ArrayList<>();
         try
         {
@@ -48,5 +52,15 @@ public class UrlLoader extends AsyncTaskLoader<List<String>>
         Crashlytics.setString("last_action", "downloading failed: " + getYoutubeLink);
         Crashlytics.log("An error has occurred: " + getYoutubeLink);
         return null;
+    }
+
+    @Override
+    protected void onPostExecute(List<String> strings) {
+        if(listener != null && !AudioService.getInstance().isDestroyed())
+            listener.postExecute(strings);
+    }
+
+    public void setListener(Listener listener){
+        this.listener = listener;
     }
 }

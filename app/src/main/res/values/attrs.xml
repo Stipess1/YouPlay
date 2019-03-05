@@ -3,5 +3,6 @@
     <attr name="ViewBackground" format="reference"/>
     <attr name="spinner" format="reference"/>
     <attr name="info_button" format="reference"/>
+    <attr name="shuffle_button" format="reference"/>
     <attr name="tabLayout" format="reference"/>
 </resources>

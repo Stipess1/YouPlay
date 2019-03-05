@@ -161,7 +161,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
             }, 120);
 
             FrameLayout frameLayout = new FrameLayout(getActivity());
-            FrameLayout.LayoutParams params = new  FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
             params.leftMargin  = getResources().getDimensionPixelSize(R.dimen.dialog_margin);
             params.rightMargin = getResources().getDimensionPixelSize(R.dimen.dialog_margin);

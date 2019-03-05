@@ -3,6 +3,7 @@ package com.hfad.youplay.adapter;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -44,12 +45,14 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     private OnPlaylistSelected listener;
     private OnMusicSelected song_listener;
     private OnRadioSelected onRadioSelected;
+    private OnSwipeListener onswipeListener;
     private YouPlayDatabase db;
     private List<Music> list;
     private List<String> playlists = new ArrayList<>();
     private List<Station> stations = new ArrayList<>();
     private ListType play;
     private int position = -1;
+    private int lastPos;
 
     public PlaylistAdapter(Context context, int resource, List<Music> list, ListType play)
     {
@@ -57,6 +60,10 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         this.resource  = resource;
         this.list      = list;
         this.play      = play;
+    }
+
+    public interface OnSwipeListener{
+        void onSwipe(int position);
     }
 
     public void setStations(List<Station> stations)
@@ -119,20 +126,75 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         PLAYLIST_TABLE
     }
 
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
+
+        ItemTouchHelper.Callback callback = new ItemTouchHelper.Callback(){
+
+            @Override
+            public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                // Nezelimo swipe-at pjesmu koja trenutno svira
+                if(viewHolder.getAdapterPosition() == position || play == ListType.STATIONS)
+                    return makeMovementFlags(0,0);
+                return makeMovementFlags(0,
+                        ItemTouchHelper.RIGHT);
+            }
+
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder viewHolder1) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+                int adapterPos = viewHolder.getAdapterPosition();
+                if(play != ListType.STATIONS)
+                {
+                    list.remove(adapterPos);
+                    notifyItemRemoved(adapterPos);
+                    notifyItemRangeChanged(adapterPos, list.size());
+                    onswipeListener.onSwipe(list.indexOf(PlayFragment.currentlyPlayingSong));
+                }
+            }
+        };
+        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper.attachToRecyclerView(recyclerView);
+    }
+
     public void setListner(OnPlaylistSelected listner)
     {
         this.listener = listner;
     }
 
-    public void setListner(OnMusicSelected listener, OnRadioSelected onRadioSelected)
+    public List<Music> getList()
+    {
+        return list;
+    }
+
+    public void setListener(OnMusicSelected listener, OnRadioSelected onRadioSelected)
     {
         this.song_listener = listener;
         this.onRadioSelected = onRadioSelected;
     }
 
+    public void setOnSwipeListener(OnSwipeListener onSwipeListener)
+    {
+        this.onswipeListener = onSwipeListener;
+    }
+
     public void setCurrent(int position)
     {
         this.position = position;
+    }
+
+    public void setLastCurrent(int lastPos)
+    {
+        this.lastPos = lastPos;
+    }
+
+    public int getLastPos() {
+        return lastPos;
     }
 
     @Override
@@ -143,10 +205,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         if(play == ListType.SUGGESTIONS)
         {
             Music pjesma = list.get(position);
-
             holder.title.setText(pjesma.getTitle());
-
-
             if(this.position != position)
             {
                 holder.title.setTextColor(context.getResources().getColor(R.color.suggestions));

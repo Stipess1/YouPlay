@@ -48,7 +48,6 @@ public abstract class BaseFragment extends Fragment{
             }
         };
         handler.postDelayed(runnable, 200);
-
     }
 
     public abstract void buildAlertDialog(int position, View view);

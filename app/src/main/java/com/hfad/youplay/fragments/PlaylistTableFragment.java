@@ -29,6 +29,7 @@ import com.hfad.youplay.music.Music;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.ThemeManager;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.hfad.youplay.utils.Constants.DIALOG_NOW_PLAYING;
@@ -106,7 +107,7 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         if(database.ifItemExists(pjesma.getId()) && database.isDownloaded(pjesma.getId()))
         {
             pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
-            onItemClicked.onMusicClick(pjesma, data, title);
+            onItemClicked.onMusicClick(pjesma, data, title, false);
         }
         else
         {
@@ -134,6 +135,16 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         recyclerView = view.findViewById(R.id.playlist_recyclerView);
         try{
             data = YouPlayDatabase.getInstance(getContext()).getDataTable(title);
+            for(int i = 0; i < data.size(); i++)
+            {
+                Music pjesma = data.get(i);
+                if(!FileManager.getMediaFile(pjesma.getId()).exists())
+                {
+                    pjesma.setDownloaded(0);
+                    data.remove(i);
+                    data.add(i, pjesma);
+                }
+            }
         }catch (SQLiteException e)
         {
             Toast.makeText(getContext(), getString(R.string.playlist_error, title), Toast.LENGTH_SHORT).show();
@@ -162,7 +173,13 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     @Override
     public void onClick(Music pjesma, View view)
     {
-        onItemClicked.onMusicClick(pjesma, data, title);
+        onItemClicked.onMusicClick(pjesma, data, title, false);
+        setPlayScreen();
+    }
+
+    @Override
+    public void onShuffle() {
+        onItemClicked.onMusicClick(data.get(0), data, title, true);
         setPlayScreen();
     }
 
@@ -171,6 +188,16 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         data.clear();
         try{
             data.addAll(YouPlayDatabase.getInstance(getContext()).getDataTable(title));
+            for(int i = 0; i < data.size(); i++)
+            {
+                Music pjesma = data.get(i);
+                if(!FileManager.getMediaFile(pjesma.getId()).exists())
+                {
+                    pjesma.setDownloaded(0);
+                    data.remove(i);
+                    data.add(i, pjesma);
+                }
+            }
         }
         catch (SQLiteException e)
         {

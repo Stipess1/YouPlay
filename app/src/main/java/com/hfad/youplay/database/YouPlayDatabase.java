@@ -578,6 +578,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                        duration = Integer.toString(first) +":0"+ Integer.toString(convert);
                    else
                        duration = Integer.toString(first) +":"+ Integer.toString(convert);
+
                    pjesma.setDuration(duration);
                    music.add(pjesma);
                }

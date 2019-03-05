@@ -17,4 +17,6 @@ public interface OnMusicSelected {
     void onLongClick(Music pjesma, View v);
 
     void onInfoClicked(int position, View v);
+
+    void onShuffle();
 }

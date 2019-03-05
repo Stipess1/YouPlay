@@ -115,6 +115,7 @@
     <string name="downloading">Downloading</string>
     <string name="download_update_error">An error has occurred while trying to download an update.</string>
     <string name="download_error">An error has ouccurred, check if there is internet connection</string>
+    <string name="shuffle" translatable="false">Shuffle</string>
     <plurals name="songs">
         <item quantity="one">%d Song</item>
         <item quantity="other">%d Songs</item>

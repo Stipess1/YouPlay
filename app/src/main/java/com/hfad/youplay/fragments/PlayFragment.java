@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.Keep;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
@@ -53,7 +52,6 @@ import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.hfad.youplay.AudioService;
@@ -71,7 +69,6 @@ import com.hfad.youplay.radio.Country;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.Constants;
 import com.hfad.youplay.utils.FileManager;
-import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.UrlLoader;
 import com.hfad.youplay.youtube.loaders.YoutubeMusicLoader;
@@ -88,7 +85,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -119,7 +115,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     public SeekBar seekbar;
     public static Runnable runnable;
     public static Handler handler;
-    private ArrayList<Music> musicList;
+    private List<Music> musicList;
     private ArrayList<Music> tempList;
     public int position;
     private int lastPost;
@@ -134,6 +130,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private ArrayList<String> lists = new ArrayList<>();
     private ArrayAdapter<String> spinnerAdapter;
     private AsyncTask databaseHandler;
+    private UrlLoader urlLoader;
 
     private String getYoutubeLink;
     private RecyclerView recyclerView;
@@ -170,6 +167,10 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public boolean isSlided() {
         return slided;
+    }
+
+    public void setMusicList(List<Music> musicList) {
+        this.musicList = musicList;
     }
 
     public ArrayList<Station> getStations()
@@ -246,7 +247,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         spinner             = view.findViewById(R.id.spinner);
 
         currentlyTitle.setSelected(true);
-        adapter.setListner(this, this);
+        adapter.setListener(this, this);
+        adapter.setOnSwipeListener(new PlaylistAdapter.OnSwipeListener() {
+            @Override
+            public void onSwipe(int position) {
+                setCurrentDeleted(position);
+            }
+        });
         recyclerView.setAdapter(adapter);
         linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -349,7 +356,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                             if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
                             {
                                 suggestionBar.setVisibility(View.GONE);
-                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, table);
+                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, table, false);
                             }
                             suggestionBar.setVisibility(View.GONE);
                         }
@@ -376,7 +383,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                             if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
                             {
                                 suggestionBar.setVisibility(View.GONE);
-                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, getResources().getString(R.string.you_history));
+                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, getResources().getString(R.string.you_history), false);
                             }
                             suggestionBar.setVisibility(View.GONE);
                         }
@@ -573,6 +580,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void setMusic(Music pjesma, List<Music> pjesme)
     {
+
         if(!db.ifItemExists(pjesma.getId()) && pjesma.getDownloaded() == 0)
         {
             Log.d(TAG, "Prvi if");
@@ -650,24 +658,33 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     public void onLongClick(Music pjesma, View v)
     {
 
-        if(tempList.size() > 0 && !pjesma.equals(currentlyPlayingSong))
-        {
-            int position = tempList.indexOf(pjesma);
-            tempList.remove(pjesma);
-            adapter.notifyItemRemoved(position);
-            adapter.notifyItemRangeChanged(position, tempList.size());
-
-            setCurrent(tempList.indexOf(currentlyPlayingSong));
-        }
+        // Dodati nesto drugo posto koristimo sad swipe da uklonimo pjesmu
+//        if(tempList.size() > 0 && !pjesma.equals(currentlyPlayingSong))
+//        {
+//            int position = tempList.indexOf(pjesma);
+//            tempList.remove(pjesma);
+//            adapter.notifyItemRemoved(position);
+//            adapter.notifyItemRangeChanged(position, tempList.size());
+//
+//            setCurrentDeleted(tempList.indexOf(currentlyPlayingSong));
+//        }
 
     }
 
-    public void setCurrent(final int position)
-    {
-        Log.d(TAG, "SetCurrent pos: " + position);
+    @Override
+    public void onShuffle() {
+
+    }
+
+    /**
+     * Kada obrisemo pjesmu prilikom dugog klika u ekranu za reproduciranje
+     * moramo obavjestit adapter i time ponovno istaknuti koja pjesma se
+     * reproducira
+     * @param position pozicija na kojoj se pjesma nalazi
+     */
+    private void setCurrentDeleted(int position){
         this.position = position;
 
-        recyclerView.scrollToPosition(position);
         adapter.setCurrent(position);
 
         if(position >= 0)
@@ -678,6 +695,25 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
 
         lastPost = position;
+        adapter.setLastCurrent(lastPost);
+    }
+
+    public void setCurrent(final int position)
+    {
+        this.position = position;
+
+        recyclerView.scrollToPosition(position);
+        adapter.setCurrent(position);
+
+        if(position >= 0)
+        {
+            adapter.notifyItemChanged(adapter.getLastPos());
+            // tako da mozemo postavit grey BG na trenutnu pjesmu
+            adapter.notifyItemChanged(position);
+        }
+
+        lastPost = position;
+        adapter.setLastCurrent(lastPost);
     }
 
     public void refreshList(List<Station> postaje)
@@ -688,7 +724,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void refreshList(List<Music> pjesme, boolean queue)
     {
-        Log.d(TAG, "refreshList size: " + pjesme.size());
+
         adapter.reloadList(pjesme);
 
         if(!queue)
@@ -968,6 +1004,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     }
 
+    public void setShuffled()
+    {
+        shuffled = true;
+        this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
+        audioService.setShuffled(shuffled);
+    }
+
     public void checkShuffle()
     {
         if(!shuffled)
@@ -1001,8 +1044,12 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(musicList != null && !audioService.getIsStream())
         {
             position += 1;
-            Music pjesma = null;
+            for(int i = 0; i < tempList.size(); i++){
+                Log.d(TAG, "Position: "+ i +" "+ tempList.get(i).getTitle());
+            }
+            Log.d(TAG, "Pos: " + position);
 
+            Music pjesma = null;
             if(replay && position >= tempList.size())
             {
                 position = 0;
@@ -1106,12 +1153,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(audioService.exoPlayer.getPlayWhenReady() && !update)
         {
             audioService.exoPlayer.setPlayWhenReady(false);
-            play_pause.setForeground(getResources().getDrawable(R.drawable.play));
+            if(isAdded())
+                play_pause.setForeground(getResources().getDrawable(R.drawable.play));
         }
         else if(!audioService.exoPlayer.getPlayWhenReady() && !update)
         {
             audioService.exoPlayer.setPlayWhenReady(true);
-            play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
+            if(isAdded())
+                play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
             playCycle();
         }
         else
@@ -1364,44 +1413,58 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         downloadSong(pjesma, false);
     }
 
-    public void downloadSong(final Music pjesma, final boolean relatedVideos)
-    {
+    public void downloadSong(final Music pjesma, final boolean relatedVideos) {
         Activity activity = getActivity();
-        if(activity instanceof MainActivity)
-            ((MainActivity)getActivity()).pager.setCurrentItem(0);
+        if (activity instanceof MainActivity)
+            ((MainActivity) getActivity()).pager.setCurrentItem(0);
 
         bar.setVisibility(View.VISIBLE);
         getYoutubeLink = YOUTUBELINK + pjesma.getId();
 
-        getActivity().getSupportLoaderManager().restartLoader(9, null, new LoaderManager.LoaderCallbacks<List<String>>() {
-            @NonNull
-            @Override
-            public Loader<List<String>> onCreateLoader(int id, @Nullable Bundle args)
-            {
-                return new UrlLoader(getContext(), getYoutubeLink);
-            }
+        if(urlLoader != null)
+            urlLoader.cancel(true);
 
+        urlLoader = new UrlLoader(getYoutubeLink);
+        urlLoader.setListener(new UrlLoader.Listener() {
             @Override
-            public void onLoadFinished(@NonNull Loader<List<String>> loader, List<String> data) {
-                if(data != null)
-                {
+            public void postExecute(List<String> data) {
+                if (data != null) {
                     pjesma.setPath(data.get(1));
                     pjesma.setUrlImage(data.get(0));
                     urlExists(pjesma, relatedVideos);
-                }
-                else
-                {
+                } else {
                     Toast.makeText(getContext(), getResources().getString(R.string.cant_extract), Toast.LENGTH_SHORT).show();
                     bar.setVisibility(View.GONE);
                 }
             }
+        });
+        urlLoader.execute();
 
-            @Override
-            public void onLoaderReset(@NonNull Loader<List<String>> loader) {
-
-            }
-
-        }).forceLoad();
+//        getActivity().getSupportLoaderManager().restartLoader(9, null, new LoaderManager.LoaderCallbacks<List<String>>() {
+//            @NonNull
+//            @Override
+//            public Loader<List<String>> onCreateLoader(int id, @Nullable Bundle args) {
+//                return new UrlLoader(getContext(), getYoutubeLink);
+//            }
+//
+//            @Override
+//            public void onLoadFinished(@NonNull Loader<List<String>> loader, List<String> data) {
+//                if (data != null) {
+//                    pjesma.setPath(data.get(1));
+//                    pjesma.setUrlImage(data.get(0));
+//                    urlExists(pjesma, relatedVideos);
+//                } else {
+//                    Toast.makeText(getContext(), getResources().getString(R.string.cant_extract), Toast.LENGTH_SHORT).show();
+//                    bar.setVisibility(View.GONE);
+//                }
+//            }
+//
+//            @Override
+//            public void onLoaderReset(@NonNull Loader<List<String>> loader) {
+//
+//            }
+//
+//        }).forceLoad();
     }
 
     private void updateTable(Music pjesma)
@@ -1416,7 +1479,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(pjesma.getDownloaded() == 0)
             setMusic(pjesma, tempList);
 
-        onItemClicked.refresh(pjesma);
+        if(isAdded())
+            onItemClicked.refresh(pjesma);
     }
 
     @Override
@@ -1466,7 +1530,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
                 @Override
                 public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-                    if(cause == EndCause.COMPLETED)
+                    if(cause == EndCause.COMPLETED && isAdded())
                     {
                         Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
                         seekbar.setSecondaryProgress(seekbar.getMax());
@@ -1474,9 +1538,10 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
                         updateTable(pjesma);
                         onItemClicked.refreshSearchList(pjesma);
+                        onItemClicked.refreshPlaylist();
                         Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
                     }
-                    else if(cause == EndCause.ERROR)
+                    else if(cause == EndCause.ERROR && isAdded())
                     {
                         bar.setVisibility(View.GONE);
                         if(Utils.freeSpace(true) < 20)

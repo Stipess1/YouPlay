@@ -10,6 +10,7 @@
         <item name="alertDialogTheme">@style/DialogLight</item>
         <item name="android:colorBackground">@android:color/white</item>
         <item name="ViewBackground">@android:color/white</item>
+        <item name="shuffle_button">@drawable/shuffle_dark</item>
         <item name="info_button">@drawable/info</item>
         <item name="tabLayout">@color/adapter_color</item>
         <item name="android:textColor">@color/play_fragment_bars</item>
@@ -23,6 +24,7 @@
         <item name="colorAccent">@color/grey</item>
         <item name="alertDialogTheme">@style/DialogDark</item>
         <item name="android:textColor">@color/white</item>
+        <item name="shuffle_button">@drawable/shuffle</item>
         <item name="android:colorBackground">@color/play_fragment_bars</item>
         <item name="ViewBackground">@color/play_fragment_bars</item>
         <item name="info_button">@drawable/info_dark</item>

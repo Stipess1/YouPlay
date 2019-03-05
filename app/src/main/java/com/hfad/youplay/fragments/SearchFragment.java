@@ -47,6 +47,7 @@ import com.hfad.youplay.Ilisteners.OnMusicSelected;
 import com.hfad.youplay.music.Music;
 
 import com.hfad.youplay.utils.FileManager;
+import com.hfad.youplay.utils.SeparatorDecoration;
 import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.SuggestionLoader;
@@ -72,7 +73,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
     public RecyclerView recyclerView;
     public ProgressBar progressBar;
     private SearchAdapter videoAdapter;
-    private DividerItemDecoration dividerItemDecoration;
+    private SeparatorDecoration dividerItemDecoration;
     private ArrayList<Music> musicList = new ArrayList<>();
     private Context context;
     private TextView internet, noResult;
@@ -108,8 +109,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         videoAdapter.setListener(this);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
-        dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), linearLayoutManager.getOrientation());
-        dividerItemDecoration.setDrawable(getActivity().getResources().getDrawable(ThemeManager.getDividerColor()));
+        dividerItemDecoration = new SeparatorDecoration(getResources().getColor(ThemeManager.getDividerColorSearch()), 2);
+//        dividerItemDecoration.setDrawable(getActivity().getResources().getDrawable(ThemeManager.getDividerColor()));
 //        recyclerView.addItemDecoration(dividerItemDecoration);
 
 
@@ -239,7 +240,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         {
             final Context context = recyclerView.getContext();
             final LayoutAnimationController controller =
-                    AnimationUtils.loadLayoutAnimation(context, R.anim.animation_fall_down);
+                    AnimationUtils.loadLayoutAnimation(context, R.anim.from_bottom);
 
             recyclerView.setLayoutAnimation(controller);
             recyclerView.getAdapter().notifyDataSetChanged();
@@ -403,7 +404,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId()))
         {
             audioService.exoPlayer.setPlayWhenReady(false);
-            musicClicked.onMusicClick(pjesma, null, "---");
+            musicClicked.onMusicClick(pjesma, null, "---", false);
         }
         else
         {
@@ -421,6 +422,11 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
     }
 
     @Override
+    public void onShuffle() {
+
+    }
+
+    @Override
     public void buildAlertDialog(int position, View view)
     {
         final Music pjesma = musicList.get(position);
@@ -431,15 +437,15 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                     public void onClick(DialogInterface dialogInterface, int i) {
                         switch (i) {
                             case DIALOG_NOW_PLAYING:
-                                SearchFragment.this.setPlayingIfNotDownloaded(pjesma);
+                                setPlayingIfNotDownloaded(pjesma);
                                 break;
                             case 1:
                                 Intent appIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + pjesma.getId()));
                                 Intent webIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + pjesma.getId()));
                                 try {
-                                    SearchFragment.this.getContext().startActivity(appIntent);
+                                    getContext().startActivity(appIntent);
                                 } catch (ActivityNotFoundException ex) {
-                                    SearchFragment.this.getContext().startActivity(webIntent);
+                                    getContext().startActivity(webIntent);
                                 }
                         }
                     }

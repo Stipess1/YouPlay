@@ -24,11 +24,10 @@ public class AudioOutputListener extends BroadcastReceiver{
         {
             if(intent.getAction().equals(AudioManager.ACTION_AUDIO_BECOMING_NOISY) && AudioService.getInstance().exoPlayer.getPlayWhenReady())
             {
+                Toast.makeText(context, R.string.headphones, Toast.LENGTH_SHORT).show();
                 Intent newIntent = new Intent(context, AudioService.class);
                 newIntent.putExtra(AudioService.ACTION, PLAY_PAUSE_SONG);
                 context.startService(newIntent);
-
-                Toast.makeText(context, R.string.headphones, Toast.LENGTH_SHORT).show();
             }
         }
 

@@ -18,6 +18,7 @@ public class Music implements Serializable{
     private Bitmap image;
     private String url;
     private String path;
+    private int position;
     private int downloaded;
 
     public Music(String title, String author, String duration, String id, String views, Bitmap image)
