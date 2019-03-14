@@ -57,6 +57,14 @@
             android:name="io.fabric.ApiKey"
             android:value="20abb64c19512844bef79078690b2fa5a9d9426c" />
 
+        <meta-data
+            android:name="com.google.android.gms.ads.ca-app-pub-8163593086331416~1012493107"
+            android:value="[ca-app-pub-8163593086331416~1012493107]"/>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.AD_MANAGER_APP"
+            android:value="true" />
+
         <receiver
             android:name=".listeners.ButtonListener"
             android:exported="false" />

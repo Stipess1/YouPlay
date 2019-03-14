@@ -1,14 +1,9 @@
 package com.hfad.youplay.youtube.loaders;
 
-import android.content.Context;
 import android.os.AsyncTask;
-import android.support.annotation.Nullable;
-import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import com.crashlytics.android.Crashlytics;
 import com.hfad.youplay.AudioService;
-import com.hfad.youplay.extractor.Audio;
 import com.hfad.youplay.extractor.YoutubeExtractor;
 
 
@@ -56,7 +51,8 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
 
     @Override
     protected void onPostExecute(List<String> strings) {
-        if(listener != null && !AudioService.getInstance().isDestroyed())
+        AudioService audioService = AudioService.getInstance();
+        if(listener != null && audioService != null && !audioService.isDestroyed())
             listener.postExecute(strings);
     }
 

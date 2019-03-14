@@ -124,7 +124,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private boolean replay = false;
     private PlaylistAdapter adapter;
     private ArrayList<Station> stations;
-    private LinearLayoutManager linearLayoutManager;
     private OnItemClicked onItemClicked;
     // Spinner
     private ArrayList<String> lists = new ArrayList<>();
@@ -132,7 +131,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private AsyncTask databaseHandler;
     private UrlLoader urlLoader;
 
-    private String getYoutubeLink;
+    private Context context;
     private RecyclerView recyclerView;
 
     private boolean slided = false;
@@ -156,6 +155,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        this.context = context;
         onItemClicked = (OnItemClicked) getActivity();
     }
 
@@ -255,7 +255,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             }
         });
         recyclerView.setAdapter(adapter);
-        linearLayoutManager = new LinearLayoutManager(getActivity());
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
@@ -1419,7 +1419,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             ((MainActivity) getActivity()).pager.setCurrentItem(0);
 
         bar.setVisibility(View.VISIBLE);
-        getYoutubeLink = YOUTUBELINK + pjesma.getId();
+        String getYoutubeLink = YOUTUBELINK + pjesma.getId();
 
         if(urlLoader != null)
             urlLoader.cancel(true);
@@ -1428,13 +1428,16 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         urlLoader.setListener(new UrlLoader.Listener() {
             @Override
             public void postExecute(List<String> data) {
-                if (data != null) {
+                if (data != null && data.get(1) != null) {
                     pjesma.setPath(data.get(1));
                     pjesma.setUrlImage(data.get(0));
                     urlExists(pjesma, relatedVideos);
                 } else {
-                    Toast.makeText(getContext(), getResources().getString(R.string.cant_extract), Toast.LENGTH_SHORT).show();
-                    bar.setVisibility(View.GONE);
+                    if(getContext() != null)
+                    {
+                        Toast.makeText(getContext(), getResources().getString(R.string.cant_extract), Toast.LENGTH_SHORT).show();
+                        bar.setVisibility(View.GONE);
+                    }
                 }
             }
         });
@@ -1495,7 +1498,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     private void download(final Music pjesma)
     {
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         boolean fastDownload = preferences.getBoolean(getResources().getString(R.string.check_download), false);
         boolean cacheMode = preferences.getBoolean(Constants.CACHE_MODE, true);
         Log.d(TAG, "FastDownload enabled: " + fastDownload);

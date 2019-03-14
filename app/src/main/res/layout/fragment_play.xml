@@ -259,15 +259,15 @@
                 <TextView
                     android:id="@+id/autoplay"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginTop="8dp"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical|end"
                     android:layout_marginEnd="8dp"
-                    android:layout_marginBottom="8dp"
                     android:fontFamily="sans-serif-light"
+                    android:gravity="center"
                     android:text="@string/autoplay"
+                    android:textAlignment="center"
                     android:textColor="@color/seekbar_progress"
-                    app:layout_constraintBottom_toTopOf="@+id/play_suggestion_list"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
             </android.support.constraint.ConstraintLayout>
