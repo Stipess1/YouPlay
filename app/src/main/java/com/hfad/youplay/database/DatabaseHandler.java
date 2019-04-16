@@ -42,6 +42,7 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
             else
             {
                 database = db.getDatabase(YouPlayDatabase.PLAYLIST_DB);
+                if(database != null)
                 for(Music pjesma : pjesme)
                     db.insertInTable(pjesma, tableName);
             }
@@ -51,7 +52,7 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
             database = db.getDatabase(YouPlayDatabase.YOUPLAY_DB);
             if(type == UpdateType.ADD)
             {
-                if(!db.ifItemExists(pjesma.getId()))
+                if(!db.ifItemExists(pjesma.getId()) && database != null)
                     YouPlayDatabase.insertSong(database, pjesma);
                 else if(pjesma.getDownloaded() == 1)
                     db.updateSong(DOWNLOADED, pjesma);

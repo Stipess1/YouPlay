@@ -149,8 +149,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             musicList.clear();
                             musicList.addAll(data);
 
-//                            videoAdapter.notifyDataSetChanged();
-                            runLayoutAnimation();
+                            videoAdapter.notifyDataSetChanged();
+//                            runLayoutAnimation();
                             recyclerView.smoothScrollToPosition(0);
 
                             recyclerView.setVisibility(View.VISIBLE);

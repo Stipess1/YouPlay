@@ -12,7 +12,6 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:fontFamily="sans-serif-light"
-        android:foreground="?android:attr/selectableItemBackground"
         android:padding="8dp"
         android:textSize="16sp"
         android:ellipsize="end"
@@ -30,7 +29,6 @@
         android:fontFamily="sans-serif-thin"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="@color/downloaded"
-        android:foreground="?android:attr/selectableItemBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 </android.support.constraint.ConstraintLayout>

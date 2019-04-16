@@ -135,7 +135,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             @Override
             public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                 // Nezelimo swipe-at pjesmu koja trenutno svira
-                if(viewHolder.getAdapterPosition() == position || play == ListType.STATIONS)
+                if(viewHolder.getAdapterPosition() == position || play == ListType.PLAYLIST_TABLE || play == ListType.STATIONS)
                     return makeMovementFlags(0,0);
                 return makeMovementFlags(0,
                         ItemTouchHelper.RIGHT);

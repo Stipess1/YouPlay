@@ -435,7 +435,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     {
         int position = lists.indexOf(table);
         currentTable = table;
-        audioService.setCurrentTable(currentTable);
+        if(audioService != null)
+            audioService.setCurrentTable(currentTable);
         spinner.setSelection(position);
     }
 
@@ -1338,7 +1339,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private void playSong(Music pjesma)
     {
         currentlyPlayingSong = pjesma;
-        Glide.with(this).load(FileManager.getPictureFile(pjesma.getId())).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
+        if(isAdded())
+            Glide.with(this).load(FileManager.getPictureFile(pjesma.getId())).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
 
         seekbar.setProgress(0);
         suggestionBar.setVisibility(View.GONE);
@@ -1428,7 +1430,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         urlLoader.setListener(new UrlLoader.Listener() {
             @Override
             public void postExecute(List<String> data) {
-                if (data != null && data.get(1) != null) {
+                if (data != null && data.get(1) != null && !AudioService.getInstance().isDestroyed()) {
                     pjesma.setPath(data.get(1));
                     pjesma.setUrlImage(data.get(0));
                     urlExists(pjesma, relatedVideos);

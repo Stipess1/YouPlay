@@ -277,7 +277,9 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         SQLiteDatabase db = getDatabase(YOUPLAY_DB);
         ArrayList<Station> stations = new ArrayList<>();
         String query = "SELECT * FROM " + "RADIO" + " ORDER BY _id " + getOrder();
-        Cursor data = db.rawQuery(query, null);
+        Cursor data = null;
+        if(db != null)
+            data = db.rawQuery(query, null);
 
         if(data != null && data.moveToFirst())
         {
@@ -330,7 +332,13 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         Crashlytics.setBool("File_exists", FileManager.getRootPath().exists());
         Crashlytics.setString("More_info", "freeSpace: " + Utils.freeSpace(true) + " Path: "
                 + FileManager.getRootPath().getAbsolutePath());
-        return SQLiteDatabase.openOrCreateDatabase(getPath(database), null);
+        try{
+            return SQLiteDatabase.openOrCreateDatabase(getPath(database), null);
+        }catch (Exception e)
+        {
+            return null;
+        }
+
     }
 
     /*
@@ -546,7 +554,9 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         SQLiteDatabase db = getDatabase(YOUPLAY_DB);
         ArrayList<Music> music = new ArrayList<>();
         String query = "SELECT * FROM " + TABLE_NAME + " ORDER BY _id " + getOrder();
-        Cursor data = db.rawQuery(query, null);
+        Cursor data = null;
+        if(db != null)
+            data = db.rawQuery(query, null);
 
            if(data != null && data.moveToFirst())
            {

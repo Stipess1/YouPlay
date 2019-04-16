@@ -121,6 +121,8 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 Music to = data.get(targetPos);
                 int toPos = youPlayDatabase.getIdOrder(to.getId(), tableName);
 
+
+                // Ovo treba async
                 ContentValues newValues = new ContentValues();
                 newValues.put(TITLE, from.getTitle());
                 newValues.put(ID, from.getId());
