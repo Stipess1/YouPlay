@@ -96,9 +96,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = false;
+    public static final boolean noAdApp = true;
     // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
-    public static final boolean isGooglePlay = true;
+    // i mora biti false za ovo za korisnike koji nemaju reklame
+    public static final boolean isGooglePlay = false;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
 

@@ -111,6 +111,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private boolean shuffled = false;
     private boolean alarm = false;
     private boolean alarmEnded = false;
+    private boolean replaySong = false;
 
 
     public AudioService()
@@ -265,6 +266,16 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     public void setReplay(boolean replay) {
         this.replay = replay;
+    }
+
+    public void setReplaySong(boolean replaySong)
+    {
+        this.replaySong = replaySong;
+    }
+
+    public boolean isReplaySong()
+    {
+        return replaySong;
     }
 
     public boolean isAutoPlaybool() {

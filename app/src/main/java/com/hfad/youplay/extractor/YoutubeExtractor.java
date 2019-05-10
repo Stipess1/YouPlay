@@ -1,10 +1,18 @@
 package com.hfad.youplay.extractor;
 
+import android.util.Log;
+
 import com.grack.nanojson.JsonObject;
 import com.grack.nanojson.JsonParser;
+import com.hfad.youplay.database.YouPlayDatabase;
+import com.hfad.youplay.music.Music;
+import com.hfad.youplay.utils.FileManager;
+import com.hfad.youplay.utils.Utils;
+
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.mozilla.javascript.Context;
 import org.mozilla.javascript.Function;
 import org.mozilla.javascript.ScriptableObject;
@@ -15,10 +23,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class YoutubeExtractor {
 
+    private static final String TAG = YoutubeExtractor.class.getSimpleName();
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36";
     private  static String DECRYPTION_SIGNATURE_FUNCTION_REGEX =
             "(\\w+)\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;";
@@ -31,20 +41,29 @@ public class YoutubeExtractor {
 
     private String url = "https://www.youtube.com/watch?v=B6L-dViA4Vc";
     private String id = "B6L-dViA4Vc";
-    private String decryptUrl = "https://youplayandroid.com/decrypt/decrypt.json";
+    private final static String DECRYPT_URL = "https://youplayandroid.com/decrypt/decrypt.json";
+    private static final String HTTPS = "https:";
 
     private Document document;
     private JsonObject playerArgs;
+    private List<Music> musicList = new ArrayList<>();
+    private List<Music> checkList = new ArrayList<>();
     private final Map<String, String> videoInfoPage = new HashMap<>();
+
+    public List<Music> getMusicList()
+    {
+        return musicList;
+    }
 
     public void parse(String url)
     {
+        checkList.addAll(YouPlayDatabase.getInstance().getData());
         this.url = url;
         id = url.substring(32);
         Connection connect = Jsoup.connect(url);
         try{
 
-            URL url1 = new URL(decryptUrl);
+            URL url1 = new URL(DECRYPT_URL);
             HttpURLConnection urlConnection = (HttpURLConnection) url1.openConnection();
             urlConnection.setRequestProperty("User-Agent", USER_AGENT);
             urlConnection.connect();
@@ -60,14 +79,14 @@ public class YoutubeExtractor {
             }
 
             String pageContent = connect.get().html();
-            document = Jsoup.parse(pageContent);
+            document = Jsoup.parse(pageContent, url);
 
             String playerUrl;
             if(pageContent.contains("<meta property=\"og:restrictions:age"))
             {
                 EmbeddedInfo info = getImbeddedInfo();
                 String audioInfo = getAudioInfoUrl(id, info.sts);
-                String infoPageResponse = Jsoup.connect(audioInfo).get().html();
+                String infoPageResponse = downloadPage(audioInfo);
                 videoInfoPage.putAll(Parser.compatParseMap(infoPageResponse));
                 playerUrl = info.url;
                 //Age restricted
@@ -84,6 +103,7 @@ public class YoutubeExtractor {
             if(decryptionCode.isEmpty())
                 decryptionCode = decryptionCodeLoad(playerUrl);
 
+            musicList.addAll(getRelatedVideos());
         }
         catch (Exception e)
         {
@@ -220,6 +240,48 @@ public class YoutubeExtractor {
         return null;
     }
 
+    private String download(String siteUrl, Map<String, String> customProperties) throws IOException {
+        URL url = new URL(siteUrl);
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        BufferedReader in = null;
+        StringBuilder response = new StringBuilder();
+        try {
+            con.setRequestMethod("GET");
+            con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36");
+
+            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+            String inputLine;
+            while((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+        } catch(UnknownHostException uhe) {//thrown when there's no internet connection
+            throw new IOException("unknown host or no network", uhe);
+            //Toast.makeText(getActivity(), uhe.getMessage(), Toast.LENGTH_LONG).show();
+        } catch(Exception e) {
+            /*
+             * HTTP 429 == Too Many Request
+             * Receive from Youtube.com = ReCaptcha challenge request
+             * See : https://github.com/rg3/youtube-dl/issues/5138
+             */
+            if (con.getResponseCode() == 429) {
+                throw new IOException("reCaptcha Challenge requested");
+            }
+            throw new IOException(e);
+        } finally {
+            if(in != null) {
+                in.close();
+            }
+        }
+
+        return response.toString();
+    }
+
+    public String downloadPage(String siteUrl) throws IOException{
+        Map<String, String> requestProperties = new HashMap<>();
+        return download(siteUrl, requestProperties);
+    }
+
     private String download(String siteUrl) throws IOException
     {
         URL url = new URL(siteUrl);
@@ -314,6 +376,120 @@ public class YoutubeExtractor {
         return "https://www.youtube.com/get_video_info?" + "video_id=" + id +
                 "&eurl=https://youtube.googleapis.com/v/" + id +
                 "&sts=" + sts + "&ps=default&gl=US&hl=en";
+    }
+
+    private List<Music> getRelatedVideos()
+    {
+        List<Music> musicList = new ArrayList<>();
+        Element ul = document.select("ul[id=\"watch-related\"]").first();
+        if(ul != null)
+        {
+            for(Element li : ul.children())
+            {
+                // prvo pogledati dali postoji playlista, ako da ne gledaj ju
+                if(li.select("a[class*=\"content-link\"]").first() != null)
+                {
+
+                        String title = li.select("span.title").first().text();
+                        String id = li.select("a.content-link").first().attr("abs:href").substring(32);
+                        String temp = li.select("span[class=\"accessible-description\"]").first().text().replaceAll("\\D+","");
+
+                        int number = Integer.parseInt(temp);
+                        String time = Integer.toString(number);
+                        time = formatDuration(time);
+                        Music music = new Music();
+                        music.setTitle(title);
+                        music.setId(id);
+                        music.setDuration(time);
+                        Log.d(TAG, ""+li);
+                        music.setAuthor(getUploaderName(li));
+
+                        music.setViews(Utils.convertViewsToString(getViewCount(li)));
+                        music.setUrlImage(getThumbnail(li));
+                        for(Music pjesma : checkList)
+                        {
+                            if(pjesma.getId().equals(music.getId()))
+                            {
+                                if(pjesma.getDownloaded() == 1)
+                                {
+                                    music.setPath(FileManager.getMediaPath(music.getId()));
+                                    music.setDownloaded(1);
+                                }
+                            }
+                        }
+                        musicList.add(music);
+
+
+                }
+            }
+        }
+
+        return musicList;
+    }
+
+    private String formatDuration(String time)
+    {
+        if(time.length() == 3)
+        {
+            String first = time.substring(0,1);
+            first = first + ":";
+            time = first + time.substring(1,3);
+        }
+        else if(time.length() == 4)
+        {
+            String first = time.substring(0,2);
+            first = first + ":";
+            time = first + time.substring(2,4);
+        }
+        else if(time.length() == 5)
+        {
+            String first = time.substring(0,1);
+            first = first + ":";
+            String second = first + time.substring(1,3);
+            time = second + ":" + time.substring(3,5);
+        }
+        else if(time.length() == 6)
+        {
+            String first = time.substring(0,2);
+            first = first + ":";
+            String second = first + time.substring(2,4);
+            time = second + ":" + time.substring(4,6);
+        }
+        return time;
+    }
+
+    private String getThumbnail(Element li)
+    {
+        Element img = li.select("img").first();
+        String thumbnailUrl = img.attr("abs:src");
+        // Sometimes youtube sends links to gif files which somehow seem to not exist
+        // anymore. Items with such gif also offer a secondary image source. So we are going
+        // to use that if we caught such an item.
+        if (thumbnailUrl.contains(".gif")) {
+            thumbnailUrl = img.attr("data-thumb");
+        }
+        if (thumbnailUrl.startsWith("//")) {
+            thumbnailUrl = HTTPS + thumbnailUrl;
+        }
+        return thumbnailUrl;
+    }
+
+    private long getViewCount(Element li)
+    {
+        try {
+
+            return Long.parseLong(Utils.removeNonDigitCharacters(
+                    li.select("span.view-count").first().text()));
+        } catch (Exception e) {
+            //related videos sometimes have no view count
+            return 0;
+        }
+    }
+
+    private String getUploaderName(Element li)
+    {
+        return li.select("span[class*=\"attribution\"]").first()
+                .select("span").first().text();
     }
 
     private class EmbeddedInfo {

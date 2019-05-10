@@ -19,8 +19,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -71,7 +69,6 @@ import com.hfad.youplay.utils.Constants;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.UrlLoader;
-import com.hfad.youplay.youtube.loaders.YoutubeMusicLoader;
 import com.liulishuo.okdownload.DownloadListener;
 import com.liulishuo.okdownload.DownloadSerialQueue;
 import com.liulishuo.okdownload.DownloadTask;
@@ -122,6 +119,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private int currentProgress;
     private boolean wasPlaying = false;
     private boolean replay = false;
+    private boolean replaySong = false;
     private PlaylistAdapter adapter;
     private ArrayList<Station> stations;
     private OnItemClicked onItemClicked;
@@ -463,6 +461,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
 
         replay = audioService.isReplay();
+        replaySong = audioService.isReplaySong();
         autoPlaybool = audioService.isAutoPlaybool();
 
         if(replay)
@@ -900,7 +899,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     {
         if(replay)
         {
-            replay = false;
+            if(!replaySong)
+                replaySong = true;
+            else
+            {
+                replaySong = false;
+                replay = false;
+            }
             replayF.setForeground(getResources().getDrawable(R.drawable.replay));
         }
         else
@@ -908,6 +913,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             replay = true;
             replayF.setForeground(getResources().getDrawable(R.drawable.replay_pressed));
         }
+        audioService.setReplaySong(replaySong);
         audioService.setReplay(replay);
     }
 
@@ -1045,17 +1051,17 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(musicList != null && !audioService.getIsStream())
         {
             position += 1;
-            for(int i = 0; i < tempList.size(); i++){
-                Log.d(TAG, "Position: "+ i +" "+ tempList.get(i).getTitle());
-            }
-            Log.d(TAG, "Pos: " + position);
 
             Music pjesma = null;
-            if(replay && position >= tempList.size())
+            if(replay && replaySong)
+            {
+                pjesma = tempList.get(position-1);
+            }
+            else if(replay && position >= tempList.size())
             {
                 position = 0;
             }
-            if(position < tempList.size())
+            else if(position < tempList.size())
             {
                 pjesma = tempList.get(position);
                 setCurrent(position);
@@ -1426,14 +1432,23 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(urlLoader != null)
             urlLoader.cancel(true);
 
-        urlLoader = new UrlLoader(getYoutubeLink);
+        urlLoader = new UrlLoader(getYoutubeLink, relatedVideos);
         urlLoader.setListener(new UrlLoader.Listener() {
             @Override
             public void postExecute(List<String> data) {
-                if (data != null && data.get(1) != null && !AudioService.getInstance().isDestroyed()) {
+                if (data != null && data.get(1) != null && isAdded()) {
                     pjesma.setPath(data.get(1));
                     pjesma.setUrlImage(data.get(0));
-                    urlExists(pjesma, relatedVideos);
+                    urlExists(pjesma);
+                    if(relatedVideos)
+                    {
+                        tempList.clear();
+                        tempList.addAll(urlLoader.getMusicList());
+                        tempList.add(0, pjesma);
+                        suggestionBar.setVisibility(View.GONE);
+                        refreshList(tempList, false);
+                        audioService.setMusicList(tempList);
+                    }
                 } else {
                     if(getContext() != null)
                     {
@@ -1557,12 +1572,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
     }
 
-    private void urlExists(final Music pjesma, final boolean relatedVideos)
+    private void urlExists(final Music pjesma)
     {
         seekbar.setSecondaryProgress(0);
+        if(context == null) return;
         if(!deleteMedia)
         {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
             boolean fastDownload = preferences.getBoolean(getResources().getString(R.string.check_download), false);
             boolean cacheMode = preferences.getBoolean(Constants.CACHE_MODE, true);
 
@@ -1647,31 +1663,31 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
         deleteMedia = false;
 
-        if(relatedVideos)
-        {
-            getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
-                @Override
-                public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
-                    suggestionBar.setVisibility(View.VISIBLE);
-                    return new YoutubeMusicLoader(getContext(), pjesma.getId(), true);
-                }
-
-                @Override
-                public void onLoadFinished(Loader<List<Music>> loader, List<Music> data) {
-                    tempList.clear();
-                    tempList.addAll(data);
-                    tempList.add(0, pjesma);
-                    suggestionBar.setVisibility(View.GONE);
-                    refreshList(tempList, false);
-                    audioService.setMusicList(tempList);
-                }
-
-                @Override
-                public void onLoaderReset(Loader<List<Music>> loader) {
-
-                }
-            }).forceLoad();
-        }
+//        if(relatedVideos)
+//        {
+//            getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
+//                @Override
+//                public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
+//                    suggestionBar.setVisibility(View.VISIBLE);
+//                    return new YoutubeMusicLoader(getContext(), pjesma.getId(), true);
+//                }
+//
+//                @Override
+//                public void onLoadFinished(Loader<List<Music>> loader, List<Music> data) {
+//                    tempList.clear();
+//                    tempList.addAll(data);
+//                    tempList.add(0, pjesma);
+//                    suggestionBar.setVisibility(View.GONE);
+//                    refreshList(tempList, false);
+//                    audioService.setMusicList(tempList);
+//                }
+//
+//                @Override
+//                public void onLoaderReset(Loader<List<Music>> loader) {
+//
+//                }
+//            }).forceLoad();
+//        }
     }
 
     @Override

@@ -49,51 +49,6 @@ public class Utils {
         return formatter.format(views);
     }
 
-    public static String getDuration(String duration) {
-        duration = duration.substring(2);
-        String H, M, S;
-        int indOfH = duration.indexOf("H");
-        if (indOfH > -1) {
-            H = duration.substring(0,indOfH);
-            duration = duration.substring(indOfH);
-            duration = duration.replace("H","");
-        } else {
-            H = "";
-        }
-
-        int indOfM = duration.indexOf("M");
-        if (indOfM > -1) {
-            M = duration.substring(0,indOfM);
-            duration = duration.substring(indOfM);
-            duration = duration.replace("M","");
-            if (H.length() > 0 && M.length() == 1) {
-                M = "0" + M;
-            }
-        } else {
-            if (H.length() > 0) {
-                M = "00";
-            } else {
-                M = "0";
-            }
-        }
-        int indOfS = duration.indexOf("S");
-        if (indOfS > -1) {
-            S = duration.substring(0,indOfS);
-            duration = duration.substring(indOfS);
-            duration = duration.replace("S","");
-            if (S.length() == 1) {
-                S = "0" + S;
-            }
-        } else {
-            S = "00";
-        }
-        if (H.length() > 0) {
-            return H + ":" +  M + ":" + S;
-        } else {
-            return M + ":" + S;
-        }
-    }
-
     public static long convertToMilis(String duration)
     {
         String[] regex = duration.split(":");
@@ -160,6 +115,11 @@ public class Utils {
         }
 
         return new StatFs(path);
+    }
+
+    public static String removeNonDigitCharacters(String remove)
+    {
+        return remove.replaceAll("\\D+","");
     }
 
     public static boolean needsUpdate(String webVersion)

@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import com.crashlytics.android.Crashlytics;
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.extractor.YoutubeExtractor;
+import com.hfad.youplay.music.Music;
 
 
 import java.util.ArrayList;
@@ -16,14 +17,22 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
     private static final String TAG = UrlLoader.class.getSimpleName();
     private String getYoutubeLink;
     private Listener listener;
+    private List<Music> musicList = new ArrayList<>();
+    private boolean relatedVideos;
 
-    public UrlLoader(String getYoutubeLink)
+    public UrlLoader(String getYoutubeLink, boolean relatedVideos)
     {
         this.getYoutubeLink = getYoutubeLink;
+        this.relatedVideos = relatedVideos;
     }
 
     public interface Listener{
         void postExecute(List<String> list);
+    }
+
+    public List<Music> getMusicList()
+    {
+        return musicList;
     }
 
     @Override
@@ -36,6 +45,9 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
 
             data.add(extractor.getThumbnailUrl());
             data.add(extractor.getAudio().getUrl());
+            if(relatedVideos)
+                musicList.addAll(extractor.getMusicList());
+
             Crashlytics.setString("last_action", "downloading: " + getYoutubeLink);
 
             return data;

@@ -20,8 +20,8 @@ android {
         applicationId "com.hfad.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 33
-        versionName "1.9.4"
+        versionCode 34
+        versionName "1.9.5"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

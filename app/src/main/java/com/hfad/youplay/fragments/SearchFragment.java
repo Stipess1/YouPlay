@@ -150,7 +150,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             musicList.addAll(data);
 
                             videoAdapter.notifyDataSetChanged();
-//                            runLayoutAnimation();
                             recyclerView.smoothScrollToPosition(0);
 
                             recyclerView.setVisibility(View.VISIBLE);
@@ -184,6 +183,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                 {
                     if(query.length() > 2)
                     {
+                        noResult.setVisibility(View.GONE);
                         if(!swapAdapter)
                         {
                             recyclerView.swapAdapter(null, true);
@@ -232,20 +232,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         });
         db = YouPlayDatabase.getInstance(getContext());
         return view;
-    }
-
-    private void runLayoutAnimation()
-    {
-        if(recyclerView.getAdapter() != null)
-        {
-            final Context context = recyclerView.getContext();
-            final LayoutAnimationController controller =
-                    AnimationUtils.loadLayoutAnimation(context, R.anim.from_bottom);
-
-            recyclerView.setLayoutAnimation(controller);
-            recyclerView.getAdapter().notifyDataSetChanged();
-            recyclerView.scheduleLayoutAnimation();
-        }
     }
 
     @Override

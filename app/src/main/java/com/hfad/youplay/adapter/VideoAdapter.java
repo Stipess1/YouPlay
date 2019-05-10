@@ -122,7 +122,6 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                 int toPos = youPlayDatabase.getIdOrder(to.getId(), tableName);
 
 
-                // Ovo treba async
                 ContentValues newValues = new ContentValues();
                 newValues.put(TITLE, from.getTitle());
                 newValues.put(ID, from.getId());
@@ -425,11 +424,6 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     public void notifyFilterData(List<Music> musicList) {
         filterData.clear();
         filterData.addAll(musicList);
-    }
-
-    public List<Music> getFilterData()
-    {
-        return filterData;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder

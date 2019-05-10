@@ -211,13 +211,8 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             Country country = countries.get(position);
             ViewHolderCountry viewHolderCountry = (ViewHolderCountry) holder;
             viewHolderCountry.country.setText(country.getName());
-//            viewHolderCountry.country.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-
-//            viewHolderCountry.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-
             String count = context.getResources().getString(R.string.radio_stations) + country.getStationCount();
             viewHolderCountry.stationCount.setText(count);
-//            viewHolderCountry.stationCount.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
             viewHolderCountry.itemView.setTag(country);
         }
     }
