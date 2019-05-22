@@ -76,8 +76,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private static final String TAG = "HistoryFragment";
 
     private RecyclerView recyclerView;
-    public List<Music> musicList;
-    private List<Music> tempList;
+    public ArrayList<Music> musicList;
+    private ArrayList<Music> tempList;
     public VideoAdapter adapter;
     private OnItemClicked onItemClicked;
     private TextView addToQ;
@@ -252,7 +252,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                 }
 
                 @Override
-                public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
 
                 }
             }).execute();
@@ -281,7 +281,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     }
 
     @Override
-    public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+    public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
         if(!AudioService.getInstance().isDestroyed())
         {
             if(type == DatabaseHandler.UpdateType.GET && pjesme == null)
@@ -339,6 +339,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         tempList.clear();
         tempList.addAll(queueList);
 
+        audioService.getAudioPlayer().setMusicList(tempList);
         onItemClicked.refreshSuggestions(tempList, queue);
 
         Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.song_in_queue), Snackbar.LENGTH_SHORT);
@@ -363,7 +364,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
         tempList.clear();
         tempList.addAll(queueList);
-
+        audioService.getAudioPlayer().setMusicList(tempList);
 
         onItemClicked.refreshSuggestions(tempList, queue);
     }
@@ -494,7 +495,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             recyclerView.addItemDecoration(dividerItemDecoration);
 
             if(Utils.freeSpace(true) > 20 && FileManager.getRootPath().exists())
+            {
                 adapter.refreshList();
+                if(audioService.getAudioPlayer().getMusicList().size() == 0)
+                    audioService.getAudioPlayer().setMusicList(musicList);
+            }
             else if(!FileManager.getRootPath().exists())
                 Toast.makeText(getContext(), getResources().getString(R.string.files_dont_exist), Toast.LENGTH_SHORT).show();
             else
@@ -546,6 +551,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     {
         if(!adapter.getState())
         {
+            audioService.getAudioPlayer().setPosition(musicList.indexOf(pjesma));
+            audioService.getAudioPlayer().setMusicList(musicList);
             setClickedSong(pjesma, musicList, false);
             audioService.setRealMusic(new ArrayList<>(musicList));
         }
@@ -555,16 +562,14 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     @Override
     public void onShuffle() {
         setClickedSong(musicList.get(0), musicList, true);
-        if(audioService != null)
-            audioService.setRealMusic(new ArrayList<>(musicList));
     }
 
-    private void setClickedSong(Music pjesma, List<Music> pjesme, boolean shuffled)
+    private void setClickedSong(Music pjesma, ArrayList<Music> pjesme, boolean shuffled)
     {
         queueList.clear();
         OkDownload.with().downloadDispatcher().cancelAll();
-        if(AudioService.getInstance().exoPlayer.getPlayWhenReady())
-            AudioService.getInstance().exoPlayer.stop();
+        if(AudioService.getInstance().getAudioPlayer().getPlayWhenReady())
+            AudioService.getInstance().getAudioPlayer().stop();
 
         if(URLUtil.isValidUrl(pjesma.getPath()))
             pjesma.setPath("");
@@ -651,7 +656,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         builder.create().show();
     }
 
-    private void buildPlaylistDialog(final List<Music> data)
+    private void buildPlaylistDialog(final ArrayList<Music> data)
     {
         final List<String> titles = db.getAllPlaylists();
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
@@ -674,7 +679,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                             }
 
                             @Override
-                            public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                            public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
 
                             }
                         }).execute();

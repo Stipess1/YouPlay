@@ -63,6 +63,7 @@ import com.hfad.youplay.adapter.PlaylistAdapter;
 import com.hfad.youplay.database.DatabaseHandler;
 import com.hfad.youplay.database.YouPlayDatabase;
 import com.hfad.youplay.music.Music;
+import com.hfad.youplay.player.AudioPlayer;
 import com.hfad.youplay.radio.Country;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.Constants;
@@ -93,12 +94,12 @@ import static com.hfad.youplay.utils.Utils.*;
 
 
 public class PlayFragment extends BaseFragment implements View.OnClickListener,
-        OnMusicSelected, OnRadioSelected, OnDataChanged {
+        OnMusicSelected, OnRadioSelected, OnDataChanged, AudioPlayer.PlayerListener {
 
     public static final String TAG = PlayFragment.class.getSimpleName();
     private static final String YOUTUBELINK = "https://www.youtube.com/watch?v=";
 
-    private boolean shuffled = false;
+    private AudioPlayer audioPlayer;
     private ImageView currentlyPlaying;
     private FrameLayout play_pause;
     private FrameLayout shuffle;
@@ -112,7 +113,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     public SeekBar seekbar;
     public static Runnable runnable;
     public static Handler handler;
-    private List<Music> musicList;
     private ArrayList<Music> tempList;
     public int position;
     private int lastPost;
@@ -157,19 +157,12 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         onItemClicked = (OnItemClicked) getActivity();
     }
 
-    public boolean getShuffled()
-    {
-        return shuffled;
-    }
 
 
     public boolean isSlided() {
         return slided;
     }
 
-    public void setMusicList(List<Music> musicList) {
-        this.musicList = musicList;
-    }
 
     public ArrayList<Station> getStations()
     {
@@ -210,28 +203,27 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         playFragment.setOnClickListener(this);
 
         stations = new ArrayList<>();
-        musicList = new ArrayList<>();
         tempList = new ArrayList<>();
 
         audioService = AudioService.getInstance();
+        audioPlayer = audioService.getAudioPlayer();
 
-        if(audioService != null && audioService.getMusicList() != null && !audioService.getIsStream())
+        if(audioService != null && audioPlayer.getMusicList() != null && !audioPlayer.isStream())
         {
-            if(audioService.isShuffled())
-            {
-                shuffled = true;
+            if(audioPlayer.isShuffled())
                 shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
-            }
-            tempList.clear();
-            tempList.addAll(audioService.getMusicList());
 
-            musicList.clear();
-            musicList.addAll(audioService.getRealMusic());
+            tempList.clear();
+            tempList.addAll(audioPlayer.getMusicList());
+            for(Music pjesma : audioPlayer.getMusicList())
+                Log.d(TAG,"title: " + pjesma.getTitle());
+//            musicList.clear();
+//            musicList.addAll(audioService.getRealMusic());
         }
 
         adapter = new PlaylistAdapter(getContext(), R.layout.play_fragment_list, tempList, PlaylistAdapter.ListType.SUGGESTIONS);
 
-        if(audioService != null && audioService.getStations() != null && audioService.getIsStream())
+        if(audioService != null && audioService.getStations() != null && audioPlayer.isStream())
             refreshList(audioService.getStations());
 
         durationTime        = view.findViewById(R.id.duration_time);
@@ -250,6 +242,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onSwipe(int position) {
                 setCurrentDeleted(position);
+                audioPlayer.setMusicList(tempList);
             }
         });
         recyclerView.setAdapter(adapter);
@@ -262,7 +255,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean input)
             {
-                if(input && !audioService.getIsStream())
+                if(input && !audioPlayer.isStream())
                 {
                     currentProgress = progress;
                     durationTimeCurrent.setText(convertDuration(progress));
@@ -272,9 +265,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onStartTrackingTouch(SeekBar seekBar)
             {
-                if(audioService.exoPlayer.getPlayWhenReady() && !audioService.getIsStream())
+                if(audioService.getAudioPlayer().getPlayWhenReady() && !audioPlayer.isStream())
                 {
-                    audioService.exoPlayer.setPlayWhenReady(false);
+                    audioService.getAudioPlayer().setPlayWhenReady(false);
                     wasPlaying = true;
                 }
             }
@@ -282,12 +275,12 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onStopTrackingTouch(SeekBar seekBar)
             {
-                if(!audioService.getIsStream())
+                if(!audioPlayer.isStream())
                 {
-                    audioService.exoPlayer.seekTo(currentProgress);
+                    audioService.getAudioPlayer().seekTo(currentProgress);
                     if(wasPlaying)
                     {
-                        audioService.exoPlayer.setPlayWhenReady(true);
+                        audioService.getAudioPlayer().setPlayWhenReady(true);
                         wasPlaying = false;
                         playCycle();
                     }
@@ -306,20 +299,22 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(audioService != null && audioService.getEventListener() != null)
         {
             Log.d(TAG, "AudioService listener");
-            audioService.exoPlayer.removeListener(audioService.getEventListener());
-            audioService.setListenerAdded(false);
-            setListeners();
+//            audioService.exoPlayer.removeListener(audioService.getEventListener());
+//            audioService.setListenerAdded(false);
+//            setListeners();
         }
 
-        if(audioService != null && audioService.getMusicList() != null && !audioService.getIsStream())
+
+        if(audioService != null && !audioPlayer.isStream() && audioPlayer.getCurrentlyPlaying() != null)
         {
-            setCurrent(audioService.getCurrentSongPos());
+            setCurrent(audioPlayer.getPosition());
             Log.d(TAG, "AudioService listener musiclist");
             setDestroyedScreenSong();
         }
-        else if(audioService != null && audioService.getIsStream() && audioService.getStations() != null)
+        else if(audioService != null && audioService.getStations() != null)
         {
             setCurrent(audioService.getCurrentStreamPos());
+            adapter.setPlay(PlaylistAdapter.ListType.STATIONS);
             setDestroyedScreenStream();
         }
 
@@ -350,7 +345,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         }
 
                         @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                        public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
                             if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
                             {
                                 suggestionBar.setVisibility(View.GONE);
@@ -377,7 +372,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         }
 
                         @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+                        public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
                             if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
                             {
                                 suggestionBar.setVisibility(View.GONE);
@@ -444,7 +439,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
          */
     private void setDestroyedScreenSong()
     {
-        currentlyPlayingSong = audioService.getMusic();
+        currentlyPlayingSong = audioPlayer.getCurrentlyPlaying();
 
         Glide.with(this).load(FileManager.getPictureFile(currentlyPlayingSong.getId())).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
 
@@ -453,7 +448,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         durationTimeCurrent.setText(R.string.you_temp_time);
         ((MainActivity)getActivity()).pager.setCurrentItem(0);
 
-        if(audioService.exoPlayer.getPlayWhenReady())
+        if(audioService.getAudioPlayer().getPlayWhenReady())
             play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
 
         else
@@ -461,27 +456,30 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
 
         replay = audioService.isReplay();
-        replaySong = audioService.isReplaySong();
+//        replaySong = audioService.isReplaySong();
         autoPlaybool = audioService.isAutoPlaybool();
+        AudioPlayer.Replay replay = audioPlayer.getReplay();
 
-        if(replay)
+        if(replay == AudioPlayer.Replay.REPLAY_ALL)
             replayF.setForeground(getResources().getDrawable(R.drawable.replay_pressed));
+        else if(replay == AudioPlayer.Replay.REPLAY_ONE)
+            replayF.setForeground(getResources().getDrawable(R.drawable.replay_all));
         else
             replayF.setForeground(getResources().getDrawable(R.drawable.replay));
 
-        if(autoPlaybool)
+        if(audioPlayer.isAutoplay())
             autoPlay.setTextColor(getResources().getColor(R.color.seekbar_progress));
         else
             autoPlay.setTextColor(getResources().getColor(R.color.suggestions));
 
-        seekbar.setMax((int)audioService.exoPlayer.getDuration());
-        seekbar.setProgress((int) audioService.exoPlayer.getCurrentPosition());
+        seekbar.setMax((int)audioService.getAudioPlayer().getDuration());
+        seekbar.setProgress((int) audioService.getAudioPlayer().getCurrentPosition());
         if(audioService.isAlarm())
             alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
         if(currentlyPlayingSong.getDownloaded() == 1)
             seekbar.setSecondaryProgress(seekbar.getMax());
 
-        durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
+        durationTimeCurrent.setText(convertDuration(audioService.getAudioPlayer().getCurrentPosition()));
         currentTable = audioService.getCurrentTable();
         playCycle();
     }
@@ -504,12 +502,12 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(audioService.isAlarm())
             alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
 
-        if(audioService.exoPlayer.getPlayWhenReady())
+        if(audioService.getAudioPlayer().getPlayWhenReady())
             play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
         else
             play_pause.setForeground(getResources().getDrawable(R.drawable.play));
 
-        durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
+        durationTimeCurrent.setText(convertDuration(audioService.getAudioPlayer().getCurrentPosition()));
         playCycle();
     }
 
@@ -547,10 +545,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     {
         final int position = stations.indexOf(station);
 
-        if(audioService.exoPlayer.getPlayWhenReady())
-            audioService.exoPlayer.stop();
+        if(audioService.getAudioPlayer().getPlayWhenReady())
+            audioService.getAudioPlayer().stop();
 
-        audioService.isStream(true);
+        audioPlayer.setStream(true);
+        audioPlayer.playSong(station);
         setSong(station);
         setCurrent(position);
 
@@ -561,6 +560,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     @Override
     public void initAudioService() {
         audioService = AudioService.getInstance();
+        audioPlayer = audioService.getAudioPlayer();
+        audioPlayer.setPlayerState(this);
     }
 
     public ArrayList<Music> getTempList()
@@ -600,8 +601,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         {
             if(!tempList.equals(pjesme))
                 adapter.reloadList(pjesme);
-                setSong(pjesma);
-
+            Log.d(TAG, "musics " + pjesme.toString());
+            setSong(pjesma);
         }
     }
 
@@ -615,6 +616,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             audioService.setStations(stations);
         }
         setCurrent(getStationPos(pjesma, stations));
+        audioPlayer.playSong(pjesma);
         setSong(pjesma);
     }
 
@@ -633,11 +635,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     {
         this.position = tempList.indexOf(pjesma);
 
-        if(audioService.exoPlayer.getPlayWhenReady())
-            audioService.exoPlayer.stop();
+        if(audioService.getAudioPlayer().getPlayWhenReady())
+            audioService.getAudioPlayer().stop();
 
         OkDownload.with().downloadDispatcher().cancelAll();
-        audioService.isStream(false);
+        audioPlayer.setStream(false);
         if(pjesma.getDownloaded() == 1)
             setSong(pjesma);
         else
@@ -684,6 +686,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
      */
     private void setCurrentDeleted(int position){
         this.position = position;
+        audioPlayer.setPosition(position);
 
         adapter.setCurrent(position);
 
@@ -695,24 +698,27 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
 
         lastPost = position;
+        audioPlayer.setLastPost(lastPost);
         adapter.setLastCurrent(lastPost);
     }
 
     public void setCurrent(final int position)
     {
-        this.position = position;
+        audioPlayer.setPosition(position);
 
         recyclerView.scrollToPosition(position);
         adapter.setCurrent(position);
 
         if(position >= 0)
         {
+            Log.d(TAG, "SetCurrent postiion ");
             adapter.notifyItemChanged(adapter.getLastPos());
             // tako da mozemo postavit grey BG na trenutnu pjesmu
             adapter.notifyItemChanged(position);
         }
 
         lastPost = position;
+        audioPlayer.setLastPost(lastPost);
         adapter.setLastCurrent(lastPost);
     }
 
@@ -770,23 +776,30 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 break;
             case R.id.you_shuffle:
                 // Ako korisnik nije izabro pjesmu iz search-a
-                if(musicList != null && currentlyPlayingSong != null &&
+                if(currentlyPlayingSong != null &&
                         adapter.getPlay() != PlaylistAdapter.ListType.STATIONS)
                 {
-                    if(!shuffled)
-                    {
+
+                    if(!audioPlayer.isShuffled()) {
                         lastPost = position;
                         position = 0;
                         setCurrent(position);
-                        musicList.clear();
-                        musicList.addAll(getTempList());
-                        Collections.shuffle(getTempList());
-                        checkShuffle();
+                        audioPlayer.shuffle();
+                        tempList.clear();
+                        tempList.addAll(audioPlayer.getMusicList());
+                        adapter.notifyDataSetChanged();
+                        shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
+//                        checkShuffle();
                     }
                     else
                     {
-                        checkShuffle();
-                        setCurrent(getPosition());
+                        audioPlayer.unShuffle();
+                        tempList.clear();
+                        tempList.addAll(audioPlayer.getMusicList());
+                        adapter.notifyDataSetChanged();
+                        this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
+                        setCurrent(audioPlayer.getPosition());
+
                     }
 
                     audioService.setMusicList(getTempList());
@@ -882,14 +895,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     }
 
-    private int getPosition()
-    {
-        for(Music pjesma : musicList)
-            if(pjesma.getId().equals(currentlyPlayingSong.getId()))
-                return musicList.indexOf(pjesma);
-        return 0;
-    }
-
     @Override
     public void setupActionBar()
     {
@@ -897,41 +902,38 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void replay()
     {
-        if(replay)
+        if(audioPlayer.getReplay() == AudioPlayer.Replay.REPLAY_ONE)
         {
-            if(!replaySong)
-                replaySong = true;
-            else
-            {
-                replaySong = false;
-                replay = false;
-            }
             replayF.setForeground(getResources().getDrawable(R.drawable.replay));
+            audioPlayer.setReplay(AudioPlayer.Replay.REPLAY_OFF);
         }
-        else
+        else if (audioPlayer.getReplay() == AudioPlayer.Replay.REPLAY_ALL)
         {
-            replay = true;
-            replayF.setForeground(getResources().getDrawable(R.drawable.replay_pressed));
+            replayF.setForeground(getResources().getDrawable(R.drawable.replay_all));
+            audioPlayer.setReplay(AudioPlayer.Replay.REPLAY_ONE);
         }
-        audioService.setReplaySong(replaySong);
-        audioService.setReplay(replay);
+        else {
+            replayF.setForeground(getResources().getDrawable(R.drawable.replay_pressed));
+            audioPlayer.setReplay(AudioPlayer.Replay.REPLAY_ALL);
+        }
+
     }
 
     private void autoPlay()
     {
-        if(!autoPlaybool)
+        if(!audioPlayer.isAutoplay())
         {
             autoPlay.setTextColor(getResources().getColor(R.color.seekbar_progress));
-            autoPlaybool = true;
+            audioPlayer.setAutoplay(true);
             if(mediaCompleted)
-                nextSong();
+                audioService.getAudioPlayer().nextSong();
         }
         else
         {
             autoPlay.setTextColor(getResources().getColor(R.color.suggestions));
-            autoPlaybool = false;
+            audioPlayer.setAutoplay(false);
         }
-        audioService.setAutoPlaybool(autoPlaybool);
+
     }
 
     public void slide()
@@ -1013,159 +1015,46 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void setShuffled()
     {
-        shuffled = true;
         this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
-        audioService.setShuffled(shuffled);
+        audioPlayer.setShuffled(true);
     }
 
-    public void checkShuffle()
-    {
-        if(!shuffled)
-        {
-            for(Music pjesma : tempList)
-                if(pjesma.getId().equals(currentlyPlayingSong.getId()))
-                {
-                    tempList.remove(pjesma);
-                    break;
-                }
-
-            tempList.add(0, currentlyPlayingSong);
-            adapter.notifyDataSetChanged();
-            shuffled = true;
-            shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
-        }
-        else
-        {
-            tempList.clear();
-            tempList.addAll(musicList);
-            adapter.notifyDataSetChanged();
-            shuffled = false;
-            shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
-        }
-        audioService.setShuffled(shuffled);
+    public void setUnshuffled() {
+        this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
+        audioPlayer.setShuffled(false);
     }
+
 
     public void nextSong()
     {
         // kada korisnik skida next nece radit nema potrebe pregledavat jeli je shuffled ili nije.
-        if(musicList != null && !audioService.getIsStream())
-        {
-            position += 1;
+        audioPlayer.nextSong();
+        setCurrent(audioPlayer.getPosition());
+        if(audioPlayer.isStream())
+            setSong(audioPlayer.getCurrentlyPlayingStation());
 
-            Music pjesma = null;
-            if(replay && replaySong)
-            {
-                pjesma = tempList.get(position-1);
-            }
-            else if(replay && position >= tempList.size())
-            {
-                position = 0;
-            }
-            else if(position < tempList.size())
-            {
-                pjesma = tempList.get(position);
-                setCurrent(position);
-            }
-            else if(position >= tempList.size())
-            {
-                position = tempList.size() - 1;
-            }
-            if(pjesma != null)
-            {
-                if(audioService.exoPlayer.getPlayWhenReady())
-                    audioService.exoPlayer.stop();
-
-                if(pjesma.getDownloaded() == 1)
-                    setMusic(pjesma, tempList);
-                else
-                    downloadSong(pjesma, false);
-            }
-        }
-        else if(audioService.getIsStream())
-        {
-            position += 1;
-            Station pjesma = null;
-
-            if(replay && position >= stations.size())
-            {
-                position = 0;
-            }
-            if(position < stations.size())
-            {
-                pjesma = stations.get(position);
-                setCurrent(position);
-            }
-            else if(position >= stations.size())
-            {
-                position = stations.size() - 1;
-            }
-            if(pjesma != null)
-            {
-                if(audioService.exoPlayer.getPlayWhenReady())
-                    audioService.exoPlayer.stop();
-                setSong(pjesma);
-            }
-        }
     }
 
     public void previousSong()
     {
 
-        if(musicList != null && !audioService.getIsStream())
-        {
-            position -=1;
-            Music pjesma = null;
-            if(position >= 0)
-            {
-                pjesma = tempList.get(position);
-                setCurrent(position);
-            }
-            else if(position <= tempList.size())
-            {
-                position = 0;
-            }
-            if(pjesma != null)
-            {
-                if(audioService.exoPlayer.getPlayWhenReady())
-                    audioService.exoPlayer.stop();
-
-                if(pjesma.getDownloaded() == 1)
-                    setMusic(pjesma, tempList);
-                else
-                    downloadSong(pjesma, false);
-            }
-        }
-        else if(audioService.getIsStream())
-        {
-            position -=1;
-            Station pjesma = null;
-            if(position >= 0)
-            {
-                pjesma = stations.get(position);
-                setCurrent(position);
-            }
-            else if(position <= stations.size())
-            {
-                position = 0;
-            }
-            if(pjesma != null)
-            {
-                setSong(pjesma);
-            }
-        }
+        audioPlayer.previousSong();
+        setCurrent(audioPlayer.getPosition());
+        if(audioPlayer.isStream())
+            setSong(audioPlayer.getCurrentlyPlayingStation());
     }
 
     public void playPauseSong(boolean update)
     {
-        if(audioService.exoPlayer.getPlayWhenReady() && !update)
+        if(audioPlayer.getPlayWhenReady() && !update)
         {
-            audioService.exoPlayer.setPlayWhenReady(false);
+            audioPlayer.setPlayWhenReady(false);
             if(isAdded())
                 play_pause.setForeground(getResources().getDrawable(R.drawable.play));
         }
-        else if(!audioService.exoPlayer.getPlayWhenReady() && !update)
+        else if(!audioPlayer.getPlayWhenReady() && !update)
         {
-            audioService.exoPlayer.setPlayWhenReady(true);
+            audioPlayer.setPlayWhenReady(true);
             if(isAdded())
                 play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
             playCycle();
@@ -1175,149 +1064,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             Intent newIntent = new Intent(getContext(), AudioService.class);
             newIntent.putExtra(AudioService.ACTION, PLAY_PAUSE_SONG);
             getContext().startService(newIntent);
-        }
-    }
-
-    public void setListeners()
-    {
-        if(!AudioService.getInstance().getListenerAdded())
-        {
-            audioService.setEventListener(new Player.EventListener() {
-
-                @Override
-                public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
-
-                }
-
-                @Override
-                public void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections) {
-
-                }
-
-                @Override
-                public void onLoadingChanged(boolean isLoading) {
-
-                }
-
-                @Override
-                public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-                    AudioService audioService = AudioService.getInstance();
-                    switch (playbackState)
-                    {
-                        case Player.STATE_IDLE:
-                            Log.d(TAG, "PlaywhenReady: " + playWhenReady);
-                            break;
-                        case Player.STATE_ENDED:
-                            if(!audioService.isDestroyed())
-                            {
-                                if(autoPlaybool)
-                                {
-                                    if(audioService.isAlarm())
-                                    {
-                                        audioService.setAlarmCount(audioService.getAlarmCount()-1);
-                                        if(audioService.getAlarmCount() == 0)
-                                        {
-                                            playPauseSong(true);
-//                                            audioService.updateNotification("", "");
-                                            audioService.setAlarm(false);
-                                            mediaCompleted = true;
-                                            // Posto playwhenready vraca true moramo drugacije updatea notifikaciju.
-                                            alarmEnded = true;
-                                            audioService.setAlarmEnded(true);
-                                            alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
-                                            break;
-                                        }
-                                    }
-                                    if(!alarmEnded)
-                                        nextSong();
-                                    alarmEnded = false;
-                                    audioService.setAlarmEnded(false);
-                                }
-                                mediaCompleted = true;
-                            }
-                            else
-                            {
-
-                                if(audioService.isAutoPlaybool())
-                                {
-                                    if(audioService.isAlarm())
-                                    {
-                                        audioService.setAlarmCount(audioService.getAlarmCount()-1);
-                                        if(audioService.getAlarmCount() == 0)
-                                        {
-                                            audioService.playPauseSong();
-                                            audioService.updateNotification("","");
-                                            audioService.setAlarm(false);
-                                            audioService.setAlarmEnded(true);
-                                            break;
-                                        }
-                                    }
-                                    if(!audioService.isAlarmEnded())
-                                        audioService.nextSong();
-                                    audioService.setAlarmEnded(false);
-                                }
-                            }
-                            break;
-                        case Player.STATE_READY:
-                            if(!audioService.isDestroyed())
-                            {
-                                bar.setVisibility(View.GONE);
-                                if(audioService.getIsStream())
-                                {
-                                    bar.setVisibility(View.GONE);
-                                    durationTime.setText(R.string.you_temp_time);
-                                    seekbar.setMax(0);
-                                    seekbar.setProgress(0);
-                                }
-                                else
-                                {
-                                    seekbar.setMax((int)audioService.exoPlayer.getDuration());
-                                    if(currentlyPlayingSong != null && currentlyPlayingSong.getDownloaded() == 1)
-                                        seekbar.setSecondaryProgress(seekbar.getMax());
-                                }
-                                playCycle();
-                                mediaCompleted = false;
-                            }
-                            break;
-                        case Player.STATE_BUFFERING:
-                            if(!audioService.isDestroyed())
-                                bar.setVisibility(View.VISIBLE);
-                            break;
-                    }
-                }
-
-                @Override
-                public void onRepeatModeChanged(int repeatMode) {
-
-                }
-
-                @Override
-                public void onShuffleModeEnabledChanged(boolean shuffleModeEnabled) {
-
-                }
-
-                @Override
-                public void onPlayerError(ExoPlaybackException error) {
-
-                }
-
-                @Override
-                public void onPositionDiscontinuity(int reason) {
-
-                }
-
-                @Override
-                public void onPlaybackParametersChanged(PlaybackParameters playbackParameters) {
-
-                }
-
-                @Override
-                public void onSeekProcessed() {
-
-                }
-            });
-            audioService.exoPlayer.addListener(audioService.getEventListener());
-            audioService.setListenerAdded(true);
         }
     }
 
@@ -1339,7 +1085,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         onItemClicked.setStation(pjesma);
         setPlayScreen();
-
     }
 
     private void playSong(Music pjesma)
@@ -1355,8 +1100,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         currentlyTitle.setText(pjesma.getTitle());
         durationTime.setText(pjesma.getDuration());
         durationTimeCurrent.setText(R.string.you_temp_time);
+//        audioPlayer.setPosition(position);
+        if(!audioPlayer.isShuffled()) {
+            this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
+        }
         onItemClicked.setMusic(pjesma);
-
     }
 
     public void setSong(final Music pjesma)
@@ -1374,14 +1122,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     {
         if(audioService != null && handler != null )
         {
-            if(audioService.exoPlayer.getPlayWhenReady())
+            if(audioService.getAudioPlayer().getPlayWhenReady())
             {
-                seekbar.setProgress((int) audioService.exoPlayer.getCurrentPosition());
+                seekbar.setProgress((int) audioService.getAudioPlayer().getCurrentPosition());
                 runnable = new Runnable() {
                     @Override
                     public void run() {
-                        if (durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
-                            PlayFragment.this.playCycle();
+                        if (durationTimeCurrent != null && audioService != null && audioService.getAudioPlayer().getPlayWhenReady())
+                            playCycle();
 
                     }
                 };
@@ -1390,8 +1138,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 runnable = new Runnable() {
                     @Override
                     public void run() {
-                        if (durationTimeCurrent != null && audioService != null && audioService.exoPlayer.getPlayWhenReady())
-                            durationTimeCurrent.setText(convertDuration(audioService.exoPlayer.getCurrentPosition()));
+                        if (durationTimeCurrent != null && audioService != null && audioService.getAudioPlayer().getPlayWhenReady())
+                            durationTimeCurrent.setText(convertDuration(audioService.getAudioPlayer().getCurrentPosition()));
 
                     }
                 };
@@ -1459,32 +1207,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             }
         });
         urlLoader.execute();
-
-//        getActivity().getSupportLoaderManager().restartLoader(9, null, new LoaderManager.LoaderCallbacks<List<String>>() {
-//            @NonNull
-//            @Override
-//            public Loader<List<String>> onCreateLoader(int id, @Nullable Bundle args) {
-//                return new UrlLoader(getContext(), getYoutubeLink);
-//            }
-//
-//            @Override
-//            public void onLoadFinished(@NonNull Loader<List<String>> loader, List<String> data) {
-//                if (data != null) {
-//                    pjesma.setPath(data.get(1));
-//                    pjesma.setUrlImage(data.get(0));
-//                    urlExists(pjesma, relatedVideos);
-//                } else {
-//                    Toast.makeText(getContext(), getResources().getString(R.string.cant_extract), Toast.LENGTH_SHORT).show();
-//                    bar.setVisibility(View.GONE);
-//                }
-//            }
-//
-//            @Override
-//            public void onLoaderReset(@NonNull Loader<List<String>> loader) {
-//
-//            }
-//
-//        }).forceLoad();
     }
 
     private void updateTable(Music pjesma)
@@ -1509,7 +1231,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     }
 
     @Override
-    public void dataChanged(DatabaseHandler.UpdateType type, List<Music> pjesme) {
+    public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
 
     }
 
@@ -1662,32 +1384,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             setMusic(pjesma, tempList);
         }
         deleteMedia = false;
-
-//        if(relatedVideos)
-//        {
-//            getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
-//                @Override
-//                public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
-//                    suggestionBar.setVisibility(View.VISIBLE);
-//                    return new YoutubeMusicLoader(getContext(), pjesma.getId(), true);
-//                }
-//
-//                @Override
-//                public void onLoadFinished(Loader<List<Music>> loader, List<Music> data) {
-//                    tempList.clear();
-//                    tempList.addAll(data);
-//                    tempList.add(0, pjesma);
-//                    suggestionBar.setVisibility(View.GONE);
-//                    refreshList(tempList, false);
-//                    audioService.setMusicList(tempList);
-//                }
-//
-//                @Override
-//                public void onLoaderReset(Loader<List<Music>> loader) {
-//
-//                }
-//            }).forceLoad();
-//        }
     }
 
     @Override
@@ -1711,4 +1407,46 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         super.onDetach();
     }
 
+    @Override
+    public void onReady() {
+        Log.d(TAG, "Play ready");
+        bar.setVisibility(View.GONE);
+        if(audioPlayer.isStream())
+        {
+            bar.setVisibility(View.GONE);
+            durationTime.setText(R.string.you_temp_time);
+            seekbar.setMax(0);
+            seekbar.setProgress(0);
+        }
+        else
+        {
+            seekbar.setMax((int)audioPlayer.getDuration());
+            if(currentlyPlayingSong != null && currentlyPlayingSong.getDownloaded() == 1)
+                seekbar.setSecondaryProgress(seekbar.getMax());
+        }
+        playCycle();
+        mediaCompleted = false;
+    }
+
+    @Override
+    public void onBuffering() {
+        if(isAdded())
+            bar.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void onNextSong(Music music) {
+        playSong(music);
+        setCurrent(audioPlayer.getPosition());
+    }
+
+    @Override
+    public void onPreviousSong(Music music) {
+        playSong(music);
+    }
+
+    @Override
+    public void downloadSong(Music music) {
+        downloadSong(music, false);
+    }
 }

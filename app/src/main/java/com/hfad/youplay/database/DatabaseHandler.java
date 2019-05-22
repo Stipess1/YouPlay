@@ -20,7 +20,7 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
     private UpdateType type;
     private YouPlayDatabase db;
     private Music pjesma;
-    private List<Music> pjesme;
+    private ArrayList<Music> pjesme;
     private OnDataChanged onDataChanged;
 
     /**
@@ -122,7 +122,7 @@ public class DatabaseHandler extends AsyncTask<Boolean, Object, Void>
         return this;
     }
 
-    public DatabaseHandler(List<Music> pjesme, String tableName, String databaseName, UpdateType type)
+    public DatabaseHandler(ArrayList<Music> pjesme, String tableName, String databaseName, UpdateType type)
     {
         this.tableName = tableName;
         this.databaseName = databaseName;

@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
@@ -23,9 +24,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.media.VolumeProviderCompat;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.RemoteViews;
@@ -35,7 +38,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.NotificationTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.exoplayer2.C;
@@ -44,7 +46,6 @@ import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.audio.AudioListener;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
@@ -56,13 +57,14 @@ import com.hfad.youplay.listeners.AudioOutputListener;
 import com.hfad.youplay.listeners.ButtonListener;
 import com.hfad.youplay.listeners.NetworkStateListener;
 import com.hfad.youplay.music.Music;
+import com.hfad.youplay.player.AudioPlayer;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.NotificationId;
+import com.hfad.youplay.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.hfad.youplay.utils.Constants.*;
 
@@ -76,7 +78,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     public static String ACTION = "action";
     public static String LIST = "list";
 
-    public SimpleExoPlayer exoPlayer;
+    private AudioPlayer audioPlayer;
     private AudioManager audioManager;
     private static final int NOTIFICATION_ID = NotificationId.getID();
 
@@ -92,7 +94,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private NotificationManager manager;
     private ServiceCallback serviceCallback;
     private Player.EventListener eventListener;
-    MediaControllerCompat mediaControllerCompat;
+    private MediaSessionCompat mediaSessionCompat;
     private int alarmCount = 0;
     private String currentTable = "";
 
@@ -102,7 +104,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private boolean wasPlaying = false;
     private boolean isLoss = false;
     private static AudioService instance;
-    private boolean isStream = false;
     private boolean isDestroyed;
     private boolean listenerAdded = false;
 
@@ -133,61 +134,71 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     @Override
     public void onCreate()
     {
-        Log.d("MainActivity", "On Service create");
-        MediaSessionCompat mediaSessionCompat = new MediaSessionCompat(this, getPackageName());
+        audioPlayer = new AudioPlayer(this);
+//        audioPlayer.setMusicList(realMusic);
+
+        mediaSessionCompat = new MediaSessionCompat(this, getPackageName());
         mediaSessionCompat.setFlags(MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS);
 
         try {
-            mediaControllerCompat = new MediaControllerCompat(getApplicationContext(), mediaSessionCompat.getSessionToken());
+            MediaControllerCompat mediaControllerCompat = new MediaControllerCompat(getApplicationContext(), mediaSessionCompat.getSessionToken());
         } catch (RemoteException e) {
             e.printStackTrace();
         }
         MediaSessionCompat.Callback mController = new MediaSessionCompat.Callback() {
-            @Override
-            public boolean onMediaButtonEvent(Intent mediaButtonEvent) {
-                KeyEvent event = mediaButtonEvent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
-                if(event.getAction() == KeyEvent.ACTION_DOWN)
-                {
-                    if(serviceCallback != null)
-                        serviceCallback.callback(PLAY_PAUSE);
-                    else
-                        playPauseSong();
-
-                    updateNotification("", "");
-                    return true;
-                }
-
-                return super.onMediaButtonEvent(mediaButtonEvent);
-            }
 
             @Override
             public void onPlay() {
-                playPauseSong();
+                mediaSessionCompat.setActive(true);
+                setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+                if (serviceCallback != null)
+                    serviceCallback.callback(PLAY_PAUSE);
+                else
+                    audioPlayer.playWhenReady();
                 updateNotification("", "");
             }
 
             @Override
             public void onPause() {
-                playPauseSong();
+                setMediaPlaybackState(PlaybackStateCompat.STATE_PAUSED);
+                if (serviceCallback != null)
+                    serviceCallback.callback(PLAY_PAUSE);
+                else
+                    audioPlayer.playWhenReady();
+
                 updateNotification("", "");
             }
 
             @Override
             public void onSkipToNext() {
-                nextSong();
+                setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT);
+                if (serviceCallback != null)
+                    serviceCallback.callback(NEXT);
+                else
+                    audioPlayer.nextSong();
+
+                updateNotification("", "");
             }
 
             @Override
             public void onSkipToPrevious() {
-                previousSong();
+                setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS);
+                if (serviceCallback != null)
+                    serviceCallback.callback(PREVIOUS);
+                else
+                    audioPlayer.previousSong();
+
+                updateNotification("", "");
             }
+
         };
         mediaSessionCompat.setCallback(mController);
+
+        mediaSessionCompat.setMediaButtonReceiver(null);
         mediaSessionCompat.setActive(true);
 
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(this,new DefaultRenderersFactory(this) ,new DefaultTrackSelector(), new DefaultLoadControl());
 
         remoteViews = new RemoteViews(getApplication().getPackageName(), R.layout.custom_notification);
         remoteViews.setImageViewResource(R.id.notification_image, R.mipmap.ic_launcher_round);
@@ -228,6 +239,10 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     public boolean isAlarmEnded() {
         return alarmEnded;
+    }
+
+    public AudioPlayer getAudioPlayer() {
+        return audioPlayer;
     }
 
     public void setAlarmEnded(boolean alarmEnded) {
@@ -375,15 +390,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         notification = initNotification("", "");
     }
 
-    public void isStream(boolean isStream)
-    {
-        this.isStream = isStream;
-    }
-
-    public boolean getIsStream()
-    {
-        return isStream;
-    }
 
     /**
      * Funckija se prvi put izvrsi pri pokretanju aplikacije, te svaki puta kada se izabere pjesma ili postaja.
@@ -393,7 +399,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
      */
     public Notification initNotification(String text, String image)
     {
-        if(exoPlayer.getPlayWhenReady())
+        if(audioPlayer.getPlayWhenReady())
         {
             audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
             remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", R.drawable.pause);
@@ -505,25 +511,55 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         return builder.build();
     }
 
-    /**
-     * Postavlja pjesmu ili postaju po dobivenoj lokaciji pjesme/postaje
-     * @param path lokacija pjesme
-     */
-    private void setMusic(String path)
-    {
-        // Ako stream zavrsi i prebaci na drugu pjesmu dok je activity unisten, a pjesma nije skinuta
-        if(path != null)
-        {
-            Uri uri = Uri.parse(path);
-            DefaultDataSourceFactory dataSourceFactory = new DefaultDataSourceFactory(this, Util.getUserAgent(this, "YouPlay"), null);
-            ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-            MediaSource mediaSource = new ExtractorMediaSource(uri, dataSourceFactory, extractorsFactory, null, null);
-            exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
+    private void setMediaPlaybackState(int state) {
+        PlaybackStateCompat.Builder playbackstateBuilder = new PlaybackStateCompat.Builder();
+        switch (state) {
+            case PlaybackStateCompat.STATE_PLAYING: {
+                playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PAUSE
+                        | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS);
+                break;
+            }
+            default: {
+                playbackstateBuilder.setActions(PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_PLAY
+                        | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS);
+                break;
+            }
+        }
 
-            exoPlayer.prepare(mediaSource);
-            exoPlayer.setPlayWhenReady(true);
+        playbackstateBuilder.setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 0);
+        mediaSessionCompat.setPlaybackState(playbackstateBuilder.build());
+    }
+
+    private void setMusic()
+    {
+        if(!audioPlayer.isStream() && music.getPath() != null) {
+            Bitmap bitmapImage = BitmapFactory.decodeFile(FileManager.getPicturePath(music.getId()));
+            MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, music.getTitle())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, music.getAuthor())
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, Utils.convertToMilis(music.getDuration()))
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmapImage);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, audioPlayer.getMusicList().size());
+
+            mediaSessionCompat.setMetadata(metadataCompat.build());
+
+            setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+
+            audioPlayer.playSong(music);
 
             Answers.getInstance().logCustom(new CustomEvent("Songs played"));
+        } else {
+            Bitmap bitmap = BitmapFactory.decodeFile(station.getIcon());
+            MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, station.getName())
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmap)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, station.getCountry());
+            mediaSessionCompat.setMetadata(metadataCompat.build());
+
+            setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
+
+//            audioPlayer.playSong(station);
         }
     }
 
@@ -541,13 +577,15 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     {
         if(intent != null)
         {
-            if(intent.getSerializableExtra(LIST) != null && intent.getSerializableExtra(SONG) != null && !isStream)
+            if(intent.getSerializableExtra(SONG) != null && !audioPlayer.isStream())
             {
-                musicList = (ArrayList<Music>) intent.getSerializableExtra(LIST);
+//                musicList = (ArrayList<Music>) intent.getSerializableExtra(LIST);
                 music = (Music) intent.getSerializableExtra(SONG);
             }
-            else if(isStream && intent.getSerializableExtra(SONG) != null)
+            else if(audioPlayer.isStream() && intent.getSerializableExtra(SONG) != null)
                 station = (Station) intent.getSerializableExtra(SONG);
+
+
             switch (intent.getIntExtra(ACTION,0))
             {
                 case PLAY_SONG:
@@ -556,21 +594,25 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 case NEXT_SONG:
                     if(serviceCallback != null)
                         serviceCallback.callback(NEXT);
-                    else
-                        nextSong();
+                    else {
+                        audioPlayer.nextSong();
+                        updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                    }
                     break;
                 case PREVIOUS_SONG:
                     if(serviceCallback != null)
                         serviceCallback.callback(PREVIOUS);
-                    else
-                        previousSong();
+                    else {
+                        audioPlayer.previousSong();
+                        updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                    }
                     break;
                 case PLAY_PAUSE_SONG:
 
                     if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
                     else
-                        playPauseSong();
+                        audioPlayer.playWhenReady();
 
                     updateNotification("", "");
                     break;
@@ -588,6 +630,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     break;
             }
 
+            MediaButtonReceiver.handleIntent(mediaSessionCompat, intent);
+
         }
         return START_NOT_STICKY;
     }
@@ -599,24 +643,25 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         switch (focus)
         {
             case AudioManager.AUDIOFOCUS_GAIN:
-                if(!exoPlayer.getPlayWhenReady() && wasPlaying && !isLoss)
+                if(!audioPlayer.getPlayWhenReady() && wasPlaying && !isLoss)
                 {
+                    mediaSessionCompat.setActive(true);
                     if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
                     else
-                        playPauseSong();
+                        audioPlayer.playWhenReady();
 
                     updateNotification("","");
                     wasPlaying = false;
                 }
                     break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                if(exoPlayer.getPlayWhenReady())
+                if(audioPlayer.getPlayWhenReady())
                 {
                     if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
                     else
-                        playPauseSong();
+                        audioPlayer.playWhenReady();
 
                     updateNotification("","");
                     switch (audioManager.getMode())
@@ -632,12 +677,12 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 break;
 
                 case AudioManager.AUDIOFOCUS_LOSS:
-                    if(exoPlayer.getPlayWhenReady())
+                    if(audioPlayer.getPlayWhenReady())
                     {
                         if(serviceCallback != null)
                             serviceCallback.callback(PLAY_PAUSE);
                         else
-                            playPauseSong();
+                            audioPlayer.playWhenReady();
 
                         updateNotification("","");
                         wasPlaying = true;
@@ -649,95 +694,83 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     private void playSong()
     {
-        if(isStream)
-        {
-            setMusic(station.getUrl());
+        if(audioPlayer.isStream())
             updateNotification(station.getName(), station.getIcon());
-        }
         else
-        {
-            setMusic(music.getPath());
             updateNotification(music.getTitle(), music.getId());
-        }
+
+        setMusic();
     }
 
-    public void playPauseSong()
-    {
-        if(exoPlayer.getPlayWhenReady())
-            exoPlayer.setPlayWhenReady(false);
-        else
-            exoPlayer.setPlayWhenReady(true);
-    }
-
-    public void nextSong()
-    {
-        if(!isStream && music != null)
-        {
-            int pos;
-            for(Music pjesma : musicList)
-                if(pjesma.getId().equals(music.getId()))
-                {
-                    pos = musicList.indexOf(pjesma);
-                    if(pos+1 < musicList.size())
-                    {
-                        music = musicList.get(pos+1);
-                        if(music != null && music.getPath() != null)
-                            playSong();
-                        break;
-                    }
-                }
-        }
-        else if(isStream)
-        {
-            int pos;
-            for(Station station : stations)
-                if(station.getId().equals(this.station.getId()))
-                {
-                    pos = stations.indexOf(station);
-                    if(pos+1 < stations.size())
-                    {
-                        this.station = stations.get(pos+1);
-                        playSong();
-                        break;
-                    }
-                }
-        }
-    }
-
-    private void previousSong()
-    {
-        if(!isStream && music != null)
-        {
-            int pos;
-            for(Music pjesma : musicList)
-                if(pjesma.getId().equals(music.getId()))
-                {
-                    pos = musicList.indexOf(pjesma);
-                    if(pos-1 >= 0)
-                    {
-                        music = musicList.get(pos-1);
-                        if(music != null)
-                            playSong();
-                        break;
-                    }
-                }
-        }
-        else if(isStream)
-        {
-            int pos;
-            for(Station station : stations)
-                if(station.getId().equals(this.station.getId()))
-                {
-                    pos = stations.indexOf(station);
-                    if(pos-1 >= 0)
-                    {
-                        this.station = stations.get(pos-1);
-                        playSong();
-                        break;
-                    }
-                }
-        }
-    }
+//    public void nextSong()
+//    {
+//        if(!isStream && music != null)
+//        {
+//            int pos;
+//            for(Music pjesma : musicList)
+//                if(pjesma.getId().equals(music.getId()))
+//                {
+//                    pos = musicList.indexOf(pjesma);
+//                    if(pos+1 < musicList.size())
+//                    {
+//                        music = musicList.get(pos+1);
+//                        if(music != null && music.getPath() != null)
+//                            playSong();
+//                        break;
+//                    }
+//                }
+//        }
+//        else if(isStream)
+//        {
+//            int pos;
+//            for(Station station : stations)
+//                if(station.getId().equals(this.station.getId()))
+//                {
+//                    pos = stations.indexOf(station);
+//                    if(pos+1 < stations.size())
+//                    {
+//                        this.station = stations.get(pos+1);
+//                        playSong();
+//                        break;
+//                    }
+//                }
+//        }
+//    }
+//
+//    private void previousSong()
+//    {
+//        if(!isStream && music != null)
+//        {
+//            int pos;
+//            for(Music pjesma : musicList)
+//                if(pjesma.getId().equals(music.getId()))
+//                {
+//                    pos = musicList.indexOf(pjesma);
+//                    if(pos-1 >= 0)
+//                    {
+//                        music = musicList.get(pos-1);
+//                        if(music != null)
+//                            playSong();
+//                        break;
+//                    }
+//                }
+//        }
+//        else if(isStream)
+//        {
+//            int pos;
+//            for(Station station : stations)
+//                if(station.getId().equals(this.station.getId()))
+//                {
+//                    pos = stations.indexOf(station);
+//                    if(pos-1 >= 0)
+//                    {
+//                        this.station = stations.get(pos-1);
+//                        playSong();
+//                        break;
+//                    }
+//                }
+//        }
+//    }
 
 
     @Override
@@ -747,8 +780,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             manager.cancelAll();
 
         audioManager.abandonAudioFocus(this);
-        exoPlayer.stop();
-        exoPlayer.release();
+        audioPlayer.stop();
+        audioPlayer.release();
         instance = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);

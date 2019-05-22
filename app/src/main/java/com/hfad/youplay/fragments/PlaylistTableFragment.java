@@ -20,12 +20,14 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnMusicSelected;
 import com.hfad.youplay.R;
 import com.hfad.youplay.adapter.VideoAdapter;
 import com.hfad.youplay.database.YouPlayDatabase;
 import com.hfad.youplay.music.Music;
+import com.hfad.youplay.player.AudioPlayer;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.ThemeManager;
 
@@ -44,9 +46,10 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
 
     private RecyclerView recyclerView;
     private String title = "";
-    private List<Music> data;
+    private ArrayList<Music> data;
     private DividerItemDecoration dividerItemDecoration;
     private OnItemClicked onItemClicked;
+    private AudioPlayer audioPlayer;
     public VideoAdapter videoAdapter;
 
     public PlaylistTableFragment() {
@@ -55,13 +58,14 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
 
     @Override
     public void initAudioService() {
-
+        audioPlayer = AudioService.getInstance().getAudioPlayer();
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         onItemClicked = (OnItemClicked) getActivity();
+        initAudioService();
     }
 
     @Override
@@ -173,12 +177,15 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     @Override
     public void onClick(Music pjesma, View view)
     {
+        audioPlayer.setMusicList(data);
+        audioPlayer.setPosition(data.indexOf(pjesma));
         onItemClicked.onMusicClick(pjesma, data, title, false);
         setPlayScreen();
     }
 
     @Override
     public void onShuffle() {
+        audioPlayer.setMusicList(data);
         onItemClicked.onMusicClick(data.get(0), data, title, true);
         setPlayScreen();
     }

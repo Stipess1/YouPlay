@@ -64,7 +64,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private String tableName;
     private boolean history;
     // za filter
-    private List<Music> selected = new ArrayList<>();
+    private ArrayList<Music> selected = new ArrayList<>();
 
 
     public VideoAdapter(Context context, int resource, List<Music> objects, boolean history)
@@ -297,7 +297,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         notifyDataSetChanged();
     }
 
-    public List<Music> getAll()
+    public ArrayList<Music> getAll()
     {
         return selected;
     }

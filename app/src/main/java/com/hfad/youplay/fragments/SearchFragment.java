@@ -368,8 +368,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         }
 
         Music pjes = musicList.get(position);
-        AudioService.getInstance().isStream(false);
         initAudioService();
+        audioService.getAudioPlayer().setStream(false);
         if(Utils.freeSpace(true) > 20)
             setPlayingIfNotDownloaded(pjes);
         else
@@ -389,7 +389,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         OkDownload.with().downloadDispatcher().cancelAll();
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId()))
         {
-            audioService.exoPlayer.setPlayWhenReady(false);
+            audioService.getAudioPlayer().setPlayWhenReady(false);
             musicClicked.onMusicClick(pjesma, null, "---", false);
         }
         else

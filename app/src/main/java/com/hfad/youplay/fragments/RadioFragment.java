@@ -28,12 +28,14 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnRadioSelected;
 import com.hfad.youplay.MainActivity;
 import com.hfad.youplay.R;
 import com.hfad.youplay.adapter.RadioAdapter;
 import com.hfad.youplay.database.YouPlayDatabase;
+import com.hfad.youplay.player.AudioPlayer;
 import com.hfad.youplay.radio.Browser;
 import com.hfad.youplay.radio.Country;
 import com.hfad.youplay.radio.RadioBrowser;
@@ -349,6 +351,7 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
     @Override
     public void onClickStation(Station station, View v)
     {
+        AudioService.getInstance().getAudioPlayer().setStationList(history);
         if(radioAdapter.getFirstList() == RadioAdapter.List.STATIONS)
             radioAdapter.addRadio(station);
         refreshList();

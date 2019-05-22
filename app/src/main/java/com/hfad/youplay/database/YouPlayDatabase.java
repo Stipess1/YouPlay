@@ -344,11 +344,11 @@ public class YouPlayDatabase extends SQLiteOpenHelper
     /*
     dobavlja table sa dobivenim imenom
      */
-    public List<Music> getDataTable(String table) throws SQLiteException
+    public ArrayList<Music> getDataTable(String table) throws SQLiteException
     {
         SQLiteDatabase db = getDatabase(PLAYLIST_DB);
 
-        List<Music> music = new ArrayList<>();
+        ArrayList<Music> music = new ArrayList<>();
         String query = "SELECT * FROM " + "[" + table + "]";
 
         Cursor data = db.rawQuery(query, null);
@@ -393,15 +393,18 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         SQLiteDatabase db = getDatabase(SETTINGS_DB);
         String query = "SELECT ORDER_BY FROM settings";
 
+        if(db == null) return Order.ORDER_LATEST;
         Cursor cursor = db.rawQuery(query, null);
         cursor.moveToFirst();
 
         if(cursor.getCount() == 0)
             settingsOrderBy(Order.ORDER_LATEST);
 
+        String order = cursor.getString(0);
 
         db.close();
-        return cursor.getString(0);
+        cursor.close();
+        return order;
     }
 
     /*

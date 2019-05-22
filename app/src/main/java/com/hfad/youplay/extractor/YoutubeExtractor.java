@@ -132,7 +132,11 @@ public class YoutubeExtractor {
                     if (itagItem.itagType == Itag.ItagType.AUDIO) {
                         String streamUrl = tags.get("url");
                         if (tags.get("s") != null) {
-                            streamUrl = streamUrl + "&signature=" + decryptSignature(tags.get("s"), decryptionCode);
+                            if(tags.get("sp") == null) {
+                                streamUrl = streamUrl + "&signature=" + decryptSignature(tags.get("s"), decryptionCode);
+                            } else {
+                                streamUrl = streamUrl + "&" + tags.get("sp") + "=" + decryptSignature(tags.get("s"), decryptionCode);
+                            }
                         }
                         urlAndItags.put(streamUrl, itagItem);
                     }

@@ -11,7 +11,7 @@ public interface OnItemClicked {
     // zove onClick u history fragmentu.
     void onMusicClick(Music pjesma);
 
-    void onMusicClick(Music pjesma, List<Music> pjesme, String table, boolean shuffled);
+    void onMusicClick(Music pjesma, ArrayList<Music> pjesme, String table, boolean shuffled);
 
     void refresh(Music pjesma);
 

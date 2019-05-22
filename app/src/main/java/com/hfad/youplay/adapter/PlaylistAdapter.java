@@ -76,6 +76,11 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         notifyDataSetChanged();
     }
 
+    public void setPlay(ListType play) {
+        this.play = play;
+        this.notifyDataSetChanged();
+    }
+
     public void setPlaylists(List<String> playlists)
     {
         play = ListType.PLAYLIST_TABLE;

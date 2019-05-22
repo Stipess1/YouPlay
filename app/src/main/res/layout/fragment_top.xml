@@ -116,7 +116,6 @@
         android:fontFamily="sans-serif-thin"
         android:text="@string/you_download_empty"
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="@color/light_black"
         android:textStyle="normal"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

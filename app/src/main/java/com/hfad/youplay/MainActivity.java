@@ -67,6 +67,7 @@ import com.hfad.youplay.fragments.SearchFragment;
 import com.hfad.youplay.fragments.RadioFragment;
 import com.hfad.youplay.fragments.SettingsFragment;
 import com.hfad.youplay.music.Music;
+import com.hfad.youplay.player.AudioPlayer;
 import com.hfad.youplay.utils.Constants;
 import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.FileManager;
@@ -118,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private boolean closeApp = false;
     private YouPlayDatabase db;
     private InputMethodManager imm;
+    private AudioPlayer audioPlayer;
     // da nam otvori history prilikom prvom pokretanju
     private boolean firstTime = true;
     /*
@@ -219,11 +221,11 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 AudioService.AudioBinder audioBinder = (AudioService.AudioBinder) iBinder;
                 audioService = audioBinder.getAudio();
                 AudioService.getInstance().setDestroyed(false);
+                audioPlayer = audioService.getAudioPlayer();
                 audioService.setCallback(MainActivity.this);
 
                 historyFragment.initAudioService();
                 playFragment.initAudioService();
-                playFragment.setListeners();
                 searchFragment.initAudioService();
 
                 bound = true;
@@ -275,6 +277,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         {
             audioService.setDestroyed(true);
             audioService.setCallback(null);
+            audioPlayer.setPlayerState(null);
         }
         size = -1;
         OkDownload.with().downloadDispatcher().cancelAll();
@@ -558,18 +561,13 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
     }
 
-    public void initFiles()
-    {
-        try
-        {
-            if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists())
-            {
+    public void initFiles() {
+        try {
+            if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists()) {
                 Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
                 finishAffinity();
             }
-        }
-        catch (Exception ignored)
-        {
+        } catch (Exception ignored) {
 
         }
 
@@ -585,12 +583,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(!databaseFile.exists())
             databaseFile.mkdirs();
 
-        try
-        {
+        try {
             db.createPlaylistDatabase();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Log.d("Exception", e.getMessage());
             Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
             finishAffinity();
@@ -604,21 +599,25 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void onMusicClick(Music pjesma, List<Music> pjesme, String table, boolean shuffled)
-    {
-        List<Music> temp = new ArrayList<>();
+    public void onMusicClick(Music pjesma, ArrayList<Music> pjesme, String table, boolean shuffled) {
+        ArrayList<Music> temp = new ArrayList<>();
         if(pjesme != null)
             temp.addAll(pjesme);
-        if(playFragment.getShuffled())
-            playFragment.checkShuffle();
 
-        if(shuffled)
-        {
-            playFragment.setMusicList(pjesme);
+        // ako je korisnik stisno pjesmu u search pokrenu reklamu
+        if(pjesme == null && table.equals("---"))
+            buildExitAd();
+
+        audioPlayer.setStream(false);
+        if(shuffled) {
+            audioPlayer.setMusicList(temp);
             Collections.shuffle(temp);
             pjesma = temp.get(0);
             playFragment.setShuffled();
+        } else {
+            playFragment.setUnshuffled();
         }
+
 
         playFragment.setSpinner(table);
         playFragment.setMusic(pjesma, temp);
@@ -630,27 +629,23 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void setStation(Station station)
-    {
+    public void setStation(Station station) {
         Intent intent = new Intent(this, AudioService.class);
-        AudioService.getInstance().isStream(true);
+        audioPlayer.setStream(true);
         intent.putExtra(AudioService.SONG, station);
         intent.putExtra(AudioService.ACTION, Constants.PLAY_SONG);
         startService(intent);
     }
 
     @Override
-    public void refreshSuggestions(List<Music> data, boolean queue)
-    {
+    public void refreshSuggestions(List<Music> data, boolean queue) {
         playFragment.refreshList(data, queue);
     }
 
     @Override
-    protected void onResume()
-    {
+    protected void onResume() {
         super.onResume();
-        if(pager != null && pager.getAdapter() != null)
-        {
+        if(pager != null && pager.getAdapter() != null) {
             pager.getAdapter().notifyDataSetChanged();
         }
         if(adView != null && !noAdApp)
@@ -658,8 +653,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         putCurrentIcon();
     }
 
-    private void initAds()
-    {
+    private void initAds() {
         Log.d(TAG, "Init Ads");
         MobileAds.initialize(this, "ca-app-pub-8163593086331416~1012493107");
         interstitialAd = new InterstitialAd(this);
@@ -668,7 +662,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             @Override
             public void onAdClosed() {
                 interstitialAd.loadAd(new AdRequest.Builder().build());
-                moveTaskToBack(true);
+//                moveTaskToBack(true);
             }
 
             @Override
@@ -724,15 +718,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
-    private void putCurrentIcon()
-    {
-        for(int i = 0; i < imageId.length; i++)
-        {
+    private void putCurrentIcon() {
+        for(int i = 0; i < imageId.length; i++) {
             tabLayout.getTabAt(i).setIcon(imageId[i]);
         }
         int current = pager.getCurrentItem();
-        switch (current)
-        {
+        switch (current) {
             case 0:
                 tabLayout.getTabAt(current).setIcon(R.drawable.music_pressed);
                 tabLayout.getTabAt(1).setIcon(R.drawable.history);
@@ -848,10 +839,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 historyFragment.getSearchView().collapseActionView();
                 return true;
             }
-            if(!noAdApp && !closeApp)
-                buildExitAd();
-            else if(closeApp || noAdApp)
-                moveTaskToBack(true);
+            moveTaskToBack(true);
             return true;
         }
         else if(keyCode == KeyEvent.KEYCODE_BACK && fm.getBackStackEntryCount() != 0)
@@ -875,7 +863,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private void buildExitAd()
     {
-        if(interstitialAd != null)
+        if(interstitialAd != null && !noAdApp)
         {
             interstitialAd.setImmersiveMode(false);
             interstitialAd.show();
@@ -885,7 +873,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public void stream(Station station, ArrayList<Station> stations)
     {
-        audioService.isStream(true);
+        audioPlayer.setStream(true);
         playFragment.setSpinner("---");
         playFragment.refreshList(stations);
         playFragment.setStream(station, stations);
@@ -909,10 +897,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public void setMusic(Music pjesma) {
         Intent intent = new Intent(this, AudioService.class);
-        AudioService.getInstance().isStream(false);
+        audioPlayer.setStream(false);
         intent.putExtra(AudioService.SONG, pjesma);
         intent.putExtra(AudioService.ACTION, 6);
-        intent.putExtra(AudioService.LIST, playFragment.getTempList());
+//        intent.putExtra(AudioService.LIST, playFragment.getTempList());
         startService(intent);
     }
 
@@ -946,7 +934,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     // Kada otvaramo pjesmu u youtube pogledaj da li neka pjesma svira, ako da zaustavi ju
     @Override
     public void pauseSong() {
-        if(audioService.exoPlayer.getPlayWhenReady())
+        if(audioService.getAudioPlayer().getPlayWhenReady())
             playFragment.playPauseSong(true);
     }
 
