@@ -494,11 +494,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             recyclerView.removeItemDecoration(dividerItemDecoration);
             recyclerView.addItemDecoration(dividerItemDecoration);
 
-            if(Utils.freeSpace(true) > 20 && FileManager.getRootPath().exists())
-            {
+            if(Utils.freeSpace(true) > 20 && FileManager.getRootPath().exists()) {
                 adapter.refreshList();
-                if(audioService.getAudioPlayer().getMusicList().size() == 0)
-                    audioService.getAudioPlayer().setMusicList(musicList);
             }
             else if(!FileManager.getRootPath().exists())
                 Toast.makeText(getContext(), getResources().getString(R.string.files_dont_exist), Toast.LENGTH_SHORT).show();
@@ -551,17 +548,18 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     {
         if(!adapter.getState())
         {
+            ArrayList<Music> temp = new ArrayList<>(musicList);
             audioService.getAudioPlayer().setPosition(musicList.indexOf(pjesma));
-            audioService.getAudioPlayer().setMusicList(musicList);
-            setClickedSong(pjesma, musicList, false);
-            audioService.setRealMusic(new ArrayList<>(musicList));
+            audioService.getAudioPlayer().setMusicList(temp);
+            setClickedSong(pjesma, temp, false);
+//            audioService.setRealMusic(temp);
         }
 
     }
 
     @Override
     public void onShuffle() {
-        setClickedSong(musicList.get(0), musicList, true);
+        setClickedSong(musicList.get(0), new ArrayList<>(musicList), true);
     }
 
     private void setClickedSong(Music pjesma, ArrayList<Music> pjesme, boolean shuffled)
@@ -613,8 +611,6 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                                     HistoryFragment.this.getContext().startActivity(appIntent);
                                 } catch (ActivityNotFoundException ex) {
                                     HistoryFragment.this.getContext().startActivity(webIntent);
-                                } finally {
-                                    onItemClicked.pauseSong();
                                 }
                                 break;
                             case DIALOG_DELETE:

@@ -126,6 +126,16 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
             }
         });
 
+        PreferenceScreen contribute = (PreferenceScreen) findPreference(Constants.CONTRIBUTE);
+        contribute.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                Intent website = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE+"/contribute"));
+                startActivity(website);
+                return true;
+            }
+        });
+
         listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             @Override
             public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {

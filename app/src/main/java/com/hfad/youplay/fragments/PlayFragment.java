@@ -114,12 +114,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     public static Runnable runnable;
     public static Handler handler;
     private ArrayList<Music> tempList;
-    public int position;
     private int lastPost;
     private int currentProgress;
     private boolean wasPlaying = false;
-    private boolean replay = false;
-    private boolean replaySong = false;
     private PlaylistAdapter adapter;
     private ArrayList<Station> stations;
     private OnItemClicked onItemClicked;
@@ -135,12 +132,10 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private boolean slided = false;
     private float currentHeight;
     private float layoutHeight;
-    private boolean autoPlaybool = true;
     private boolean mediaCompleted = false;
     private AudioService audioService;
     private YouPlayDatabase db;
     private boolean deleteMedia;
-    private boolean alarmEnded;
     // trenutno ime table u spinneru
     private String currentTable = "";
 
@@ -206,20 +201,22 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         tempList = new ArrayList<>();
 
         audioService = AudioService.getInstance();
-        audioPlayer = audioService.getAudioPlayer();
+        if(audioService != null)
+            audioPlayer = audioService.getAudioPlayer();
 
-        if(audioService != null && audioPlayer.getMusicList() != null && !audioPlayer.isStream())
-        {
-            if(audioPlayer.isShuffled())
-                shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
+        if(audioPlayer != null)
+            if(audioService != null && audioPlayer.getMusicList() != null && !audioPlayer.isStream())
+            {
+                if(audioPlayer.isShuffled())
+                    shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
 
-            tempList.clear();
-            tempList.addAll(audioPlayer.getMusicList());
-            for(Music pjesma : audioPlayer.getMusicList())
-                Log.d(TAG,"title: " + pjesma.getTitle());
-//            musicList.clear();
-//            musicList.addAll(audioService.getRealMusic());
-        }
+                tempList.clear();
+                tempList.addAll(audioPlayer.getMusicList());
+                for(Music pjesma : audioPlayer.getMusicList())
+                    Log.d(TAG,"title: " + pjesma.getTitle());
+    //            musicList.clear();
+    //            musicList.addAll(audioService.getRealMusic());
+            }
 
         adapter = new PlaylistAdapter(getContext(), R.layout.play_fragment_list, tempList, PlaylistAdapter.ListType.SUGGESTIONS);
 
@@ -296,16 +293,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         });
 
 
-        if(audioService != null && audioService.getEventListener() != null)
-        {
-            Log.d(TAG, "AudioService listener");
-//            audioService.exoPlayer.removeListener(audioService.getEventListener());
-//            audioService.setListenerAdded(false);
-//            setListeners();
-        }
-
-
-        if(audioService != null && !audioPlayer.isStream() && audioPlayer.getCurrentlyPlaying() != null)
+        if(audioService != null && audioPlayer != null && !audioPlayer.isStream() && audioPlayer.getCurrentlyPlaying() != null)
         {
             setCurrent(audioPlayer.getPosition());
             Log.d(TAG, "AudioService listener musiclist");
@@ -455,9 +443,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             play_pause.setForeground(getResources().getDrawable(R.drawable.play));
 
 
-        replay = audioService.isReplay();
-//        replaySong = audioService.isReplaySong();
-        autoPlaybool = audioService.isAutoPlaybool();
         AudioPlayer.Replay replay = audioPlayer.getReplay();
 
         if(replay == AudioPlayer.Replay.REPLAY_ALL)
@@ -601,7 +586,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         {
             if(!tempList.equals(pjesme))
                 adapter.reloadList(pjesme);
-            Log.d(TAG, "musics " + pjesme.toString());
             setSong(pjesma);
         }
     }
@@ -633,19 +617,20 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     @Override
     public void onClick(Music pjesma, View view)
     {
-        this.position = tempList.indexOf(pjesma);
+        audioPlayer.setPosition(tempList.indexOf(pjesma));
 
         if(audioService.getAudioPlayer().getPlayWhenReady())
             audioService.getAudioPlayer().stop();
 
         OkDownload.with().downloadDispatcher().cancelAll();
         audioPlayer.setStream(false);
-        if(pjesma.getDownloaded() == 1)
+        if(pjesma.getDownloaded() == 1){
+            audioPlayer.playSong(pjesma);
             setSong(pjesma);
+        }
         else
             downloadSong(pjesma, false);
-        setCurrent(position);
-
+//        setCurrent(position);
         if(slided)
             slide();
     }
@@ -685,7 +670,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
      * @param position pozicija na kojoj se pjesma nalazi
      */
     private void setCurrentDeleted(int position){
-        this.position = position;
         audioPlayer.setPosition(position);
 
         adapter.setCurrent(position);
@@ -712,7 +696,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(position >= 0)
         {
             Log.d(TAG, "SetCurrent postiion ");
-            adapter.notifyItemChanged(adapter.getLastPos());
+            adapter.notifyItemChanged(audioPlayer.getLastPost());
             // tako da mozemo postavit grey BG na trenutnu pjesmu
             adapter.notifyItemChanged(position);
         }
@@ -728,10 +712,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         adapter.setStations(postaje);
     }
 
-    public void refreshList(List<Music> pjesme, boolean queue)
+    public void refreshList(ArrayList<Music> pjesme, boolean queue)
     {
 
         adapter.reloadList(pjesme);
+        audioPlayer.setMusicList(pjesme);
 
         if(!queue)
             setCurrent(0);
@@ -781,15 +766,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 {
 
                     if(!audioPlayer.isShuffled()) {
-                        lastPost = position;
-                        position = 0;
-                        setCurrent(position);
+                        audioPlayer.setLastPost(audioPlayer.getPosition());
+                        audioPlayer.setPosition(0);
+                        setCurrent(0);
                         audioPlayer.shuffle();
                         tempList.clear();
                         tempList.addAll(audioPlayer.getMusicList());
                         adapter.notifyDataSetChanged();
                         shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
-//                        checkShuffle();
                     }
                     else
                     {
@@ -799,10 +783,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         adapter.notifyDataSetChanged();
                         this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
                         setCurrent(audioPlayer.getPosition());
-
                     }
-
-                    audioService.setMusicList(getTempList());
                 }
                 break;
             case R.id.play_fragment:
@@ -883,8 +864,10 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             public void onClick(View view) {
                 if(audioService != null)
                 {
-                    audioService.setAlarmCount(numberPicker.getValue());
-                    audioService.setAlarm(true);
+//                    audioService.setAlarmCount(numberPicker.getValue());
+                    audioPlayer.setAlarm(numberPicker.getValue());
+                    audioPlayer.setAlarm(true);
+//                    audioService.setAlarm(true);
                     alarm.setForeground(getResources().getDrawable(R.drawable.alarm_set));
                     dialog.dismiss();
                     Toast.makeText(getContext(), getResources().getString(R.string.alarm_set), Toast.LENGTH_SHORT).show();
@@ -1003,7 +986,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     params.topToBottom = R.id.play_pause_layout;
 
                     layout.setLayoutParams(params);
-                    recyclerView.scrollToPosition(position);
+                    recyclerView.scrollToPosition(audioPlayer.getPosition());
                 }
             });
             va.start();
@@ -1024,24 +1007,18 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         audioPlayer.setShuffled(false);
     }
 
-
     public void nextSong()
     {
-        // kada korisnik skida next nece radit nema potrebe pregledavat jeli je shuffled ili nije.
         audioPlayer.nextSong();
-        setCurrent(audioPlayer.getPosition());
         if(audioPlayer.isStream())
-            setSong(audioPlayer.getCurrentlyPlayingStation());
-
+            setCurrent(audioPlayer.getPosition());
     }
 
     public void previousSong()
     {
-
         audioPlayer.previousSong();
-        setCurrent(audioPlayer.getPosition());
         if(audioPlayer.isStream())
-            setSong(audioPlayer.getCurrentlyPlayingStation());
+            setCurrent(audioPlayer.getPosition());
     }
 
     public void playPauseSong(boolean update)
@@ -1077,13 +1054,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         currentlyTitle.setText(pjesma.getName());
 
         if(!pjesma.getIcon().isEmpty())
-            Glide.with(this).load(pjesma.getIcon()).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
+            Glide.with(this).load(pjesma.getIcon()).apply(new RequestOptions().skipMemoryCache(true).error(R.drawable.image_holder)).into(currentlyPlaying);
         else
-            Glide.with(this).load(R.mipmap.ic_launcher).into(currentlyPlaying);
+            Glide.with(this).load(R.drawable.image_holder).into(currentlyPlaying);
 
         durationTimeCurrent.setText(R.string.you_temp_time);
 
-        onItemClicked.setStation(pjesma);
+        audioService.playSong(null, pjesma);
         setPlayScreen();
     }
 
@@ -1100,21 +1077,15 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         currentlyTitle.setText(pjesma.getTitle());
         durationTime.setText(pjesma.getDuration());
         durationTimeCurrent.setText(R.string.you_temp_time);
-//        audioPlayer.setPosition(position);
         if(!audioPlayer.isShuffled()) {
             this.shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle));
         }
-        onItemClicked.setMusic(pjesma);
+        audioService.playSong(pjesma, null);
     }
 
     public void setSong(final Music pjesma)
     {
-
-        this.position = tempList.indexOf(pjesma);
-        for(Music song : tempList)
-            if(song.getId().equals(pjesma.getId()))
-                setCurrent(tempList.indexOf(song));
-
+        setCurrent(tempList.indexOf(pjesma));
         playSong(pjesma);
     }
 
@@ -1195,7 +1166,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         tempList.add(0, pjesma);
                         suggestionBar.setVisibility(View.GONE);
                         refreshList(tempList, false);
-                        audioService.setMusicList(tempList);
+                        audioPlayer.setMusicList(tempList);
                     }
                 } else {
                     if(getContext() != null)
@@ -1311,7 +1282,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             DownloadTask.Builder songBuilder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
             if(fastDownload)
                 songBuilder.setConnectionCount(8);
-
+            Log.d(TAG, "PATH: " + pjesma.getPath());
             DownloadTask songTask = songBuilder.build();
 
             final int songId = songTask.getId();
@@ -1363,11 +1334,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     }
                     else if (cause == EndCause.ERROR)
                     {
+                        Log.d(TAG, "cause: "+ cause.toString());
                         bar.setVisibility(View.GONE);
                         if(Utils.freeSpace(true) < 20)
                             Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
 
-                        Log.d(TAG, " exception: " + realCause.toString());
                     }
                 }
             };
@@ -1435,16 +1406,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     }
 
     @Override
-    public void onNextSong(Music music) {
-        playSong(music);
-        setCurrent(audioPlayer.getPosition());
+    public void onSetSong(Music music) {
+        setSong(music);
     }
 
     @Override
-    public void onPreviousSong(Music music) {
-        playSong(music);
+    public void onSetStation(Station station) {
+        setSong(station);
     }
-
     @Override
     public void downloadSong(Music music) {
         downloadSong(music, false);

@@ -26,17 +26,17 @@ public class FileManager
 
     public static File getRootPath()
     {
-        return new File(Environment.getExternalStorageDirectory() + File.separator + Constants.APP_NAME);
+        return new File(Environment.getExternalStorageDirectory() + File.separator + APP_NAME);
     }
 
     public static String getMediaPath(String id)
     {
-        return new File(Environment.getExternalStorageDirectory() + File.separator + Constants.APP_NAME, id + MP3).getPath();
+        return new File(Environment.getExternalStorageDirectory() + File.separator + APP_NAME, id + MP3).getPath();
     }
 
     public static File getMediaFile(String id)
     {
-        return new File(Environment.getExternalStorageDirectory() + File.separator + Constants.APP_NAME, id + MP3);
+        return new File(Environment.getExternalStorageDirectory() + File.separator + APP_NAME, id + MP3);
     }
 
     public static File getPictureFile(String id)

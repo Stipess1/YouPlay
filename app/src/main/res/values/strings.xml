@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">YouPlay</string>
+    <string name="app_name" translatable="false">YouPlay</string>
 
     <string name="you_play">Play</string>
     <string name="you_search">Search</string>
@@ -17,7 +17,7 @@
     <string name="you_view">views</string>
     <string name="you_download_empty">History Empty</string>
 
-    <string name="you_temp_time">0:00</string>
+    <string name="you_temp_time" translatable="false">0:00</string>
     <string name="no_internet_connection">There is no internet connection</string>
     <string name="perms_request">Request permissions</string>
     <string name="rationale_ok">OK</string>
@@ -90,6 +90,8 @@
     <string name="check_download_desc">Speed up download speed (sometimes song won\'t be downloaded)</string>
     <string name="send_email">Send an email</string>
     <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
+    <string name="contribute">Contribute</string>
+    <string name="contribute_summary">Help translate YouPlay</string>
 
     <string name="pref_download">Downloads</string>
     <string name="cache_summary">When enabled YouPlay will automatically cache song to the device.</string>
@@ -115,7 +117,7 @@
     <string name="downloading">Downloading</string>
     <string name="download_update_error">An error has occurred while trying to download an update.</string>
     <string name="download_error">An error has ouccurred, check if there is internet connection</string>
-    <string name="shuffle" translatable="false">Shuffle</string>
+    <string name="shuffle">Shuffle</string>
     <plurals name="songs">
         <item quantity="one">%d Song</item>
         <item quantity="other">%d Songs</item>

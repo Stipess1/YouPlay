@@ -19,15 +19,13 @@ public interface OnItemClicked {
 
     void setMusic(Music pjesma);
 
-    void refreshSuggestions(List<Music> data, boolean queue);
+    void refreshSuggestions(ArrayList<Music> data, boolean queue);
 
     void refreshPlaylist();
 
     void stream(Station station, ArrayList<Station> stations);
 
     void refreshSearchList(Music pjesma);
-
-    void pauseSong();
 
     void refreshSpinnerAdapter();
 }

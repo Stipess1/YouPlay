@@ -105,4 +105,8 @@
     <string name="apprater_rate">Ocijeni sada</string>
     <string name="apprater_later">Kasnije</string>
     <string name="apprater_no_thanks">Ne hvala</string>
+    <string name="config_changed">Konfiguracija promjenjena, ponovno pokrenite aplikaciju</string>
+    <string name="shuffle">Miješanje</string>
+    <string name="contribute">Doprinos</string>
+    <string name="contribute_summary">Pomozite prevesti YouPlay</string>
 </resources>

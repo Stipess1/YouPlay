@@ -63,6 +63,7 @@ public class Constants {
 
     public static final String CACHE_MODE = "cache_mode";
     public static final String WEBSITE = "website";
+    public static final String CONTRIBUTE = "contribute";
     public static final String VERSION_CHECK = "version_check";
     public static final String SEND_EMAIL = "send_email";
 

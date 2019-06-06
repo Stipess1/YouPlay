@@ -175,7 +175,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
      */
     private String getPath(String database)
     {
-        Log.d(TAG, "Napravi bazu folder");
+        Log.d(TAG, "Napravi bazu folder: " + database);
         if(FileManager.getDatabaseFolder().exists())
             FileManager.getDatabaseFolder().mkdirs();
 
@@ -578,21 +578,26 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                     */
                    String split = data.getString(data.getColumnIndex("DURATION"));
                    String [] formatted = split.split(":");
-                   int convert = Integer.parseInt(formatted[1]);
-                   int first = Integer.parseInt(formatted[0]);
-                   convert = convert - 1;
-                   if(convert < 0)
-                   {
-                       convert = 59;
-                       first = first - 1;
-                   }
-                   String duration;
-                   if(convert < 10)
-                       duration = Integer.toString(first) +":0"+ Integer.toString(convert);
-                   else
-                       duration = Integer.toString(first) +":"+ Integer.toString(convert);
+                   if(formatted.length >= 2) {
+                       int convert = Integer.parseInt(formatted[1]);
+                       int first = Integer.parseInt(formatted[0]);
+                       convert = convert - 1;
+                       if(convert < 0)
+                       {
+                           convert = 59;
+                           first = first - 1;
+                       }
+                       String duration;
+                       if(convert < 10)
+                           duration = Integer.toString(first) +":0"+ Integer.toString(convert);
+                       else
+                           duration = Integer.toString(first) +":"+ Integer.toString(convert);
 
-                   pjesma.setDuration(duration);
+                       pjesma.setDuration(duration);
+                   }
+                   else
+                       pjesma.setDuration(split);
+
                    music.add(pjesma);
                }
                while(data.moveToNext());

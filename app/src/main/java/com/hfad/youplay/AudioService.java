@@ -134,6 +134,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     @Override
     public void onCreate()
     {
+        instance = this;
+
         audioPlayer = new AudioPlayer(this);
 //        audioPlayer.setMusicList(realMusic);
 
@@ -174,10 +176,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_NEXT);
                 if (serviceCallback != null)
                     serviceCallback.callback(NEXT);
-                else
+                else {
                     audioPlayer.nextSong();
+                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                }
 
-                updateNotification("", "");
             }
 
             @Override
@@ -185,10 +188,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 setMediaPlaybackState(PlaybackStateCompat.STATE_SKIPPING_TO_PREVIOUS);
                 if (serviceCallback != null)
                     serviceCallback.callback(PREVIOUS);
-                else
+                else {
                     audioPlayer.previousSong();
+                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                }
 
-                updateNotification("", "");
             }
 
         };
@@ -212,8 +216,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
         startForegroundService();
 
-        instance = this;
-
     }
 
 
@@ -228,25 +230,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         this.serviceCallback = serviceCallback;
     }
 
-
-    public Player.EventListener getEventListener() {
-        return eventListener;
-    }
-
-    public void setEventListener(Player.EventListener eventListener) {
-        this.eventListener = eventListener;
-    }
-
-    public boolean isAlarmEnded() {
-        return alarmEnded;
-    }
-
     public AudioPlayer getAudioPlayer() {
         return audioPlayer;
-    }
-
-    public void setAlarmEnded(boolean alarmEnded) {
-        this.alarmEnded = alarmEnded;
     }
 
     public String getCurrentTable()
@@ -263,10 +248,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         return alarmCount;
     }
 
-    public void setAlarmCount(int alarmCount) {
-        this.alarmCount = alarmCount;
-    }
-
     public boolean isAlarm() {
         return alarm;
     }
@@ -279,37 +260,10 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         return replay;
     }
 
-    public void setReplay(boolean replay) {
-        this.replay = replay;
-    }
-
-    public void setReplaySong(boolean replaySong)
-    {
-        this.replaySong = replaySong;
-    }
-
-    public boolean isReplaySong()
-    {
-        return replaySong;
-    }
-
     public boolean isAutoPlaybool() {
         return autoPlaybool;
     }
 
-    public void setAutoPlaybool(boolean autoPlaybool) {
-        this.autoPlaybool = autoPlaybool;
-    }
-
-    public void setListenerAdded(boolean listenerAdded)
-    {
-        this.listenerAdded = listenerAdded;
-    }
-
-    public boolean getListenerAdded()
-    {
-        return listenerAdded;
-    }
 
     public void setDestroyed(boolean isDestroyed)
     {
@@ -319,34 +273,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     public boolean isDestroyed()
     {
         return isDestroyed;
-    }
-
-    public ArrayList<Music> getMusicList()
-    {
-        return musicList;
-    }
-
-    public void setMusicList(ArrayList<Music> musicList)
-    {
-        this.musicList = musicList;
-    }
-
-    public void setRealMusic(ArrayList<Music> realMusic)
-    {
-        this.realMusic = realMusic;
-    }
-
-    public ArrayList<Music> getRealMusic() {
-        return realMusic;
-    }
-
-    public boolean isShuffled() {
-        return shuffled;
-    }
-
-    public void setShuffled(boolean shuffled)
-    {
-        this.shuffled = shuffled;
     }
 
     public Music getMusic()
@@ -365,14 +291,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     public void setStations(ArrayList<Station> stations)
     {
         this.stations = stations;
-    }
-
-    public int getCurrentSongPos()
-    {
-        for(Music pjesma : musicList)
-            if(pjesma.getId().equals(music.getId()))
-                return musicList.indexOf(pjesma);
-        return 0;
     }
 
     public int getCurrentStreamPos()
@@ -424,7 +342,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                                     , remoteViews
                                     , notification
                                     , NOTIFICATION_ID);
-                            Glide.with(getApplicationContext()).asBitmap().apply(new RequestOptions().error(R.mipmap.ic_launcher)).load(resource).into(target);
+                            Glide.with(getApplicationContext()).asBitmap().apply(new RequestOptions().error(R.drawable.image_holder)).load(resource).into(target);
                         }
 
                         @Override
@@ -434,7 +352,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                                     , remoteViews
                                     , notification
                                     , NOTIFICATION_ID);
-                            Glide.with(getApplicationContext()).asBitmap().load(R.mipmap.ic_launcher).into(target);
+                            Glide.with(getApplicationContext()).asBitmap().load(R.drawable.image_holder).into(target);
                         }
                     });
                 }
@@ -533,12 +451,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private void setMusic()
     {
         if(!audioPlayer.isStream() && music.getPath() != null) {
-            Bitmap bitmapImage = BitmapFactory.decodeFile(FileManager.getPicturePath(music.getId()));
+//            Bitmap bitmapImage = BitmapFactory.decodeFile(FileManager.getPicturePath(music.getId()));
             MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, music.getTitle())
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, music.getAuthor())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, Utils.convertToMilis(music.getDuration()))
-                    .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmapImage);
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, Utils.convertToMilis(music.getDuration()));
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, audioPlayer.getMusicList().size());
 
@@ -547,19 +464,19 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
 
             audioPlayer.playSong(music);
+            Log.d(TAG, "SET MUSIC");
 
             Answers.getInstance().logCustom(new CustomEvent("Songs played"));
         } else {
-            Bitmap bitmap = BitmapFactory.decodeFile(station.getIcon());
+            
             MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, station.getName())
-                    .putBitmap(MediaMetadataCompat.METADATA_KEY_DISPLAY_ICON, bitmap)
                     .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, station.getCountry());
             mediaSessionCompat.setMetadata(metadataCompat.build());
 
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
-
-//            audioPlayer.playSong(station);
+            Log.d(TAG, "SET STATION");
+            audioPlayer.playSong(station);
         }
     }
 
@@ -589,19 +506,23 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
             switch (intent.getIntExtra(ACTION,0))
             {
                 case PLAY_SONG:
-                    playSong();
+                    playSong(music, station);
                     break;
                 case NEXT_SONG:
-                    if(serviceCallback != null)
+                    if(serviceCallback != null) {
                         serviceCallback.callback(NEXT);
+                    }
                     else {
                         audioPlayer.nextSong();
                         updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
                     }
+
+
                     break;
                 case PREVIOUS_SONG:
-                    if(serviceCallback != null)
+                    if(serviceCallback != null) {
                         serviceCallback.callback(PREVIOUS);
+                    }
                     else {
                         audioPlayer.previousSong();
                         updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
@@ -692,14 +613,18 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         }
     }
 
-    private void playSong()
+    public void playSong(Music music, Station station)
     {
+        this.music = music;
+        this.station = station;
+
+        setMusic();
+
         if(audioPlayer.isStream())
             updateNotification(station.getName(), station.getIcon());
         else
             updateNotification(music.getTitle(), music.getId());
 
-        setMusic();
     }
 
 //    public void nextSong()

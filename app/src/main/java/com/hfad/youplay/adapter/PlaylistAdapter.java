@@ -281,9 +281,9 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             Station station = stations.get(position);
             holder.title.setText(station.getName());
             if(!station.getIcon().isEmpty())
-                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.mipmap.ic_launcher).diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true)).into(holder.image);
+                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.drawable.image_holder)).into(holder.image);
             else
-                Glide.with(context).load(R.mipmap.ic_launcher).apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE).skipMemoryCache(true)).into(holder.image);
+                Glide.with(context).load(R.drawable.image_holder).into(holder.image);
 
 
             if(this.position != position)

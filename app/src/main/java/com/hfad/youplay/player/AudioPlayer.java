@@ -2,40 +2,32 @@ package com.hfad.youplay.player;
 
 import android.content.Context;
 import android.net.Uri;
-import android.os.Looper;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.RenderersFactory;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.drm.DrmSessionManager;
-import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.music.Music;
 import com.hfad.youplay.radio.Station;
+import com.hfad.youplay.utils.FileManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class AudioPlayer implements Player.EventListener{
 
-    AudioService audioService = AudioService.getInstance();
+    private AudioService audioService = AudioService.getInstance();
 
     private SimpleExoPlayer exoPlayer;
     // Lista pjesama
@@ -77,9 +69,9 @@ public class AudioPlayer implements Player.EventListener{
         // kada player ucitava pjesmu / radio
         void onBuffering();
         // kada sljedeca pjesma pocne svirat
-        void onNextSong(Music music);
-        // kada prijasnja pjesma pocne svirat
-        void onPreviousSong(Music music);
+        void onSetSong(Music music);
+
+        void onSetStation(Station station);
         // pjesma koja se treba skinut
         void downloadSong(Music music);
     }
@@ -118,8 +110,11 @@ public class AudioPlayer implements Player.EventListener{
                         break;
                     }
 
-                    if(!isAlarm)
+                    if(!isAlarm) {
+                        Log.d("AudioPlayer", "Next song");
                         nextSong();
+
+                    }
 
                     isAlarm = false;
 
@@ -224,6 +219,7 @@ public class AudioPlayer implements Player.EventListener{
         exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
+//        audioService.updateNotification(music.getTitle(), FileManager.getPicturePath(music.getId()));
     }
 
     public void playSong(Station station) {
@@ -236,6 +232,7 @@ public class AudioPlayer implements Player.EventListener{
         exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
+//        audioService.updateNotification(station.getName(), FileManager.getPicturePath(station.getId()));
     }
 
     public void setPlayerState(PlayerListener playerState) {
@@ -274,25 +271,30 @@ public class AudioPlayer implements Player.EventListener{
                 return;
             }
             Music music = musicList.get(position);
-
+            boolean state = playerState != null;
+            Log.d("AudioService", "state: "+ state);
             if(autoplay) {
                 if(music.getDownloaded() == 1) {
                     currentlyPlaying = music;
                     if(playerState == null)
                         playSong(music);
-                } else
-                if(playerState != null)
-                    playerState.downloadSong(music);
+                } else {
+                    if(playerState != null)
+                        playerState.downloadSong(music);
+                }
             }
-            if(playerState != null)
-                playerState.onNextSong(music);
+            if(playerState != null && music.getDownloaded() == 1)
+                playerState.onSetSong(music);
         } else {
             if(position >= stationList.size()) {
                 position = stationList.size() - 1;
                 return;
             }
             Station station = stationList.get(position);
-            playSong(station);
+            if(playerState != null)
+                playerState.onSetStation(station);
+            else
+                playSong(station);
         }
 
     }
@@ -300,7 +302,7 @@ public class AudioPlayer implements Player.EventListener{
     public void previousSong() {
         position = position - 1;
         if(!isStream) {
-            if(position < 0) {
+            if(position < 0 && position < musicList.size()) {
                 position = 0;
                 return;
             }
@@ -315,15 +317,18 @@ public class AudioPlayer implements Player.EventListener{
                     playerState.downloadSong(music);
             }
 
-            if(playerState != null)
-                playerState.onPreviousSong(music);
+            if(playerState != null  && music.getDownloaded() == 1)
+                playerState.onSetSong(music);
         } else {
             if(position < 0) {
                 position = 0;
                 return;
             }
             Station station = stationList.get(position);
-            playSong(station);
+            if(playerState != null)
+                playerState.onSetStation(station);
+            else
+                playSong(station);
         }
 
     }
@@ -339,8 +344,6 @@ public class AudioPlayer implements Player.EventListener{
         musicList.add(0, currentlyPlaying);
         position = 0;
         shuffled = true;
-        for(Music pjesma : musicList)
-            Log.d("AudioPlayer", "title: " + pjesma.getTitle());
     }
 
     public void unShuffle() {

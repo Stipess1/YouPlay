@@ -69,6 +69,11 @@
             android:summary="https://youplayandroid.com/"/>
 
         <PreferenceScreen
+            android:key="contribute"
+            android:title="@string/contribute"
+            android:summary="@string/contribute_summary"/>
+
+        <PreferenceScreen
             android:key="send_email"
             android:title="@string/send_email"
             android:summary="stipess@youplayandroid.com"/>

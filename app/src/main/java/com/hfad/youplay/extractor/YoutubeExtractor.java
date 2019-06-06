@@ -405,7 +405,6 @@ public class YoutubeExtractor {
                         music.setTitle(title);
                         music.setId(id);
                         music.setDuration(time);
-                        Log.d(TAG, ""+li);
                         music.setAuthor(getUploaderName(li));
 
                         music.setViews(Utils.convertViewsToString(getViewCount(li)));

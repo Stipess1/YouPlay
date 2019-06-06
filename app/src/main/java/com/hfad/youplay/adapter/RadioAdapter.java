@@ -175,8 +175,7 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             viewHolder.info.setVisibility(View.GONE);
 
             if(!station.getIcon().equals(""))
-                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().diskCacheStrategy(DiskCacheStrategy.NONE).
-                        skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(viewHolder.image);
+                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.drawable.image_holder)).into(viewHolder.image);
 
             viewHolder.itemView.setTag(station);
         }
@@ -201,9 +200,9 @@ public class RadioAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
 
             viewHolder.image.setScaleType(ImageView.ScaleType.CENTER_CROP);
             if(!station.getIcon().isEmpty())
-                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.mipmap.ic_launcher)).into(viewHolder.image);
+                Glide.with(context).load(station.getIcon()).apply(new RequestOptions().error(R.drawable.image_holder)).into(viewHolder.image);
             else
-                Glide.with(context).load(R.mipmap.ic_launcher).into(viewHolder.image);
+                Glide.with(context).load(R.drawable.image_holder).into(viewHolder.image);
 
             viewHolder.itemView.setTag(station);
         }

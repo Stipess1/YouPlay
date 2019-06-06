@@ -2,7 +2,6 @@ package com.hfad.youplay;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -10,7 +9,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -33,7 +31,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
-import android.system.ErrnoException;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -97,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = true;
+    public static final boolean noAdApp = false;
     // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
     // i mora biti false za ovo za korisnike koji nemaju reklame
     public static final boolean isGooglePlay = false;
@@ -116,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     public ViewPager pager;
     private AdView adView;
     private InterstitialAd interstitialAd;
-    private boolean closeApp = false;
     private YouPlayDatabase db;
     private InputMethodManager imm;
     private AudioPlayer audioPlayer;
@@ -638,7 +634,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void refreshSuggestions(List<Music> data, boolean queue) {
+    public void refreshSuggestions(ArrayList<Music> data, boolean queue) {
+        playFragment.setSpinner(getResources().getString(R.string.you_history));
         playFragment.refreshList(data, queue);
     }
 
@@ -663,24 +660,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             public void onAdClosed() {
                 interstitialAd.loadAd(new AdRequest.Builder().build());
 //                moveTaskToBack(true);
-            }
-
-            @Override
-            public void onAdFailedToLoad(int i) {
-                switch (i)
-                {
-                    case AdRequest.ERROR_CODE_NO_FILL:
-                        closeApp = true;
-                        break;
-                    case AdRequest.ERROR_CODE_NETWORK_ERROR:
-                        closeApp = true;
-                        break;
-                }
-            }
-
-            @Override
-            public void onAdLoaded() {
-                closeApp = false;
             }
         });
         interstitialAd.loadAd(new AdRequest.Builder().build());
@@ -900,7 +879,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         audioPlayer.setStream(false);
         intent.putExtra(AudioService.SONG, pjesma);
         intent.putExtra(AudioService.ACTION, 6);
-//        intent.putExtra(AudioService.LIST, playFragment.getTempList());
         startService(intent);
     }
 
@@ -929,13 +907,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 this.finishAffinity();
                 break;
         }
-    }
-
-    // Kada otvaramo pjesmu u youtube pogledaj da li neka pjesma svira, ako da zaustavi ju
-    @Override
-    public void pauseSong() {
-        if(audioService.getAudioPlayer().getPlayWhenReady())
-            playFragment.playPauseSong(true);
     }
 
     // Kada se napravi lista u playlist fragmenut ova se funkcija zove.
