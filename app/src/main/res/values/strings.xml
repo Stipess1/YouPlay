@@ -86,8 +86,6 @@
     <string name="pref_navigation_summary">When enabled navigation bar won\'t show in play screen</string>
     <string name="switch_summary">Change to dark theme</string>
     <string name="check_download">Download</string>
-    <string name="check_download_title">Download</string>
-    <string name="check_download_desc">Speed up download speed (sometimes song won\'t be downloaded)</string>
     <string name="send_email">Send an email</string>
     <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
     <string name="contribute">Contribute</string>

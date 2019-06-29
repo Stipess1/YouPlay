@@ -111,9 +111,7 @@ public class AudioPlayer implements Player.EventListener{
                     }
 
                     if(!isAlarm) {
-                        Log.d("AudioPlayer", "Next song");
                         nextSong();
-
                     }
 
                     isAlarm = false;
@@ -392,6 +390,10 @@ public class AudioPlayer implements Player.EventListener{
 
     public boolean isAlarm() {
         return isAlarm;
+    }
+
+    public int getAlarm() {
+        return alarm;
     }
 
     public Replay getReplay() {

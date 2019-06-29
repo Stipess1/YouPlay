@@ -182,7 +182,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         File base = new File(Environment.getExternalStorageDirectory() + File.separator +
                 Constants.APP_NAME + File.separator + Constants.DATABASE, database);
 
-
+        Log.d(TAG, "path: " + base.getAbsolutePath());
         return base.getAbsolutePath();
     }
     /*
@@ -298,8 +298,10 @@ public class YouPlayDatabase extends SQLiteOpenHelper
             while(data.moveToNext());
 
         }
-        data.close();
-        db.close();
+        if(data != null)
+            data.close();
+        if(db != null)
+            db.close();
         return stations;
     }
 
@@ -334,11 +336,10 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                 + FileManager.getRootPath().getAbsolutePath());
         try{
             return SQLiteDatabase.openOrCreateDatabase(getPath(database), null);
-        }catch (Exception e)
-        {
-            return null;
+        }catch (Exception e) {
+            e.printStackTrace();
         }
-
+        return null;
     }
 
     /*
@@ -414,18 +415,21 @@ public class YouPlayDatabase extends SQLiteOpenHelper
     {
         SQLiteDatabase db = getDatabase(PLAYLIST_DB);
         String query = "SELECT ID FROM " + "[" + table + "]";
-
-        Cursor data = db.rawQuery(query, null);
-        if(data != null && data.moveToFirst())
-        {
-            String pic = data.getString(0);
+        try{
+            Cursor data = db.rawQuery(query, null);
+            if(data != null && data.moveToFirst())
+            {
+                String pic = data.getString(0);
+                db.close();
+                data.close();
+                return pic;
+            }
             db.close();
-            data.close();
-            return pic;
+            if(data != null)
+                data.close();
+        }catch (Exception ignored) {
+
         }
-        db.close();
-        if(data != null)
-            data.close();
         return null;
     }
 
@@ -603,10 +607,11 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                while(data.moveToNext());
 
            }
-           if(data != null)
-                data.close();
 
-        db.close();
+           if(data != null)
+               data.close();
+           if(db != null)
+            db.close();
         return music;
     }
 

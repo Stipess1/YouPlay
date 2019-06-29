@@ -3,12 +3,10 @@ package com.hfad.youplay.utils;
 import android.os.Environment;
 import android.os.StatFs;
 
-import com.google.api.services.youtube.model.SearchResult;
 import com.hfad.youplay.BuildConfig;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.List;
 import java.util.Locale;
 
 /**
@@ -23,26 +21,6 @@ public class Utils {
     private static DecimalFormat formatter = new DecimalFormat("#,###", symbols);
     private static final long MEGA_BYTE = 1048576;
 
-    public static String getID(List<SearchResult> searchResults) {
-
-        StringBuilder stringBuilder = new StringBuilder();
-        for (SearchResult result : searchResults) {
-            String id = result.getId().getVideoId();
-            if (id != null) {
-                stringBuilder.append(id);
-                stringBuilder.append(",");
-            }
-        }
-
-        if (stringBuilder.length() == 0) {
-            return null;
-        }
-
-        if (stringBuilder.toString().endsWith(",")) {
-            stringBuilder.setLength(stringBuilder.length() - 1);
-        }
-        return stringBuilder.toString();
-    }
 
     public static String convertViewsToString(long views)
     {

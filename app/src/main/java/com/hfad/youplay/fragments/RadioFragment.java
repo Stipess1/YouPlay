@@ -5,20 +5,6 @@ import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,6 +14,20 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.snackbar.Snackbar;
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnRadioSelected;
@@ -60,12 +60,9 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
-    public AppBarLayout divideLayout;
-    private TextView connection;
     private RadioBrowser browser;
     private StationBrowser stationBrowser;
     public TextView searchCountry;
-    private LinearLayout linearLayout;
     public RadioAdapter radioAdapter;
     private ArrayList<Country> countriesList = new ArrayList<>();
     private ArrayList<Station> stationsList = new ArrayList<>();
@@ -118,12 +115,12 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_radio, container, false);
 
-        divideLayout = view.findViewById(R.id.app_layout);
+        AppBarLayout divideLayout = view.findViewById(R.id.app_layout);
         recyclerView = view.findViewById(R.id.radio_view);
-        connection = view.findViewById(R.id.internet_connection);
+        TextView connection = view.findViewById(R.id.internet_connection);
         searchCountry = view.findViewById(R.id.search_country);
         progressBar = view.findViewById(R.id.radio_loading_bar);
-        linearLayout= view.findViewById(R.id.radio_bar_layout);
+        LinearLayout linearLayout = view.findViewById(R.id.radio_bar_layout);
         searchCountry.setOnClickListener(this);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());

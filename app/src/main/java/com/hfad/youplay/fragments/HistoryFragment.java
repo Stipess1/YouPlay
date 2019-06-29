@@ -12,25 +12,11 @@ import android.database.sqlite.SQLiteFullException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.SimpleItemAnimator;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,6 +26,23 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
+
+import com.google.android.material.snackbar.Snackbar;
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnDataChanged;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
@@ -55,7 +58,7 @@ import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.Order;
 import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
-import com.liulishuo.okdownload.OkDownload;
+import com.liulishuo.filedownloader.FileDownloader;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,6 +80,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
     private RecyclerView recyclerView;
     public ArrayList<Music> musicList;
+    // kada korisnik pretrezi history putem searcha, uzmi pjesme iz ove liste
+    // posto je musicList filtriran
     private ArrayList<Music> tempList;
     public VideoAdapter adapter;
     private OnItemClicked onItemClicked;
@@ -93,6 +98,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private ActionBar actionBar;
     private DividerItemDecoration dividerItemDecoration;
     private boolean queue = false;
+    private Toolbar toolbar;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState)
@@ -133,7 +139,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
         setHasOptionsMenu(true);
 
-        Toolbar toolbar = view.findViewById(R.id.toolbar);
+        toolbar = view.findViewById(R.id.toolbar);
        // searchView = view.findViewById(R.id.history_search_view);
 
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
@@ -264,7 +270,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     {
         if(type == DatabaseHandler.UpdateType.REMOVE && AudioService.getInstance() != null && !AudioService.getInstance().isDestroyed())
         {
-            Snackbar.make(getView(), getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT).show();
+            Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.song_deleted), Snackbar.LENGTH_SHORT);
+            View view = snackbar.getView();
+            TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
+            textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
+            snackbar.show();
             pjesma.setDownloaded(0);
             checkIfEmpty();
             if(PlayFragment.currentlyPlayingSong != null)
@@ -317,7 +327,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         adapter.disableEdit();
         Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.changes_saved), Snackbar.LENGTH_SHORT);
         View view = snackbar.getView();
-        TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+        TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
         textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
         snackbar.show();
     }
@@ -344,7 +354,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
         Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.song_in_queue), Snackbar.LENGTH_SHORT);
         View view = snackbar.getView();
-        TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+        TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
         textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
         snackbar.show();
 
@@ -397,7 +407,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
                 Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.changes_saved), Snackbar.LENGTH_SHORT);
                 View view = snackbar.getView();
-                TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
                 textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
                 snackbar.show();
             }
@@ -420,7 +430,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
                 Snackbar snackbar = Snackbar.make(getView(), getResources().getString(R.string.changes_saved), Snackbar.LENGTH_SHORT);
                 View view = snackbar.getView();
-                TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
                 textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
                 snackbar.show();
             }
@@ -454,7 +464,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         }
     }
 
-    public void setupAdapter()
+    private void setupAdapter()
     {
         adapter = new VideoAdapter(getContext(), R.layout.play_adapter_view, musicList, true);
 
@@ -470,7 +480,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
     }
 
-    public void refreshList()
+    private void refreshList()
     {
         if(audioService == null)
             audioService = AudioService.getInstance();
@@ -494,7 +504,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
             recyclerView.removeItemDecoration(dividerItemDecoration);
             recyclerView.addItemDecoration(dividerItemDecoration);
 
-            if(Utils.freeSpace(true) > 20 && FileManager.getRootPath().exists()) {
+            if(FileManager.getRootPath().exists()) {
                 adapter.refreshList();
             }
             else if(!FileManager.getRootPath().exists())
@@ -533,7 +543,7 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         checkIfEmpty();
     }
 
-    public void checkIfEmpty()
+    private void checkIfEmpty()
     {
         history.setTextColor(getResources().getColor(ThemeManager.getFontTheme()));
         if(musicList.size() > 0)
@@ -546,15 +556,26 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     @Override
     public void onClick(Music pjesma, View view)
     {
-        if(!adapter.getState())
-        {
+        if(!adapter.getState()) {
+            if(searchView.getQuery().length() > 0) {
+                searchView.setQuery("", false);
+                getSearchView().collapseActionView();
+            }
+
             ArrayList<Music> temp = new ArrayList<>(musicList);
-            audioService.getAudioPlayer().setPosition(musicList.indexOf(pjesma));
+            audioService.getAudioPlayer().setPosition(indexOf(pjesma));
             audioService.getAudioPlayer().setMusicList(temp);
             setClickedSong(pjesma, temp, false);
-//            audioService.setRealMusic(temp);
         }
+    }
 
+    private int indexOf(Music pjesma) {
+        for(Music pjes : musicList) {
+            if(pjes.getId().equals(pjesma.getId())) {
+                return musicList.indexOf(pjes);
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -565,19 +586,15 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
     private void setClickedSong(Music pjesma, ArrayList<Music> pjesme, boolean shuffled)
     {
         queueList.clear();
-        OkDownload.with().downloadDispatcher().cancelAll();
+        FileDownloader.getImpl().pauseAll();
+//        OkDownload.with().downloadDispatcher().cancelAll();
         if(AudioService.getInstance().getAudioPlayer().getPlayWhenReady())
             AudioService.getInstance().getAudioPlayer().stop();
 
         if(URLUtil.isValidUrl(pjesma.getPath()))
             pjesma.setPath("");
 
-        if(searchView.getQuery().length() > 0)
-        {
-            searchView.setQuery("", true);
-            getSearchView().collapseActionView();
-        }
-        adapter.notifyFilterData(pjesme);
+//        adapter.notifyFilterData(pjesme);
         onItemClicked.onMusicClick(pjesma, pjesme, getResources().getString(R.string.you_history), shuffled);
         setPlayScreen();
     }

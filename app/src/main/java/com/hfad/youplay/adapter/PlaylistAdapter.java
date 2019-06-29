@@ -1,9 +1,7 @@
 package com.hfad.youplay.adapter;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.helper.ItemTouchHelper;
+
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,6 +9,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.GenericTransitionOptions;
 import com.bumptech.glide.Glide;
@@ -253,18 +255,12 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             // vidjet jeli je table updatean sa id od slike!
             String id = db.getPicTable(title);
 
-
             if(id != null)
                 Glide.with(context).load(FileManager.getPictureFile(id)).apply(new RequestOptions().override(80,120)).into(holder.image);
             else
                 Glide.with(context).load(R.mipmap.ic_launcher).into(holder.image);
 
-
             holder.title.setText(title);
-//            holder.title.setTextColor(context.getResources().getColor(ThemeManager.getFontTheme()));
-//            holder.itemView.setBackgroundColor(context.getResources().getColor(ThemeManager.getTheme()));
-
-
             holder.info.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {

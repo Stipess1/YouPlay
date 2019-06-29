@@ -50,7 +50,6 @@ public class Constants {
 
     public static final int DIALOG_TABLE_DELETE = 1;
 
-    public static final String API_KEY = "AIzaSyCT6umUAVwA62xDL0_u6RAX7Xne8YLWjW8";
 
     public static final String SUGESS_URL_FIRST = "http://suggestqueries.google.com/complete/search?hl=en&ds=yt&client=youtube&hjson=t&cp=1&q=";
     public static final String SUGESS_URL_SECON = "&format=5&alt=json";
@@ -69,12 +68,5 @@ public class Constants {
 
     public static final String DOWNLOAD_LINK = "https://youplayandroid.com/download/YouPlay.apk";
 
-
-//    public static final String[] FRAGMENTS = {
-//            "History",
-//            "Playlist",
-//            "Radio_Country",
-//            "Search_Country"
-//    };
 
 }

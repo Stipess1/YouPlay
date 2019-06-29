@@ -10,25 +10,21 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v14.preference.SwitchPreference;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.FileProvider;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.preference.Preference;
-import android.support.v7.preference.PreferenceScreen;
 import android.util.Log;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+import androidx.preference.Preference;
+import androidx.preference.PreferenceScreen;
+import androidx.preference.SwitchPreference;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.hfad.youplay.AudioService;
@@ -42,13 +38,10 @@ import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.web.YouPlayWeb;
-import com.liulishuo.okdownload.DownloadTask;
-import com.liulishuo.okdownload.core.cause.EndCause;
-import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
-import com.liulishuo.okdownload.core.listener.DownloadListener1;
-import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
-
-import org.mozilla.javascript.tools.jsc.Main;
+import com.liulishuo.filedownloader.BaseDownloadTask;
+import com.liulishuo.filedownloader.FileDownloadListener;
+import com.liulishuo.filedownloader.FileDownloadQueueSet;
+import com.liulishuo.filedownloader.FileDownloader;
 
 
 /**
@@ -236,46 +229,38 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
 
     private void download(String link)
     {
-        DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
-        DownloadTask downloadTask = task.build();
+        BaseDownloadTask task = FileDownloader.getImpl().create(link).setPath(FileManager.getDownloadFolder().getPath());
         final ProgressDialog downloadDialog = new ProgressDialog(getContext());
-        downloadTask.enqueue(new DownloadListener1() {
+        FileDownloadQueueSet queueSet = new FileDownloadQueueSet(new FileDownloadListener() {
             @Override
-            public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+            protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 
+            }
+
+            @Override
+            protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+                double divide = (double) soFarBytes / totalBytes;
+                double math = (double) downloadDialog.getMax() * divide;
+                downloadDialog.setProgress((int) math);
+            }
+
+            @Override
+            protected void started(BaseDownloadTask task) {
                 downloadDialog.setMessage(getContext().getString(R.string.downloading));
                 downloadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 downloadDialog.setProgress(0);
                 downloadDialog.setMax(100);
                 downloadDialog.setCancelable(false);
                 downloadDialog.setProgressNumberFormat(null);
+                downloadDialog.dismiss();
                 downloadDialog.show();
             }
 
             @Override
-            public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-
-            }
-
-            @Override
-            public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-
-            }
-
-            @Override
-            public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
-                double divide = (double) currentOffset / totalLength;
-                double math = (double) downloadDialog.getMax() * divide;
-                downloadDialog.setProgress((int) math);
-            }
-
-            @Override
-            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-                downloadDialog.cancel();
-
-                if(cause == EndCause.COMPLETED && !AudioService.getInstance().isDestroyed())
-                {
-                    downloadDialog.cancel();
+            protected void completed(BaseDownloadTask task) {
+                downloadDialog.dismiss();
+                if(!AudioService.getInstance().isDestroyed()) {
+                    downloadDialog.dismiss();
                     Uri apkURI = (Build.VERSION.SDK_INT >= 24)
                             ? FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".provider", FileManager.getDownloadFolder())
                             : Uri.fromFile(FileManager.getDownloadFolder());
@@ -286,12 +271,81 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
                             | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivity(intent);
                 }
-                if(cause == EndCause.ERROR)
-                    realCause.printStackTrace();
+            }
 
+            @Override
+            protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+
+            }
+
+            @Override
+            protected void error(BaseDownloadTask task, Throwable e) {
+
+            }
+
+            @Override
+            protected void warn(BaseDownloadTask task) {
 
             }
         });
+        queueSet.downloadSequentially(task);
+        queueSet.start();
+//        DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
+//        DownloadTask downloadTask = task.build();
+//        final ProgressDialog downloadDialog = new ProgressDialog(getContext());
+//        downloadTask.enqueue(new DownloadListener1() {
+//            @Override
+//            public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+//
+//                downloadDialog.setMessage(getContext().getString(R.string.downloading));
+//                downloadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//                downloadDialog.setProgress(0);
+//                downloadDialog.setMax(100);
+//                downloadDialog.setCancelable(false);
+//                downloadDialog.setProgressNumberFormat(null);
+//                downloadDialog.show();
+//            }
+//
+//            @Override
+//            public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
+//
+//            }
+//
+//            @Override
+//            public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
+//
+//            }
+//
+//            @Override
+//            public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+//                double divide = (double) currentOffset / totalLength;
+//                double math = (double) downloadDialog.getMax() * divide;
+//                downloadDialog.setProgress((int) math);
+//            }
+//
+//            @Override
+//            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+//                downloadDialog.cancel();
+//
+//                if(cause == EndCause.COMPLETED && !AudioService.getInstance().isDestroyed())
+//                {
+//                    downloadDialog.cancel();
+//                    Uri apkURI = (Build.VERSION.SDK_INT >= 24)
+//                            ? FileProvider.getUriForFile(getContext(), getContext().getPackageName() + ".provider", FileManager.getDownloadFolder())
+//                            : Uri.fromFile(FileManager.getDownloadFolder());
+//
+//                    Intent intent = new Intent(Intent.ACTION_VIEW);
+//                    intent.setDataAndType(apkURI, "application/vnd.android.package-archive");
+//                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                            | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//                    startActivity(intent);
+//                }
+//                if(cause == EndCause.ERROR)
+//                    realCause.printStackTrace();
+//
+//
+//            }
+//        });
     }
 
     @Override

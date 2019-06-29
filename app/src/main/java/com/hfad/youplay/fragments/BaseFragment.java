@@ -4,16 +4,17 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.view.View;
+
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
 
 import com.hfad.youplay.MainActivity;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public abstract class BaseFragment extends Fragment{
+public abstract class BaseFragment extends Fragment {
 
 
     private static final String TAG = BaseFragment.class.getSimpleName();
@@ -37,7 +38,7 @@ public abstract class BaseFragment extends Fragment{
         setRetainInstance(true);
     }
 
-    public void setPlayScreen()
+    void setPlayScreen()
     {
         runnable = new Runnable() {
             @Override

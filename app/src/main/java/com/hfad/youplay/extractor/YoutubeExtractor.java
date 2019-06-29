@@ -55,12 +55,14 @@ public class YoutubeExtractor {
         return musicList;
     }
 
+
     public void parse(String url)
     {
         checkList.addAll(YouPlayDatabase.getInstance().getData());
         this.url = url;
         id = url.substring(32);
         Connection connect = Jsoup.connect(url);
+
         try{
 
             URL url1 = new URL(DECRYPT_URL);
@@ -78,7 +80,7 @@ public class YoutubeExtractor {
                 DECRYPTION_AKAMAIZED_STRING_REGEX = object.getString("DECRYPTION_AKAMAIZED_STRING_REGEX");
             }
 
-            String pageContent = connect.get().html();
+            String pageContent = download(url);
             document = Jsoup.parse(pageContent, url);
 
             String playerUrl;

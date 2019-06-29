@@ -18,28 +18,29 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
-
-import android.support.v4.content.FileProvider;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.FileProvider;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.ViewPager;
+
 import com.applovin.sdk.AppLovinPrivacySettings;
 import com.applovin.sdk.AppLovinSdk;
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -48,6 +49,7 @@ import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -71,12 +73,10 @@ import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.web.YouPlayWeb;
-import com.liulishuo.okdownload.DownloadTask;
-import com.liulishuo.okdownload.OkDownload;
-import com.liulishuo.okdownload.core.cause.EndCause;
-import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
-import com.liulishuo.okdownload.core.listener.DownloadListener1;
-import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
+import com.liulishuo.filedownloader.BaseDownloadTask;
+import com.liulishuo.filedownloader.FileDownloadListener;
+import com.liulishuo.filedownloader.FileDownloadQueueSet;
+import com.liulishuo.filedownloader.FileDownloader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -147,9 +147,12 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             pager.setCurrentItem(1);
             firstTime = false;
         }
+        FileDownloader.setupOnApplicationOnCreate(getApplication());
 
         if(internetConnection() && !noAdApp)
             initAds();
+
+
 
         super.onStart();
     }
@@ -187,6 +190,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         Crashlytics.setUserEmail(EMAIL);
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_main);
+
+        if(noAdApp)
+            Answers.getInstance().logCustom(new CustomEvent("Premium User"));
 
         if(pre)
             ThemeManager.setTheme(ThemeManager.Theme.DARK_THEME);
@@ -241,6 +247,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         db = new YouPlayDatabase(getApplicationContext());
         checkPermissions(PERMISSIONS);
 
+
         tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(pager);
         tabLayout.setBackgroundColor(getResources().getColor(R.color.light_black));
@@ -276,7 +283,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             audioPlayer.setPlayerState(null);
         }
         size = -1;
-        OkDownload.with().downloadDispatcher().cancelAll();
+        FileDownloader.getImpl().pauseAll();
+//        OkDownload.with().downloadDispatcher().cancelAll();
         ThemeManager.setOnThemeChanged(null);
         if(adView != null && !noAdApp)
             adView.destroy();
@@ -380,8 +388,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     @Override
-    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms)
-    {
+    public void onPermissionsGranted(int requestCode, @NonNull List<String> perms) {
         initFiles();
     }
 
@@ -396,14 +403,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(EasyPermissions.hasPermissions(this, permissions))
         {
             initFiles();
-
-            File images = FileManager.getPictureFolder();
-            if(!images.exists())
-                images.mkdirs();
-
-            File databaseFile = FileManager.getDatabaseFolder();
-            if(!databaseFile.exists())
-                databaseFile.mkdirs();
 
             // Pogledaj dali ima nova verzija YouPlay-a
             YouPlayWeb web = new YouPlayWeb();
@@ -495,13 +494,23 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private void download(String link)
     {
-        DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
-        DownloadTask downloadTask = task.build();
+        BaseDownloadTask task = FileDownloader.getImpl().create(link).setPath(FileManager.getDownloadFolder().getPath());
         final ProgressDialog downloadDialog = new ProgressDialog(MainActivity.this);
-        downloadTask.enqueue(new DownloadListener1() {
+        FileDownloadQueueSet queueSet = new FileDownloadQueueSet(new FileDownloadListener() {
             @Override
-            public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+            protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 
+            }
+
+            @Override
+            protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+                double divide = (double) soFarBytes / totalBytes;
+                double math = (double) downloadDialog.getMax() * divide;
+                downloadDialog.setProgress((int) math);
+            }
+
+            @Override
+            protected void started(BaseDownloadTask task) {
                 downloadDialog.setMessage(getApplicationContext().getString(R.string.downloading));
                 downloadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                 downloadDialog.setProgress(0);
@@ -513,27 +522,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             }
 
             @Override
-            public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-
-            }
-
-            @Override
-            public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-
-            }
-
-            @Override
-            public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
-                double divide = (double) currentOffset / totalLength;
-                double math = (double) downloadDialog.getMax() * divide;
-                downloadDialog.setProgress((int) math);
-            }
-
-            @Override
-            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+            protected void completed(BaseDownloadTask task) {
                 downloadDialog.dismiss();
-                if(cause == EndCause.COMPLETED && getApplication() != null)
-                {
+                if(getApplication() != null) {
                     downloadDialog.dismiss();
                     Uri apkURI = (Build.VERSION.SDK_INT >= 24)
                             ? FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getPackageName() + ".provider", FileManager.getDownloadFolder())
@@ -545,10 +536,79 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                             | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                     startActivity(intent);
                 }
+            }
 
+            @Override
+            protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+
+            }
+
+            @Override
+            protected void error(BaseDownloadTask task, Throwable e) {
+
+            }
+
+            @Override
+            protected void warn(BaseDownloadTask task) {
 
             }
         });
+        queueSet.downloadSequentially(task);
+        queueSet.start();
+//        DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
+//        DownloadTask downloadTask = task.build();
+//        final ProgressDialog downloadDialog = new ProgressDialog(MainActivity.this);
+//        downloadTask.enqueue(new DownloadListener1() {
+//            @Override
+//            public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+//
+//                downloadDialog.setMessage(getApplicationContext().getString(R.string.downloading));
+//                downloadDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+//                downloadDialog.setProgress(0);
+//                downloadDialog.setMax(100);
+//                downloadDialog.setCancelable(false);
+//                downloadDialog.setProgressNumberFormat(null);
+//                downloadDialog.dismiss();
+//                downloadDialog.show();
+//            }
+//
+//            @Override
+//            public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
+//
+//            }
+//
+//            @Override
+//            public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
+//
+//            }
+//
+//            @Override
+//            public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+//                double divide = (double) currentOffset / totalLength;
+//                double math = (double) downloadDialog.getMax() * divide;
+//                downloadDialog.setProgress((int) math);
+//            }
+//
+//            @Override
+//            public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+//                downloadDialog.dismiss();
+//                if(cause == EndCause.COMPLETED && getApplication() != null)
+//                {
+//                    downloadDialog.dismiss();
+//                    Uri apkURI = (Build.VERSION.SDK_INT >= 24)
+//                            ? FileProvider.getUriForFile(getApplicationContext(), getApplicationContext().getPackageName() + ".provider", FileManager.getDownloadFolder())
+//                            : Uri.fromFile(FileManager.getDownloadFolder());
+//
+//                    Intent intent = new Intent(Intent.ACTION_VIEW);
+//                    intent.setDataAndType(apkURI, "application/vnd.android.package-archive");
+//                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                            | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//                    startActivity(intent);
+//                }
+//
+//
+//            }
+//        });
     }
 
     @Override
@@ -558,14 +618,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     public void initFiles() {
-        try {
-            if(Utils.freeSpace(true) < 20 && Environment.getExternalStorageDirectory().exists()) {
-                Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
-                finishAffinity();
-            }
-        } catch (Exception ignored) {
-
-        }
 
         File file = FileManager.getRootPath();
         if(!file.exists())
@@ -584,6 +636,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         } catch (Exception e) {
             Log.d("Exception", e.getMessage());
             Toast.makeText(this, getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
+            // Zna se desit kada se uklone permisije u postavkama da nezeli uci u app
+            // sve dok se ne "force stop" aplikacija pa ovdje radimo rucno
+            int pid = android.os.Process.myPid();
+            android.os.Process.killProcess(pid);
             finishAffinity();
         }
 

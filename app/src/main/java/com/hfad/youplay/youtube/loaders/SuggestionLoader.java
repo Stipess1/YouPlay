@@ -1,9 +1,10 @@
 package com.hfad.youplay.youtube.loaders;
 
 import android.content.Context;
-import android.support.annotation.Nullable;
-import android.support.v4.content.AsyncTaskLoader;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.loader.content.AsyncTaskLoader;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.json.JSONArray;

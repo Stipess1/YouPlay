@@ -3,8 +3,6 @@ package com.hfad.youplay.listeners;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.media.session.MediaButtonReceiver;
-import android.view.KeyEvent;
 
 import com.hfad.youplay.AudioService;
 import static com.hfad.youplay.utils.Constants.*;

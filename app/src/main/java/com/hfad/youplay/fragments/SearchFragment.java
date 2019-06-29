@@ -10,31 +10,29 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.content.Loader;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SearchView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.view.animation.LayoutAnimationController;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
@@ -52,7 +50,7 @@ import com.hfad.youplay.utils.ThemeManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.SuggestionLoader;
 import com.hfad.youplay.youtube.loaders.YoutubeMusicLoader;
-import com.liulishuo.okdownload.OkDownload;
+import com.liulishuo.filedownloader.FileDownloader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,8 +108,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
         dividerItemDecoration = new SeparatorDecoration(getResources().getColor(ThemeManager.getDividerColorSearch()), 2);
-//        dividerItemDecoration.setDrawable(getActivity().getResources().getDrawable(ThemeManager.getDividerColor()));
-//        recyclerView.addItemDecoration(dividerItemDecoration);
 
 
         Toolbar toolbar = view.findViewById(R.id.toolbar);
@@ -129,15 +125,15 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                     recyclerView.setAdapter(videoAdapter);
                     recyclerView.addItemDecoration(dividerItemDecoration);
 
-                    getLoaderManager().restartLoader(1, null, new android.support.v4.app.LoaderManager.LoaderCallbacks<List<Music>>() {
+                    getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
 
                         @Override
-                        public android.support.v4.content.Loader<List<Music>> onCreateLoader(int id, Bundle args) {
+                        public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
                             return new YoutubeMusicLoader(getContext(), query);
                         }
 
                         @Override
-                        public void onLoadFinished(android.support.v4.content.Loader<List<Music>> loader, List<Music> data) {
+                        public void onLoadFinished(Loader<List<Music>> loader, List<Music> data) {
                             if(data.size() > 0)
                                 noResult.setVisibility(View.GONE);
                             else
@@ -157,7 +153,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                         }
 
                         @Override
-                        public void onLoaderReset(android.support.v4.content.Loader<List<Music>> loader) {
+                        public void onLoaderReset(Loader<List<Music>> loader) {
 
                         }
                     }).forceLoad();
@@ -305,7 +301,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         {
             if(ThemeManager.getDebug().equals("Dark"))
             {
-                EditText searchEditText = searchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+                EditText searchEditText = searchView.findViewById(androidx.appcompat.R.id.search_src_text);
                 searchEditText.setTextColor(getResources().getColor(R.color.white));
                 searchEditText.setHintTextColor(getResources().getColor(R.color.white));
             }
@@ -382,11 +378,12 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         buildAlertDialog(position,v);
     }
 
-    public void setPlayingIfNotDownloaded(Music pjesma)
+    private void setPlayingIfNotDownloaded(Music pjesma)
     {
         // Pogledat jel pjesma vec postoji i da li je live stream
         // Ako se neka pjesma skida, otkazi preuzimanje i postavi drugu pjesma da svira ili skida.
-        OkDownload.with().downloadDispatcher().cancelAll();
+        FileDownloader.getImpl().pauseAll();
+//        OkDownload.with().downloadDispatcher().cancelAll();
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId()))
         {
             audioService.getAudioPlayer().setPlayWhenReady(false);

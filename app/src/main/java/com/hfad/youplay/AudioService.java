@@ -20,18 +20,21 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.content.ContextCompat;
+
 import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.RemoteViews;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.JobIntentService;
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+import androidx.media.session.MediaButtonReceiver;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
@@ -68,7 +71,7 @@ import java.util.ArrayList;
 
 import static com.hfad.youplay.utils.Constants.*;
 
-public class AudioService extends Service implements AudioManager.OnAudioFocusChangeListener
+public class AudioService extends JobIntentService implements AudioManager.OnAudioFocusChangeListener
 {
 
     private static final String TAG = AudioService.class.getSimpleName();
@@ -105,15 +108,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     private boolean isLoss = false;
     private static AudioService instance;
     private boolean isDestroyed;
-    private boolean listenerAdded = false;
-
-    private boolean replay = false;
-    private boolean autoPlaybool = true;
-    private boolean shuffled = false;
-    private boolean alarm = false;
-    private boolean alarmEnded = false;
-    private boolean replaySong = false;
-
 
     public AudioService()
     {
@@ -243,27 +237,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     {
         this.currentTable = currentTable;
     }
-
-    public int getAlarmCount() {
-        return alarmCount;
-    }
-
-    public boolean isAlarm() {
-        return alarm;
-    }
-
-    public void setAlarm(boolean alarm) {
-        this.alarm = alarm;
-    }
-
-    public boolean isReplay() {
-        return replay;
-    }
-
-    public boolean isAutoPlaybool() {
-        return autoPlaybool;
-    }
-
 
     public void setDestroyed(boolean isDestroyed)
     {
@@ -490,6 +463,11 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     }
 
     @Override
+    protected void onHandleWork(@NonNull Intent intent) {
+
+    }
+
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId)
     {
         if(intent != null)
@@ -514,10 +492,9 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     }
                     else {
                         audioPlayer.nextSong();
-                        updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                        if(audioPlayer.getCurrentlyPlaying() != null)
+                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
                     }
-
-
                     break;
                 case PREVIOUS_SONG:
                     if(serviceCallback != null) {
@@ -525,7 +502,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                     }
                     else {
                         audioPlayer.previousSong();
-                        updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                        if(audioPlayer.getCurrentlyPlaying() != null)
+                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
                     }
                     break;
                 case PLAY_PAUSE_SONG:
@@ -561,11 +539,15 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
     public void onAudioFocusChange(int focus)
     {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        Log.d(TAG, "UNPLUGGED PLUGGED " + focus);
         switch (focus)
         {
+
             case AudioManager.AUDIOFOCUS_GAIN:
+                Log.d(TAG, "AUDIOFOCUS GAIN");
                 if(!audioPlayer.getPlayWhenReady() && wasPlaying && !isLoss)
                 {
+
                     mediaSessionCompat.setActive(true);
                     if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
@@ -577,6 +559,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 }
                     break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                Log.d(TAG, "AUDIOFOCUS LOSS TRANSIENT");
                 if(audioPlayer.getPlayWhenReady())
                 {
                     if(serviceCallback != null)
@@ -585,11 +568,13 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                         audioPlayer.playWhenReady();
 
                     updateNotification("","");
+                    Log.d(TAG, audioManager.getMode() +" MODE");
                     switch (audioManager.getMode())
                     {
                         case AudioManager.MODE_RINGTONE:
                             case AudioManager.MODE_IN_CALL:
                                 wasPlaying = true;
+                                Log.d(TAG, "AUDIOFOCUS LOSS CALL/RINGTONE");
                                 break;
                     }
                     if(preferences.getBoolean("sound_mode", false))
@@ -598,6 +583,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                 break;
 
                 case AudioManager.AUDIOFOCUS_LOSS:
+                    Log.d(TAG, "AUDIOFOCUS LOSS 1");
                     if(audioPlayer.getPlayWhenReady())
                     {
                         if(serviceCallback != null)
@@ -606,6 +592,7 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
                             audioPlayer.playWhenReady();
 
                         updateNotification("","");
+                        Log.d(TAG, "AUDIOFOCUS LOSS ");
                         wasPlaying = true;
                         isLoss = true;
                     }
@@ -627,76 +614,6 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
 
     }
 
-//    public void nextSong()
-//    {
-//        if(!isStream && music != null)
-//        {
-//            int pos;
-//            for(Music pjesma : musicList)
-//                if(pjesma.getId().equals(music.getId()))
-//                {
-//                    pos = musicList.indexOf(pjesma);
-//                    if(pos+1 < musicList.size())
-//                    {
-//                        music = musicList.get(pos+1);
-//                        if(music != null && music.getPath() != null)
-//                            playSong();
-//                        break;
-//                    }
-//                }
-//        }
-//        else if(isStream)
-//        {
-//            int pos;
-//            for(Station station : stations)
-//                if(station.getId().equals(this.station.getId()))
-//                {
-//                    pos = stations.indexOf(station);
-//                    if(pos+1 < stations.size())
-//                    {
-//                        this.station = stations.get(pos+1);
-//                        playSong();
-//                        break;
-//                    }
-//                }
-//        }
-//    }
-//
-//    private void previousSong()
-//    {
-//        if(!isStream && music != null)
-//        {
-//            int pos;
-//            for(Music pjesma : musicList)
-//                if(pjesma.getId().equals(music.getId()))
-//                {
-//                    pos = musicList.indexOf(pjesma);
-//                    if(pos-1 >= 0)
-//                    {
-//                        music = musicList.get(pos-1);
-//                        if(music != null)
-//                            playSong();
-//                        break;
-//                    }
-//                }
-//        }
-//        else if(isStream)
-//        {
-//            int pos;
-//            for(Station station : stations)
-//                if(station.getId().equals(this.station.getId()))
-//                {
-//                    pos = stations.indexOf(station);
-//                    if(pos-1 >= 0)
-//                    {
-//                        this.station = stations.get(pos-1);
-//                        playSong();
-//                        break;
-//                    }
-//                }
-//        }
-//    }
-
 
     @Override
     public void onDestroy()
@@ -710,6 +627,8 @@ public class AudioService extends Service implements AudioManager.OnAudioFocusCh
         instance = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);
+        int pid = android.os.Process.myPid();
+        android.os.Process.killProcess(pid);
         super.onDestroy();
     }
 

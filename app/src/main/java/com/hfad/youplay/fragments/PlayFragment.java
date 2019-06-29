@@ -15,14 +15,15 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.constraint.ConstraintLayout;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
+
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -46,12 +47,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.PlaybackParameters;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.source.TrackGroupArray;
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.material.snackbar.Snackbar;
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.Ilisteners.OnDataChanged;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
@@ -70,14 +66,11 @@ import com.hfad.youplay.utils.Constants;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.Utils;
 import com.hfad.youplay.youtube.loaders.UrlLoader;
-import com.liulishuo.okdownload.DownloadListener;
-import com.liulishuo.okdownload.DownloadSerialQueue;
-import com.liulishuo.okdownload.DownloadTask;
-import com.liulishuo.okdownload.OkDownload;
-import com.liulishuo.okdownload.core.cause.EndCause;
-import com.liulishuo.okdownload.core.cause.ResumeFailedCause;
-import com.liulishuo.okdownload.core.listener.DownloadListener1;
-import com.liulishuo.okdownload.core.listener.assist.Listener1Assist;
+import com.liulishuo.filedownloader.BaseDownloadTask;
+import com.liulishuo.filedownloader.FileDownloadListener;
+import com.liulishuo.filedownloader.FileDownloadQueueSet;
+import com.liulishuo.filedownloader.FileDownloader;
+import com.liulishuo.filedownloader.util.FileDownloadSerialQueue;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -212,10 +205,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
                 tempList.clear();
                 tempList.addAll(audioPlayer.getMusicList());
-                for(Music pjesma : audioPlayer.getMusicList())
-                    Log.d(TAG,"title: " + pjesma.getTitle());
-    //            musicList.clear();
-    //            musicList.addAll(audioService.getRealMusic());
             }
 
         adapter = new PlaylistAdapter(getContext(), R.layout.play_fragment_list, tempList, PlaylistAdapter.ListType.SUGGESTIONS);
@@ -239,7 +228,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onSwipe(int position) {
                 setCurrentDeleted(position);
-                audioPlayer.setMusicList(tempList);
+                audioPlayer.setMusicList(new ArrayList<>(tempList));
             }
         });
         recyclerView.setAdapter(adapter);
@@ -459,7 +448,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         seekbar.setMax((int)audioService.getAudioPlayer().getDuration());
         seekbar.setProgress((int) audioService.getAudioPlayer().getCurrentPosition());
-        if(audioService.isAlarm())
+        if(audioService.getAudioPlayer().isAlarm())
             alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
         if(currentlyPlayingSong.getDownloaded() == 1)
             seekbar.setSecondaryProgress(seekbar.getMax());
@@ -484,7 +473,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         ((MainActivity)getActivity()).pager.setCurrentItem(0);
 
-        if(audioService.isAlarm())
+        if(audioService.getAudioPlayer().isAlarm())
             alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
 
         if(audioService.getAudioPlayer().getPlayWhenReady())
@@ -549,10 +538,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         audioPlayer.setPlayerState(this);
     }
 
-    public ArrayList<Music> getTempList()
-    {
-        return tempList;
-    }
 
     @Override
     public void onInfoClicked(Station station) {
@@ -622,7 +607,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(audioService.getAudioPlayer().getPlayWhenReady())
             audioService.getAudioPlayer().stop();
 
-        OkDownload.with().downloadDispatcher().cancelAll();
+        FileDownloader.getImpl().pauseAll();
+//        OkDownload.with().downloadDispatcher().cancelAll();
+//        setCurrent(audioPlayer.getPosition());
         audioPlayer.setStream(false);
         if(pjesma.getDownloaded() == 1){
             audioPlayer.playSong(pjesma);
@@ -630,7 +617,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
         else
             downloadSong(pjesma, false);
-//        setCurrent(position);
+
         if(slided)
             slide();
     }
@@ -686,10 +673,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         adapter.setLastCurrent(lastPost);
     }
 
-    public void setCurrent(final int position)
+    private void setCurrent(final int position)
     {
         audioPlayer.setPosition(position);
 
+        Log.d(TAG, "SCroll " + position) ;
         recyclerView.scrollToPosition(position);
         adapter.setCurrent(position);
 
@@ -805,9 +793,9 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     buildPlaylistDialog(currentlyPlayingSong);
                 break;
             case R.id.alarm:
-                if(audioService.getAlarmCount() > 0 && audioService.isAlarm())
+                if(audioService.getAudioPlayer().getAlarm() > 0 && audioService.getAudioPlayer().isAlarm())
                 {
-                    audioService.setAlarm(false);
+                    audioService.getAudioPlayer().setAlarm(false);
                     alarm.setForeground(getResources().getDrawable(R.drawable.alarm_add));
                     Toast.makeText(getContext(), getResources().getString(R.string.alarm_disabled), Toast.LENGTH_SHORT).show();
                 }
@@ -827,7 +815,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String title = titles.get(i);
                         YouPlayDatabase.getInstance(PlayFragment.this.getContext()).insertInTable(pjesma, title);
-                        Snackbar.make(PlayFragment.this.getView(), PlayFragment.this.getResources().getString(R.string.playlist_added), Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getView(), PlayFragment.this.getResources().getString(R.string.playlist_added), Snackbar.LENGTH_SHORT).show();
                         onItemClicked.refreshPlaylist();
                     }
                 });
@@ -1044,7 +1032,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
     }
 
-    public void setSong(Station pjesma)
+    private void setSong(Station pjesma)
     {
         Log.d(TAG, "SetSong station");
         bar.setVisibility(View.VISIBLE);
@@ -1083,13 +1071,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         audioService.playSong(pjesma, null);
     }
 
-    public void setSong(final Music pjesma)
+    private void setSong(final Music pjesma)
     {
-        setCurrent(tempList.indexOf(pjesma));
+        setCurrent(audioPlayer.getPosition());
         playSong(pjesma);
     }
 
-    public void playCycle()
+    private void playCycle()
     {
         if(audioService != null && handler != null )
         {
@@ -1125,7 +1113,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     u folderu ostane pola skinut fajl, taj fajl ce se obrisat i ponovno ce pocet
     skidat pjesmu
      */
-    public void deleteAndDownload(Music pjesma)
+    private void deleteAndDownload(Music pjesma)
     {
         deleteMedia = true;
 
@@ -1140,7 +1128,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         downloadSong(pjesma, false);
     }
 
-    public void downloadSong(final Music pjesma, final boolean relatedVideos) {
+    private void downloadSong(final Music pjesma, final boolean relatedVideos) {
         Activity activity = getActivity();
         if (activity instanceof MainActivity)
             ((MainActivity) getActivity()).pager.setCurrentItem(0);
@@ -1189,7 +1177,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     @Override
     public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma)
     {
-        if(pjesma.getDownloaded() == 0)
+        if(pjesma.getDownloaded() == 0 && isAdded())
             setMusic(pjesma, tempList);
 
         if(isAdded())
@@ -1214,36 +1202,23 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         Log.d(TAG, "FastDownload enabled: " + fastDownload);
         if(cacheMode)
         {
-            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
-            if(fastDownload)
-                builder.setConnectionCount(8);
-            DownloadTask task = builder.build();
-            task.enqueue(new DownloadListener1() {
+            BaseDownloadTask songTask = FileDownloader.getImpl().create(pjesma.getPath()).setPath(FileManager.getMediaPath(pjesma.getId()));
+            FileDownloadQueueSet queueSet = new FileDownloadQueueSet(new FileDownloadListener() {
                 @Override
-                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+                protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
 
                 }
 
                 @Override
-                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-
-                }
-
-                @Override
-                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-
-                }
-
-                @Override
-                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
-                    double divide = (double) currentOffset / totalLength;
+                protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+                    double divide = (double) soFarBytes / totalBytes;
                     double math = (double) seekbar.getMax() * divide;
                     seekbar.setSecondaryProgress((int) math);
                 }
 
                 @Override
-                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-                    if(cause == EndCause.COMPLETED && isAdded())
+                protected void completed(BaseDownloadTask task) {
+                    if(isAdded())
                     {
                         Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
                         seekbar.setSecondaryProgress(seekbar.getMax());
@@ -1254,14 +1229,77 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         onItemClicked.refreshPlaylist();
                         Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
                     }
-                    else if(cause == EndCause.ERROR && isAdded())
-                    {
+                }
+
+                @Override
+                protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+
+                }
+
+                @Override
+                protected void error(BaseDownloadTask task, Throwable e) {
+                    if(isAdded()) {
                         bar.setVisibility(View.GONE);
                         if(Utils.freeSpace(true) < 20)
                             Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
                     }
                 }
+
+                @Override
+                protected void warn(BaseDownloadTask task) {
+
+                }
             });
+            queueSet.downloadSequentially(songTask);
+            queueSet.start();
+//            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
+//            if(fastDownload)
+//                builder.setConnectionCount(8);
+//            DownloadTask task = builder.build();
+//            task.enqueue(new DownloadListener1() {
+//                @Override
+//                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+//
+//                }
+//
+//                @Override
+//                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
+//
+//                }
+//
+//                @Override
+//                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
+//
+//                }
+//
+//                @Override
+//                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+//                    double divide = (double) currentOffset / totalLength;
+//                    double math = (double) seekbar.getMax() * divide;
+//                    seekbar.setSecondaryProgress((int) math);
+//                }
+//
+//                @Override
+//                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+//                    if(cause == EndCause.COMPLETED && isAdded())
+//                    {
+//                        Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
+//                        seekbar.setSecondaryProgress(seekbar.getMax());
+//                        pjesma.setDownloaded(1);
+//                        pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
+//                        updateTable(pjesma);
+//                        onItemClicked.refreshSearchList(pjesma);
+//                        onItemClicked.refreshPlaylist();
+//                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
+//                    }
+//                    else if(cause == EndCause.ERROR && isAdded())
+//                    {
+//                        bar.setVisibility(View.GONE);
+//                        if(Utils.freeSpace(true) < 20)
+//                            Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
+//                    }
+//                }
+//            });
         }
     }
 
@@ -1271,57 +1309,49 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(context == null) return;
         if(!deleteMedia)
         {
+            Log.d(TAG, "URL EXISTS " + pjesma.getTitle());
             SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-            boolean fastDownload = preferences.getBoolean(getResources().getString(R.string.check_download), false);
             boolean cacheMode = preferences.getBoolean(Constants.CACHE_MODE, true);
 
-            DownloadSerialQueue serialQueue = new DownloadSerialQueue();
-            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getUrlImage(), FileManager.getPictureFile(pjesma.getId()));
-            DownloadTask task = builder.build();
+            BaseDownloadTask songTask = FileDownloader.getImpl().create(pjesma.getPath()).setPath(FileManager.getMediaPath(pjesma.getId()));
+            BaseDownloadTask picTask = FileDownloader.getImpl().create(pjesma.getUrlImage()).setPath(FileManager.getPicturePath(pjesma.getId()));
 
-            DownloadTask.Builder songBuilder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
-            if(fastDownload)
-                songBuilder.setConnectionCount(8);
-            Log.d(TAG, "PATH: " + pjesma.getPath());
-            DownloadTask songTask = songBuilder.build();
 
             final int songId = songTask.getId();
-            final int imageId = task.getId();
-            DownloadListener listener = new DownloadListener1() {
+            final int picId = picTask.getId();
+
+            Log.d(TAG, "URL id " + songId);
+            FileDownloadListener downloadListener = new FileDownloadListener() {
                 @Override
-                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+                protected void pending(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+                    Log.d(TAG, "URL PENDING id " + task.getId());
+                }
+
+                @Override
+                protected void started(BaseDownloadTask task) {
                     if(task.getId() == songId)
                         bar.setVisibility(View.GONE);
                 }
 
                 @Override
-                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-
-                }
-
-                @Override
-                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-
-                }
-
-                @Override
-                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+                protected void progress(BaseDownloadTask task, int soFarBytes, int totalBytes) {
                     if(task.getId() == songId)
                     {
-                        double divide = (double) currentOffset / totalLength;
+                        double divide = (double) soFarBytes / totalBytes;
                         double math = (double) seekbar.getMax() * divide;
                         seekbar.setSecondaryProgress((int) math);
                     }
                 }
 
                 @Override
-                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-                    if (cause == EndCause.COMPLETED && task.getId() == imageId)
+                protected void completed(BaseDownloadTask task) {
+                    if (task.getId() == picId)
                     {
+                        Log.d(TAG, "EndCause.COMPLETED IMAGE: " + pjesma.getTitle());
                         pjesma.setDownloaded(0);
                         updateTable(pjesma);
                     }
-                    else if(cause == EndCause.COMPLETED && task.getId() == songId && getContext() != null)
+                    else if(task.getId() == songId && getContext() != null)
                     {
                         Log.d(TAG, "EndCause.COMPLETED: " + pjesma.getTitle());
                         Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
@@ -1332,21 +1362,110 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         onItemClicked.refreshSearchList(pjesma);
                         Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
                     }
-                    else if (cause == EndCause.ERROR)
-                    {
-                        Log.d(TAG, "cause: "+ cause.toString());
+                }
+
+                @Override
+                protected void paused(BaseDownloadTask task, int soFarBytes, int totalBytes) {
+
+                }
+
+                @Override
+                protected void error(BaseDownloadTask task, Throwable e) {
                         bar.setVisibility(View.GONE);
                         if(Utils.freeSpace(true) < 20)
                             Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
+                }
 
-                    }
+                @Override
+                protected void warn(BaseDownloadTask task) {
+
                 }
             };
 
-            serialQueue.setListener(listener);
-            serialQueue.enqueue(task);
+            FileDownloadQueueSet queueSet = new FileDownloadQueueSet(downloadListener);
+
+            final List<BaseDownloadTask> tasks = new ArrayList<>();
+            tasks.add(picTask);
             if(cacheMode)
-                serialQueue.enqueue(songTask);
+                tasks.add(songTask);
+
+            queueSet.downloadSequentially(tasks);
+            queueSet.start();
+//            DownloadSerialQueue serialQueue = new DownloadSerialQueue();
+//            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getUrlImage(), FileManager.getPictureFile(pjesma.getId()));
+//            DownloadTask task = builder.build();
+//
+//            DownloadTask.Builder songBuilder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
+//            if(fastDownload)
+//                songBuilder.setConnectionCount(8);
+//
+//
+//            Log.d(TAG, "PATH: " + pjesma.getPath());
+//            DownloadTask songTask = songBuilder.build();
+//
+//
+//            final int songId = songTask.getId();
+//            final int imageId = task.getId();
+//            DownloadListener listener = new DownloadListener1() {
+//                @Override
+//                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
+//                    if(task.getId() == songId)
+//                        bar.setVisibility(View.GONE);
+//                }
+//
+//                @Override
+//                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
+//
+//                }
+//
+//                @Override
+//                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
+//
+//                }
+//
+//                @Override
+//                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
+//                    if(task.getId() == songId)
+//                    {
+//                        double divide = (double) currentOffset / totalLength;
+//                        double math = (double) seekbar.getMax() * divide;
+//                        seekbar.setSecondaryProgress((int) math);
+//                    }
+//                }
+//
+//                @Override
+//                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
+//                    if (cause == EndCause.COMPLETED && task.getId() == imageId)
+//                    {
+//                        pjesma.setDownloaded(0);
+//                        updateTable(pjesma);
+//                    }
+//                    else if(cause == EndCause.COMPLETED && task.getId() == songId && getContext() != null)
+//                    {
+//                        Log.d(TAG, "EndCause.COMPLETED: " + pjesma.getTitle());
+//                        Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
+//                        seekbar.setSecondaryProgress(seekbar.getMax());
+//                        pjesma.setDownloaded(1);
+//                        pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
+//                        updateTable(pjesma);
+//                        onItemClicked.refreshSearchList(pjesma);
+//                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
+//                    }
+//                    else if (cause == EndCause.ERROR)
+//                    {
+//                        Log.d(TAG, "cause: "+ cause.toString());
+//                        bar.setVisibility(View.GONE);
+//                        if(Utils.freeSpace(true) < 20)
+//                            Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
+//
+//                    }
+//                }
+//            };
+//
+//            serialQueue.setListener(listener);
+//            serialQueue.enqueue(task);
+//            if(cacheMode)
+//                serialQueue.enqueue(songTask);
         }
         else
         {

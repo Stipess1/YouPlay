@@ -6,15 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +15,16 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
 import com.hfad.youplay.Ilisteners.OnItemClicked;
 import com.hfad.youplay.Ilisteners.OnPlaylistSelected;
 import com.hfad.youplay.MainActivity;
@@ -186,7 +187,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
                             imm.hideSoftInputFromWindow(playlistTitle.getWindowToken(), 0);
                             Snackbar snackbar = Snackbar.make(getView(), PlaylistFragment.this.getResources().getString(R.string.playlist_created, playlistTitle.getText()), Snackbar.LENGTH_SHORT);
                             View view = snackbar.getView();
-                            TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                            TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
                             textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
                             snackbar.show();
                             YouPlayDatabase.getInstance(getContext()).createPlaylist(playlistTitle.getText().toString());
@@ -225,7 +226,7 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
                                 onItemClicked.refreshSpinnerAdapter();
                                 Snackbar snackbar = Snackbar.make(getView(), PlaylistFragment.this.getResources().getString(R.string.playlist_deleted), Snackbar.LENGTH_SHORT);
                                 View view = snackbar.getView();
-                                TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+                                TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
                                 textView.setTextColor(ContextCompat.getColor(getContext(), ThemeManager.getSnackbarFont()));
                                 snackbar.show();
                             } else if (i == DIALOG_PLAYLIST_RENAME) {

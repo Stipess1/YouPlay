@@ -22,13 +22,6 @@
 
     <PreferenceCategory
         android:title="@string/pref_download">
-        <CheckBoxPreference
-            android:id="@+id/faster_download"
-            android:key="@string/check_download"
-            android:defaultValue="false"
-            android:fontFamily="sans-serif-light"
-            android:summary="@string/check_download_desc"
-            android:title="@string/check_download_title"/>
 
         <CheckBoxPreference
             android:id="@+id/cache_mode"

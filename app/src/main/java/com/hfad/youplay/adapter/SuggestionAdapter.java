@@ -1,15 +1,15 @@
 package com.hfad.youplay.adapter;
 
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.hfad.youplay.Ilisteners.OnSuggestionSelected;
 import com.hfad.youplay.R;
-import com.hfad.youplay.utils.ThemeManager;
 
 import java.util.List;
 

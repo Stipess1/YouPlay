@@ -1,6 +1,9 @@
 package com.hfad.youplay.extractor;
 
+import android.util.Log;
+
 import com.hfad.youplay.database.YouPlayDatabase;
+import com.hfad.youplay.fragments.SearchFragment;
 import com.hfad.youplay.music.Music;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.Utils;
@@ -10,13 +13,20 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.net.ssl.HttpsURLConnection;
+
 public class SearchExtractor {
+    private static final String TAG = SearchExtractor.class.getSimpleName();
     private static final String SEARCH_QUERY = "https://www.youtube.com/results?search_query=";
     private static final String PAGE = "&page=";
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36";
     private int page = 1;
     private List<Music> musicList = new ArrayList<>();
     private List<Music> checkList = new ArrayList<>();
@@ -29,10 +39,12 @@ public class SearchExtractor {
     public void setSearchQuery(String searchQuery) throws Exception
     {
         checkList.addAll(YouPlayDatabase.getInstance().getData());
-        Connection connect = Jsoup.connect(SEARCH_QUERY+searchQuery+PAGE+page);
+        final String site;
+        final String url = SEARCH_QUERY+searchQuery+PAGE+page;
+        site = download(url);
         Document document = null;
         try{
-            document = connect.get();
+            document = Jsoup.parse(site, url);
         }catch (Exception e)
         {
             throw new IOException(e.getMessage());
@@ -40,6 +52,7 @@ public class SearchExtractor {
         if(document != null)
         {
             Element list = document.select("ol[class=\"item-section\"]").first();
+            Log.d(TAG, "list: " + list);
             for(Element item : list.children())
             {
                 Element el;
@@ -55,9 +68,9 @@ public class SearchExtractor {
                             Element duration = item.select("span[class*=\"video-time\"]").first(); // Dužina pjesme
                             Element autor = item.select("div[class=\"yt-lockup-byline\"]").first() // Autor pjesme
                                     .select("a").first();
-                            Element url = el.select("h3")
+                            Element link = el.select("h3")
                                     .first().select("a").first(); // Url pesme
-                            String id = url.attr("abs:href").substring(32);
+                            String id = link.attr("abs:href").substring(32);
                             Music music = new Music();
                             music.setAuthor(autor.text());
                             music.setTitle(title.text());
@@ -89,6 +102,31 @@ public class SearchExtractor {
 
         }
 
+    }
+
+    private String download(String siteUrl) throws IOException
+    {
+        URL url = new URL(siteUrl);
+        HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+        BufferedReader in = null;
+        StringBuilder response = new StringBuilder();
+        try {
+            con.setRequestMethod("GET");
+            con.setRequestProperty("User-Agent", USER_AGENT);
+            in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            while((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+            }
+        } catch(Exception e) {
+            throw new IOException(e);
+        } finally {
+            if(in != null) {
+                in.close();
+            }
+        }
+
+        return response.toString();
     }
 
     private long getViewCount(Element element)

@@ -118,6 +118,3 @@
 -keepnames class * implements android.os.Parcelable {
    public static final ** CREATOR;
 }
-
--keepclassmembers class com.mopub.** { public *; }
--keep public class com.mopub.**
