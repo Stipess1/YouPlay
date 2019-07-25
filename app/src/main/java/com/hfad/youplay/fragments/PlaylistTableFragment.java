@@ -187,6 +187,7 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
     @Override
     public void onShuffle() {
         audioPlayer.setMusicList(data);
+        audioPlayer.setPosition(0);
         onItemClicked.onMusicClick(data.get(0), data, title, true);
         setPlayScreen();
     }

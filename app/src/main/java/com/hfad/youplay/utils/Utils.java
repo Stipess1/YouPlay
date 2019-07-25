@@ -29,7 +29,12 @@ public class Utils {
 
     public static long convertToMilis(String duration)
     {
-        String[] regex = duration.split(":");
+        String[] regex;
+        if(duration.contains(":"))
+            regex = duration.split(":");
+        else
+            regex = duration.split("\\.");
+
         if(regex.length >= 3)
         {
             long hours = Integer.parseInt(regex[0]);

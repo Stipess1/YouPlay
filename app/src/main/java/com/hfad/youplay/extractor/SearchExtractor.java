@@ -17,6 +17,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,30 +32,28 @@ public class SearchExtractor {
     private List<Music> musicList = new ArrayList<>();
     private List<Music> checkList = new ArrayList<>();
 
+    private Document document;
+
     public List<Music> getMusics()
     {
         return musicList;
     }
 
+    public void setCheckList(ArrayList<Music> checkList) {
+        this.checkList.addAll(checkList);
+    }
+
     public void setSearchQuery(String searchQuery) throws Exception
     {
-        checkList.addAll(YouPlayDatabase.getInstance().getData());
         final String site;
-        final String url = SEARCH_QUERY+searchQuery+PAGE+page;
+        searchQuery = URLEncoder.encode(searchQuery, "UTF-8");
+        final String url = SEARCH_QUERY+searchQuery;
+        Log.d(TAG, "URL: " + url);
         site = download(url);
-        Document document = null;
-        try{
-            document = Jsoup.parse(site, url);
-        }catch (Exception e)
-        {
-            throw new IOException(e.getMessage());
-        }
-        if(document != null)
-        {
+        document = Jsoup.parse(site, url);
+        if(document != null) {
             Element list = document.select("ol[class=\"item-section\"]").first();
-            Log.d(TAG, "list: " + list);
-            for(Element item : list.children())
-            {
+            for(Element item : list.children()) {
                 Element el;
 
                 if ((item.select("div[class*=\"search-message\"]").first()) != null)
@@ -62,8 +61,7 @@ public class SearchExtractor {
                 else if((el = item.select("div[class*=\"yt-lockup-video\"]").first()) != null)
                 {
                     try{
-                        if(!isLiveStream(el))
-                        {
+                        if(!isLiveStream(el)) {
                             Element title = el.select("h3").first().select("a").first(); // Naslov
                             Element duration = item.select("span[class*=\"video-time\"]").first(); // Dužina pjesme
                             Element autor = item.select("div[class=\"yt-lockup-byline\"]").first() // Autor pjesme
@@ -79,18 +77,7 @@ public class SearchExtractor {
                             music.setId(id);
                             music.setViews(Utils.convertViewsToString(getViewCount(el)));
                             music.setUrlImage(getThumbnailUrl(id));
-                            for(Music pjesma : checkList)
-                            {
-                                if(pjesma.getId().equals(music.getId()))
-                                {
-                                    if(pjesma.getDownloaded() == 1)
-                                    {
-                                        music.setPath(FileManager.getMediaPath(music.getId()));
-                                        music.setDownloaded(1);
-                                    }
-                                }
-                            }
-                            musicList.add(music);
+                            checkMusic(music);
                         }
                     }
                     catch (Exception e)
@@ -102,6 +89,27 @@ public class SearchExtractor {
 
         }
 
+    }
+
+    /**
+     * Ovo je bolji nacin za provjeravanje pjesama dali su vec skinuti, nezelimo ako nade pjesmu
+     * da nastavi pregledavat ostale pjesme nego samo iskocimo iz loopa jer smo pjesmu vec pronsali
+     * @param music pjesma koja se mora provjerit dali je skinuta
+     */
+    private void checkMusic(Music music) {
+        for(Music pjesma : checkList)
+        {
+            if(pjesma.getId().equals(music.getId()))
+            {
+                if(pjesma.getDownloaded() == 1)
+                {
+                    music.setPath(FileManager.getMediaPath(music.getId()));
+                    music.setDownloaded(1);
+                    break;
+                }
+            }
+        }
+        musicList.add(music);
     }
 
     private String download(String siteUrl) throws IOException

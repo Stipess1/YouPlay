@@ -61,7 +61,6 @@ public class YoutubeExtractor {
         checkList.addAll(YouPlayDatabase.getInstance().getData());
         this.url = url;
         id = url.substring(32);
-        Connection connect = Jsoup.connect(url);
 
         try{
 

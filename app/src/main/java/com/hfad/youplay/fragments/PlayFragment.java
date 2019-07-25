@@ -204,7 +204,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     shuffle.setForeground(getResources().getDrawable(R.drawable.shuffle_pressed));
 
                 tempList.clear();
-                tempList.addAll(audioPlayer.getMusicList());
+                if(audioPlayer.getCurrentlyPlaying() != null)
+                    tempList.addAll(audioPlayer.getMusicList());
             }
 
         adapter = new PlaylistAdapter(getContext(), R.layout.play_fragment_list, tempList, PlaylistAdapter.ListType.SUGGESTIONS);
@@ -417,6 +418,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private void setDestroyedScreenSong()
     {
         currentlyPlayingSong = audioPlayer.getCurrentlyPlaying();
+        Log.d(TAG, "setDestroyedScreenSong");
 
         Glide.with(this).load(FileManager.getPictureFile(currentlyPlayingSong.getId())).apply(new RequestOptions().skipMemoryCache(true).error(R.mipmap.ic_launcher)).into(currentlyPlaying);
 
@@ -608,8 +610,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             audioService.getAudioPlayer().stop();
 
         FileDownloader.getImpl().pauseAll();
-//        OkDownload.with().downloadDispatcher().cancelAll();
-//        setCurrent(audioPlayer.getPosition());
         audioPlayer.setStream(false);
         if(pjesma.getDownloaded() == 1){
             audioPlayer.playSong(pjesma);
@@ -702,7 +702,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
     public void refreshList(ArrayList<Music> pjesme, boolean queue)
     {
-
         adapter.reloadList(pjesme);
         audioPlayer.setMusicList(pjesme);
 
@@ -1154,7 +1153,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         tempList.add(0, pjesma);
                         suggestionBar.setVisibility(View.GONE);
                         refreshList(tempList, false);
-                        audioPlayer.setMusicList(tempList);
+//                        audioPlayer.setMusicList(tempList);
                     }
                 } else {
                     if(getContext() != null)

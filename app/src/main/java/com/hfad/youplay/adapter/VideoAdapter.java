@@ -195,10 +195,8 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             {
                 case 0:
                     long milis = 0;
-                    for(Music pjesma : data)
-                    {
-                        if(pjesma.getDuration() != null)
-                        {
+                    for(Music pjesma : data) {
+                        if(pjesma.getDuration() != null) {
                             milis += Utils.convertToMilis(pjesma.getDuration());
                         }
                     }

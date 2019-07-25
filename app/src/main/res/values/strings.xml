@@ -102,7 +102,7 @@
     <string name="about">About</string>
     <string name="pref_sound">Sound</string>
     <string name="pref_focus_mode">Audio Focus</string>
-    <string name="pref_focus_summary">Continue playing after interruptions (e.g. Facebook video)</string>
+    <string name="pref_focus_summary">don\'t continue playing after interruptions (e.g. Phone call, Facebook video etc.)</string>
     <string name="apprater_dialog_title">Rate %s</string>
     <string name="apprater_rate_message">If you enjoy using this app, please take a moment to rate it. Thanks for your support!</string>
     <string name="apprater_rate">Rate Now</string>

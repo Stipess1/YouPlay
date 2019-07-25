@@ -686,6 +686,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
     public boolean ifItemExists(String id) throws SQLiteException
     {
         SQLiteDatabase db = getDatabase(YOUPLAY_DB);
+        if(db == null) return false;
         Cursor cursor = db.query(TABLE_NAME,
                 new String[] {Constants.ID},
                 Constants.ID + " = ?",

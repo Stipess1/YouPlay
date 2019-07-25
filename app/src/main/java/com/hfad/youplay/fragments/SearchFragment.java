@@ -68,8 +68,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
     private static final String TAG = SearchFragment.class.getSimpleName();
 
-    public RecyclerView recyclerView;
-    public ProgressBar progressBar;
+    private RecyclerView recyclerView;
+    private ProgressBar progressBar;
     private SearchAdapter videoAdapter;
     private SeparatorDecoration dividerItemDecoration;
     private ArrayList<Music> musicList = new ArrayList<>();
@@ -129,7 +129,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
                         @Override
                         public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
-                            return new YoutubeMusicLoader(getContext(), query);
+                            return new YoutubeMusicLoader(getContext(), query, audioService.getAudioPlayer().getSearchList());
                         }
 
                         @Override
@@ -139,7 +139,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                             else
                                 noResult.setVisibility(View.VISIBLE);
 
-                            Log.d(TAG, "Internet suggestion " + data.size());
                             progressBar.setVisibility(View.GONE);
 
                             musicList.clear();
@@ -384,13 +383,11 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         // Ako se neka pjesma skida, otkazi preuzimanje i postavi drugu pjesma da svira ili skida.
         FileDownloader.getImpl().pauseAll();
 //        OkDownload.with().downloadDispatcher().cancelAll();
-        if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId()))
-        {
+        if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId())) {
             audioService.getAudioPlayer().setPlayWhenReady(false);
             musicClicked.onMusicClick(pjesma, null, "---", false);
         }
-        else
-        {
+        else {
             pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
             musicClicked.onMusicClick(pjesma);
         }
@@ -437,8 +434,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
     }
 
     @Override
-    public void onClick(String query)
-    {
+    public void onClick(String query) {
         searchView.setQuery(query, true);
         searchView.clearFocus();
     }

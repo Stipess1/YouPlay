@@ -21,6 +21,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceManager;
 
+import android.support.v4.media.MediaDescriptionCompat;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
@@ -79,26 +80,19 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private final IBinder binder = new AudioBinder();
     public static String SONG = "song";
     public static String ACTION = "action";
-    public static String LIST = "list";
 
     private AudioPlayer audioPlayer;
     private AudioManager audioManager;
     private static final int NOTIFICATION_ID = NotificationId.getID();
 
     public RemoteViews remoteViews;
-    private ArrayList<Music> musicList;
-    // Ovu listu dohvacamo kada se aplikacija ponovno pokrene ili activity.
-    // Zbog toga sto musicList moze biti izmjesan ili sl.
-    private ArrayList<Music> realMusic = new ArrayList<>();
     private ArrayList<Station> stations;
     private Music music;
     private Station station;
     private Notification notification;
     private NotificationManager manager;
     private ServiceCallback serviceCallback;
-    private Player.EventListener eventListener;
     private MediaSessionCompat mediaSessionCompat;
-    private int alarmCount = 0;
     private String currentTable = "";
 
     private AudioOutputListener outputListener;
@@ -120,7 +114,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     }
 
     @Override
-    public IBinder onBind(Intent intent)
+    public IBinder onBind(@NonNull Intent intent)
     {
         return binder;
     }
@@ -275,8 +269,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         return 0;
     }
 
-    public void startForegroundService()
-    {
+    public void startForegroundService() {
         startForeground(NOTIFICATION_ID, initNotification("", ""));
         notification = initNotification("", "");
     }
@@ -432,12 +425,16 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, audioPlayer.getMusicList().size());
 
+            if(music.getDownloaded() == 1)
+                metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS, MediaDescriptionCompat.STATUS_DOWNLOADED);
+            else
+                metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS, MediaDescriptionCompat.STATUS_NOT_DOWNLOADED);
+
             mediaSessionCompat.setMetadata(metadataCompat.build());
 
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
 
             audioPlayer.playSong(music);
-            Log.d(TAG, "SET MUSIC");
 
             Answers.getInstance().logCustom(new CustomEvent("Songs played"));
         } else {
@@ -562,23 +559,23 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                 Log.d(TAG, "AUDIOFOCUS LOSS TRANSIENT");
                 if(audioPlayer.getPlayWhenReady())
                 {
+                    wasPlaying = true;
                     if(serviceCallback != null)
                         serviceCallback.callback(PLAY_PAUSE);
                     else
                         audioPlayer.playWhenReady();
 
                     updateNotification("","");
-                    Log.d(TAG, audioManager.getMode() +" MODE");
-                    switch (audioManager.getMode())
-                    {
-                        case AudioManager.MODE_RINGTONE:
-                            case AudioManager.MODE_IN_CALL:
-                                wasPlaying = true;
-                                Log.d(TAG, "AUDIOFOCUS LOSS CALL/RINGTONE");
-                                break;
-                    }
+//                    Log.d(TAG, audioManager.getMode() +" MODE");
+//                    switch (audioManager.getMode())
+//                    {
+//                        case AudioManager.MODE_RINGTONE:
+//                            case AudioManager.MODE_IN_CALL:
+//                                wasPlaying = true;
+//                                break;
+//                    }
                     if(preferences.getBoolean("sound_mode", false))
-                        wasPlaying = true;
+                        wasPlaying = false;
                 }
                 break;
 

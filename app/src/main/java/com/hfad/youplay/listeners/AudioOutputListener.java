@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.os.Build;
 import android.widget.Toast;
 
 import com.hfad.youplay.AudioService;
@@ -27,7 +28,10 @@ public class AudioOutputListener extends BroadcastReceiver{
                 Toast.makeText(context, R.string.headphones, Toast.LENGTH_SHORT).show();
                 Intent newIntent = new Intent(context, AudioService.class);
                 newIntent.putExtra(AudioService.ACTION, PLAY_PAUSE_SONG);
-                context.startService(newIntent);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    context.startForegroundService(newIntent);
+                else
+                    context.startService(newIntent);
             }
         }
 

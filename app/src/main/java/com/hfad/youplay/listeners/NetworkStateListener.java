@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.os.Build;
 
 import com.hfad.youplay.AudioService;
 import com.hfad.youplay.utils.Constants;
@@ -22,7 +23,10 @@ public class NetworkStateListener extends BroadcastReceiver
         {
             Intent newIntent = new Intent(context, AudioService.class);
             newIntent.putExtra(AudioService.ACTION, Constants.ADS);
-            context.startService(newIntent);
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                context.startForegroundService(newIntent);
+            else
+                context.startService(newIntent);
         }
     }
 }

@@ -21,7 +21,6 @@ import com.hfad.youplay.R;
  */
 public class DefaultPlaylistFragment extends BaseFragment {
 
-    private AppBarLayout barLayout;
     public PlaylistFragment playlistFragment;
     private ActionBar actionBar;
 
@@ -64,7 +63,6 @@ public class DefaultPlaylistFragment extends BaseFragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_default_playlist, container, false);
-        barLayout = view.findViewById(R.id.bar_layout);
         playlistFragment = new PlaylistFragment();
 
         Toolbar toolbar = view.findViewById(R.id.toolbar);

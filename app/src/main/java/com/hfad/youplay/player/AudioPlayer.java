@@ -32,8 +32,10 @@ public class AudioPlayer implements Player.EventListener{
     private SimpleExoPlayer exoPlayer;
     // Lista pjesama
     private ArrayList<Music> musicList = new ArrayList<>();
-    // Kopija lista pjesama
+    // Kopija lista pjesama za shuffle
     private ArrayList<Music> copyList = new ArrayList<>();
+
+    private ArrayList<Music> searchList = new ArrayList<>();
     // Lista radio postaji
     private ArrayList<Station> stationList;
 
@@ -180,6 +182,14 @@ public class AudioPlayer implements Player.EventListener{
         this.musicList = musicList;
         copyList.clear();
         copyList.addAll(musicList);
+    }
+
+    public void setSearchList(ArrayList<Music> searchList) {
+        this.searchList = searchList;
+    }
+
+    public ArrayList<Music> getSearchList() {
+        return searchList;
     }
 
     public void setStationList(ArrayList<Station> stationList) {

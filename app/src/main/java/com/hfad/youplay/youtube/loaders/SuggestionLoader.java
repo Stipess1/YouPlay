@@ -27,6 +27,7 @@ public class SuggestionLoader extends AsyncTaskLoader<List<String>>
 {
 
     private static final String TAG = SuggestionLoader.class.getSimpleName();
+    private static final String USER_AGENT = "Mozilla/5.0";
     private String query;
 
     public SuggestionLoader(Context context, String query)
@@ -52,12 +53,12 @@ public class SuggestionLoader extends AsyncTaskLoader<List<String>>
             URL url = new URL(SUGESS_URL_FIRST + formatted + SUGESS_URL_SECON);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod(RQST_METHOD);
+            urlConnection.setRequestProperty("User-Agent", USER_AGENT);
             urlConnection.connect();
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 
             String next;
             while ((next = bufferedReader.readLine()) != null) {
-
                 JSONArray jsonArray = new JSONArray(next);
                 for (int i = 0; i < jsonArray.length(); i++)
                 {

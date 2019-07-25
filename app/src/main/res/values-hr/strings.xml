@@ -97,7 +97,7 @@
     <string name="alarm_disabled">Alarm uklonjen</string>
     <string name="pref_sound">Zvuk</string>
     <string name="pref_focus_mode">Audio Fokus</string>
-    <string name="pref_focus_summary">Nastavi reproducirati nakon prekidanja (npr. Facebook video, Instagram…)</string>
+    <string name="pref_focus_summary">Nemoj nastaviti reproducirati nakon prekidanja (npr. Poziv, Facebook video, Instagram…)</string>
     <string name="apprater_dialog_title">Ocijeni %s</string>
     <string name="apprater_rate_message">Ukoliko uživate koristiti ovu aplikaciju, molim vas odvojite trenutak za ocjenjivanje. Hvala na vašoj podršci.</string>
     <string name="apprater_rate">Ocijeni sada</string>
