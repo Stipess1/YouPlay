@@ -124,6 +124,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                     recyclerView.swapAdapter(null, true);
                     recyclerView.setAdapter(videoAdapter);
                     recyclerView.addItemDecoration(dividerItemDecoration);
+                    if(audioService == null)
+                        initAudioService();
 
                     getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
 

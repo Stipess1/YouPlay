@@ -111,7 +111,6 @@ public class AudioPlayer implements Player.EventListener{
                         playSong(currentlyPlaying);
                         break;
                     }
-
                     if(!isAlarm) {
                         nextSong();
                     }
@@ -285,7 +284,11 @@ public class AudioPlayer implements Player.EventListener{
                 if(music.getDownloaded() == 1) {
                     currentlyPlaying = music;
                     if(playerState == null)
+                    {
                         playSong(music);
+                        if(getCurrentlyPlaying() != null)
+                            audioService.updateNotification(getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(getCurrentlyPlaying().getId()));
+                    }
                 } else {
                     if(playerState != null)
                         playerState.downloadSong(music);

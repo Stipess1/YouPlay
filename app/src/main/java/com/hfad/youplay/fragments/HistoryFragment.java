@@ -505,7 +505,8 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
 
             if(FileManager.getRootPath().exists()) {
                 adapter.refreshList();
-                audioService.getAudioPlayer().setSearchList(musicList);
+                if(audioService != null && audioService.getAudioPlayer() != null)
+                    audioService.getAudioPlayer().setSearchList(musicList);
             }
             else if(!FileManager.getRootPath().exists())
                 Toast.makeText(getContext(), getResources().getString(R.string.files_dont_exist), Toast.LENGTH_SHORT).show();
@@ -567,6 +568,9 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
                 initAudioService();
                 return;
             }
+            if(audioService.getAudioPlayer().getSearchList().isEmpty())
+                audioService.getAudioPlayer().setSearchList(musicList);
+
             audioService.getAudioPlayer().setPosition(indexOf(pjesma));
             audioService.getAudioPlayer().setMusicList(temp);
             setClickedSong(pjesma, temp, false);

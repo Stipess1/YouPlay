@@ -45,10 +45,10 @@ public class YoutubeMusicLoader extends AsyncTaskLoader<List<Music>> {
 
     @Override
     public List<Music> loadInBackground() {
-
+        SearchExtractor searchExtractor = new SearchExtractor();
         if(!relatedVideos)
         {
-            SearchExtractor searchExtractor = new SearchExtractor();
+
             try{
                 searchExtractor.setCheckList(checkList);
                 searchExtractor.setSearchQuery(query);
@@ -59,6 +59,6 @@ public class YoutubeMusicLoader extends AsyncTaskLoader<List<Music>> {
             }
         }
 
-        return null;
+        return searchExtractor.getMusics();
     }
 }

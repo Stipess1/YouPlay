@@ -37,10 +37,10 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.applovin.sdk.AppLovinPrivacySettings;
 import com.applovin.sdk.AppLovinSdk;
-import com.chartboost.sdk.Chartboost;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
+import com.facebook.ads.AudienceNetworkAds;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     public static final boolean noAdApp = false;
     // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
     // i mora biti false za ovo za korisnike koji nemaju reklame
-    public static final boolean isGooglePlay = true;
+    public static final boolean isGooglePlay = false;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
 
@@ -157,7 +157,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             initAds();
 
         super.onStart();
-        Chartboost.onStart(this);
     }
 
     @Override
@@ -168,13 +167,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(adView != null && !noAdApp)
             adView.pause();
         super.onPause();
-        Chartboost.onPause(this);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        Chartboost.onStop(this);
     }
 
     private void hideKeyboard()
@@ -197,8 +189,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         super.onCreate(savedInstanceState);
         AppLovinSdk.initializeSdk(getApplicationContext());
         AppLovinPrivacySettings.setHasUserConsent(true, getApplicationContext());
-        Chartboost.startWithAppId(this, "5d2897a72020c932b2ae0405", "68533bd209544666ef709a8961ac7710e7540f6a");
-        Chartboost.onCreate(this);
+        AudienceNetworkAds.initialize(this);
         Fabric.with(this, new Crashlytics());
         Crashlytics.setUserEmail(EMAIL);
         FirebaseApp.initializeApp(this);
@@ -302,7 +293,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(adView != null && !noAdApp)
             adView.destroy();
         super.onDestroy();
-        Chartboost.onDestroy(this);
     }
 
     public void registerListeners()
@@ -717,7 +707,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(pager != null && pager.getAdapter() != null) {
             pager.getAdapter().notifyDataSetChanged();
         }
-        Chartboost.onResume(this);
         if(adView != null && !noAdApp)
             adView.resume();
         putCurrentIcon();
@@ -817,8 +806,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public void onBackPressed() {
         FragmentManager fm = getSupportFragmentManager();
-        if (Chartboost.onBackPressed())
-            return;
         switch (pager.getCurrentItem())
         {
             case 1:

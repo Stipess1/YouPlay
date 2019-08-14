@@ -119,4 +119,4 @@
    public static final ** CREATOR;
 }
 
--keep class com.chartboost.** { *; }
+-keep class com.facebook.ads.** { *; }

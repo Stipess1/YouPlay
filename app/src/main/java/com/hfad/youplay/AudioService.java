@@ -66,6 +66,7 @@ import com.hfad.youplay.radio.Station;
 import com.hfad.youplay.utils.FileManager;
 import com.hfad.youplay.utils.NotificationId;
 import com.hfad.youplay.utils.Utils;
+import com.liulishuo.filedownloader.FileDownloader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -391,7 +392,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
             builder.setChannelId(id);
         }
 
-//        builder.setCustomContentView(remoteViews);
         return builder.build();
     }
 
@@ -539,7 +539,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         Log.d(TAG, "UNPLUGGED PLUGGED " + focus);
         switch (focus)
         {
-
             case AudioManager.AUDIOFOCUS_GAIN:
                 Log.d(TAG, "AUDIOFOCUS GAIN");
                 if(!audioPlayer.getPlayWhenReady() && wasPlaying && !isLoss)
@@ -624,6 +623,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         instance = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);
+        FileDownloader.getImpl().unBindService();
         int pid = android.os.Process.myPid();
         android.os.Process.killProcess(pid);
         super.onDestroy();

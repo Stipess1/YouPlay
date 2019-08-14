@@ -30,11 +30,11 @@ public class YoutubeExtractor {
 
     private static final String TAG = YoutubeExtractor.class.getSimpleName();
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36";
-    private  static String DECRYPTION_SIGNATURE_FUNCTION_REGEX =
-            "(\\w+)\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;";
-    private  static String DECRYPTION_AKAMAIZED_STRING_REGEX =
+    private static final String DECRYPTION_SIGNATURE_FUNCTION_REGEX =
+            "([\\w$]+)\\s*=\\s*function\\((\\w+)\\)\\{\\s*\\2=\\s*\\2\\.split\\(\"\"\\)\\s*;";
+    private static final String DECRYPTION_AKAMAIZED_STRING_REGEX =
             "yt\\.akamaized\\.net/\\)\\s*\\|\\|\\s*.*?\\s*c\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\(";
-    private static String DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX =
+    private static final String DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX =
             "\\bc\\s*&&\\s*d\\.set\\([^,]+\\s*,\\s*(:encodeURIComponent\\s*\\()([a-zA-Z0-9$]+)\\(";
 
     private String decryptionCode = "";
@@ -64,20 +64,20 @@ public class YoutubeExtractor {
 
         try{
 
-            URL url1 = new URL(DECRYPT_URL);
-            HttpURLConnection urlConnection = (HttpURLConnection) url1.openConnection();
-            urlConnection.setRequestProperty("User-Agent", USER_AGENT);
-            urlConnection.connect();
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-
-            String next;
-            while ((next = bufferedReader.readLine()) != null)
-            {
-                JsonObject object = JsonParser.object().from(next);
-                DECRYPTION_SIGNATURE_FUNCTION_REGEX = object.getString("DECRYPTION_SIGNATURE_FUNCTION_REGEX");
-                DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX = object.getString("DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX");
-                DECRYPTION_AKAMAIZED_STRING_REGEX = object.getString("DECRYPTION_AKAMAIZED_STRING_REGEX");
-            }
+//            URL url1 = new URL(DECRYPT_URL);
+//            HttpURLConnection urlConnection = (HttpURLConnection) url1.openConnection();
+//            urlConnection.setRequestProperty("User-Agent", USER_AGENT);
+//            urlConnection.connect();
+//            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+//
+//            String next;
+//            while ((next = bufferedReader.readLine()) != null)
+//            {
+//                JsonObject object = JsonParser.object().from(next);
+//                DECRYPTION_SIGNATURE_FUNCTION_REGEX = object.getString("DECRYPTION_SIGNATURE_FUNCTION_REGEX");
+//                DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX = object.getString("DECRYPTION_AKAMAIZED_SHORT_STRING_REGEX");
+//                DECRYPTION_AKAMAIZED_STRING_REGEX = object.getString("DECRYPTION_AKAMAIZED_STRING_REGEX");
+//            }
 
             String pageContent = download(url);
             document = Jsoup.parse(pageContent, url);

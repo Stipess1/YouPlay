@@ -1251,54 +1251,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             });
             queueSet.downloadSequentially(songTask);
             queueSet.start();
-//            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
-//            if(fastDownload)
-//                builder.setConnectionCount(8);
-//            DownloadTask task = builder.build();
-//            task.enqueue(new DownloadListener1() {
-//                @Override
-//                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
-//
-//                }
-//
-//                @Override
-//                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-//
-//                }
-//
-//                @Override
-//                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-//
-//                }
-//
-//                @Override
-//                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
-//                    double divide = (double) currentOffset / totalLength;
-//                    double math = (double) seekbar.getMax() * divide;
-//                    seekbar.setSecondaryProgress((int) math);
-//                }
-//
-//                @Override
-//                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-//                    if(cause == EndCause.COMPLETED && isAdded())
-//                    {
-//                        Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
-//                        seekbar.setSecondaryProgress(seekbar.getMax());
-//                        pjesma.setDownloaded(1);
-//                        pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
-//                        updateTable(pjesma);
-//                        onItemClicked.refreshSearchList(pjesma);
-//                        onItemClicked.refreshPlaylist();
-//                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
-//                    }
-//                    else if(cause == EndCause.ERROR && isAdded())
-//                    {
-//                        bar.setVisibility(View.GONE);
-//                        if(Utils.freeSpace(true) < 20)
-//                            Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
-//                    }
-//                }
-//            });
         }
     }
 
@@ -1390,81 +1342,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
             queueSet.downloadSequentially(tasks);
             queueSet.start();
-//            DownloadSerialQueue serialQueue = new DownloadSerialQueue();
-//            DownloadTask.Builder builder = new DownloadTask.Builder(pjesma.getUrlImage(), FileManager.getPictureFile(pjesma.getId()));
-//            DownloadTask task = builder.build();
-//
-//            DownloadTask.Builder songBuilder = new DownloadTask.Builder(pjesma.getPath(), FileManager.getMediaFile(pjesma.getId()));
-//            if(fastDownload)
-//                songBuilder.setConnectionCount(8);
-//
-//
-//            Log.d(TAG, "PATH: " + pjesma.getPath());
-//            DownloadTask songTask = songBuilder.build();
-//
-//
-//            final int songId = songTask.getId();
-//            final int imageId = task.getId();
-//            DownloadListener listener = new DownloadListener1() {
-//                @Override
-//                public void taskStart(@NonNull DownloadTask task, @NonNull Listener1Assist.Listener1Model model) {
-//                    if(task.getId() == songId)
-//                        bar.setVisibility(View.GONE);
-//                }
-//
-//                @Override
-//                public void retry(@NonNull DownloadTask task, @NonNull ResumeFailedCause cause) {
-//
-//                }
-//
-//                @Override
-//                public void connected(@NonNull DownloadTask task, int blockCount, long currentOffset, long totalLength) {
-//
-//                }
-//
-//                @Override
-//                public void progress(@NonNull DownloadTask task, long currentOffset, long totalLength) {
-//                    if(task.getId() == songId)
-//                    {
-//                        double divide = (double) currentOffset / totalLength;
-//                        double math = (double) seekbar.getMax() * divide;
-//                        seekbar.setSecondaryProgress((int) math);
-//                    }
-//                }
-//
-//                @Override
-//                public void taskEnd(@NonNull DownloadTask task, @NonNull EndCause cause, @Nullable Exception realCause, @NonNull Listener1Assist.Listener1Model model) {
-//                    if (cause == EndCause.COMPLETED && task.getId() == imageId)
-//                    {
-//                        pjesma.setDownloaded(0);
-//                        updateTable(pjesma);
-//                    }
-//                    else if(cause == EndCause.COMPLETED && task.getId() == songId && getContext() != null)
-//                    {
-//                        Log.d(TAG, "EndCause.COMPLETED: " + pjesma.getTitle());
-//                        Toast.makeText(getContext(), getResources().getString(R.string.you_downloaded), Toast.LENGTH_SHORT).show();
-//                        seekbar.setSecondaryProgress(seekbar.getMax());
-//                        pjesma.setDownloaded(1);
-//                        pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
-//                        updateTable(pjesma);
-//                        onItemClicked.refreshSearchList(pjesma);
-//                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
-//                    }
-//                    else if (cause == EndCause.ERROR)
-//                    {
-//                        Log.d(TAG, "cause: "+ cause.toString());
-//                        bar.setVisibility(View.GONE);
-//                        if(Utils.freeSpace(true) < 20)
-//                            Toast.makeText(getContext(), getResources().getString(R.string.no_space), Toast.LENGTH_SHORT).show();
-//
-//                    }
-//                }
-//            };
-//
-//            serialQueue.setListener(listener);
-//            serialQueue.enqueue(task);
-//            if(cacheMode)
-//                serialQueue.enqueue(songTask);
         }
         else
         {
