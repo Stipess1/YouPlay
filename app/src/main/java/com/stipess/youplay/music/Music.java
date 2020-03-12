@@ -1,4 +1,4 @@
-package com.hfad.youplay.music;
+package com.stipess.youplay.music;
 
 import android.graphics.Bitmap;
 
