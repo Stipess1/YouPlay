@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "409069901707-puokq0dbasbj2kqsgltpb24ga89sr6ji.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hfad.youplay",
+            "certificate_hash": "b76368949421347d0aee4f1672d93275bc3ad280"
+          }
+        },
+        {
           "client_id": "409069901707-p4mg0svfr9ioufsv1vumaautkjbtuj99.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -25,18 +33,45 @@
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
+          "other_platform_oauth_client": [
+            {
+              "client_id": "409069901707-p4mg0svfr9ioufsv1vumaautkjbtuj99.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       },
       "admob_app_id": "ca-app-pub-8163593086331416~1012493107"
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409069901707:android:8a2aba63857cc2b149418e",
+        "android_client_info": {
+          "package_name": "com.stipess.youplay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "409069901707-p4mg0svfr9ioufsv1vumaautkjbtuj99.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAb5OB_6__lQszS8_lV_-Lr4yDL0fmuiXc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "409069901707-p4mg0svfr9ioufsv1vumaautkjbtuj99.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"

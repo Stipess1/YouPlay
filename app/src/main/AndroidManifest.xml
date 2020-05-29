@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.hfad.youplay">
+    package="com.stipess.youplay">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -25,7 +25,7 @@
         android:theme="@style/AppThemeLauncher"
         tools:ignore="GoogleAppIndexingWarning">
         <activity
-            android:name=".MainActivity"
+            android:name="com.stipess.youplay.MainActivity"
             android:launchMode="singleTask"
             android:theme="@style/AppThemeLauncher"
             android:screenOrientation="portrait">
@@ -37,17 +37,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.chartboost.sdk.CBImpressionActivity"
-            android:excludeFromRecents="true"
-            android:hardwareAccelerated="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <activity android:name="com.applovin.adview.AppLovinInterstitialActivity" android:configChanges="orientation|screenSize"/>
         <activity android:name="com.applovin.adview.AppLovinConfirmationActivity" android:configChanges="orientation|screenSize"/>
 
         <provider
-            android:authorities="com.hfad.youplay.provider"
+            android:authorities="com.stipess.youplay.provider"
             android:name="androidx.core.content.FileProvider"
             android:grantUriPermissions="true"
             android:exported="false">
@@ -60,29 +55,25 @@
             android:value="RR2iSZgJvTDE9FxAZZvaXdwPXoBkTtDVvv9ZJHFFzG5bJsJPMnhEeOqVor0a6eAk00IfhuK6RmID6_N-xBW16H"  />
 
         <meta-data
-            android:name="io.fabric.ApiKey"
-            android:value="20abb64c19512844bef79078690b2fa5a9d9426c" />
-
-        <meta-data
             android:name="com.google.android.gms.ads.ca-app-pub-8163593086331416~1012493107"
-            android:value="[ca-app-pub-8163593086331416~1012493107]"/>
+            android:value="[ca-app-pub-8163593086331416~1383581317]"/>
 
         <meta-data
             android:name="com.google.android.gms.ads.AD_MANAGER_APP"
             android:value="true" />
 
         <receiver
-            android:name=".listeners.ButtonListener"
+            android:name="com.stipess.youplay.listeners.ButtonListener"
             android:exported="false" />
 
-        <receiver android:name=".listeners.AudioOutputListener">
+        <receiver android:name="com.stipess.youplay.listeners.AudioOutputListener">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
 
         <service
-            android:name=".AudioService"
+            android:name="com.stipess.youplay.AudioService"
             android:enabled="true"
             android:exported="false">
             <intent-filter>
@@ -90,12 +81,12 @@
             </intent-filter>
         </service>
 
-        <activity android:name=".SettingsActivity"
+        <activity android:name="com.stipess.youplay.SettingsActivity"
             android:theme="@style/LightTheme"
             android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity" />
+                android:value="com.stipess.youplay.MainActivity" />
         </activity>
 
     </application>

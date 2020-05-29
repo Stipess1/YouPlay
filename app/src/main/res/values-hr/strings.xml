@@ -61,7 +61,7 @@
     <string name="check_download">Preuzmi</string>
     <string name="pref_download">Preuzimanja</string>
     <string name="cache_mode">Automatsko preuzimanje</string>
-    <string name="cache_summary">Kada je omogućeno YouPlay će automatski preuzeti pjesme na uređaj.</string>
+    <string name="cache_summary">Preuzimanje pjesama nije dostupno u ovoj verziji YouPlay. Preuzmite drugu verziju sa Web stranice (link ispod)</string>
     <string name="error">Došlo je do pogreške</string>
     <string name="cannot_find_table">Došlo je do pogreške pri otvaranju liste</string>
     <string name="files_dont_exist">"YouPlay nemože naći podatke, ponovno pokrenite aplikaciju. "</string>
@@ -107,4 +107,7 @@
     <string name="shuffle">Miješanje</string>
     <string name="contribute">Doprinos</string>
     <string name="contribute_summary">Pomozite prevesti YouPlay</string>
+    <string name="alert_title">Preuzimanje nije dostupno</string>
+    <string name="clear">Očisti</string>
+    <string name="clear_done">Povijest pretraživanja obrisana</string>
 </resources>

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/black_b"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.hfad.youplay.fragments.PlayFragment">
+    tools:context="com.stipess.youplay.fragments.PlayFragment">
 
     <TextView
         android:id="@+id/currently_playing_title"

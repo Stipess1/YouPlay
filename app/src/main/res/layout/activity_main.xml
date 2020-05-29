@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.hfad.youplay.MainActivity">
+    tools:context="com.stipess.youplay.MainActivity">
 
     <androidx.viewpager.widget.ViewPager
         android:id="@+id/pager"
@@ -29,7 +29,7 @@
             ads:adSize="BANNER"
             android:layout_gravity="center_horizontal"
             android:visibility="gone"
-            ads:adUnitId="ca-app-pub-8163593086331416/6598672334">
+            ads:adUnitId="ca-app-pub-8163593086331416/1828920988">
 
         </com.google.android.gms.ads.AdView>
         <com.google.android.material.tabs.TabLayout

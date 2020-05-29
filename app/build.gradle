@@ -17,11 +17,11 @@ android {
         abortOnError false
     }
     defaultConfig {
-        applicationId "com.hfad.youplay"
+        applicationId "com.stipess.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 43
-        versionName "2.0.4"
+        versionCode 53
+        versionName "2.0.9"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -65,29 +65,26 @@ dependencies {
     androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.github.bumptech.glide:glide:4.9.0'
-    implementation 'androidx.browser:browser:1.0.0'
+    implementation 'androidx.browser:browser:1.2.0'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0b4977bb0c7c9928cd8904951cfe94c71b4e81de'
 
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation 'com.google.android.gms:play-services-ads:18.0.0'
-    implementation 'com.google.android.gms:play-services-base:17.0.0'
-    implementation 'com.applovin:applovin-sdk:9.1.3'
-    implementation 'com.google.ads.mediation:applovin:8.1.4.0'
-    implementation 'com.facebook.android:audience-network-sdk:5.+'
-    implementation 'com.google.ads.mediation:facebook:5.4.0.0'
+    implementation 'com.google.android.gms:play-services-ads:18.3.0'
+    implementation 'com.google.android.gms:play-services-base:17.1.0'
 
     implementation ('com.mopub:mopub-sdk:5.5.0@aar') {
         transitive = true
     }
-    implementation 'com.liulishuo.filedownloader:library:1.7.7-SNAPSHOT'
+    implementation 'com.liulishuo.filedownloader:library:1.7.7'
     implementation 'com.google.firebase:firebase-database:18.0.0'
     implementation 'com.google.firebase:firebase-storage:18.0.0'
-    implementation 'com.google.firebase:firebase-core:17.0.0'
+    implementation 'com.google.firebase:firebase-core:17.2.1'
 
-    implementation 'org.jsoup:jsoup:1.12.1'
-    implementation 'com.grack:nanojson:1.1'
+    implementation 'org.jsoup:jsoup:1.9.2'
+    implementation 'com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751'
     implementation 'org.mozilla:rhino:1.7.7.1'
 
     implementation 'androidx.multidex:multidex:2.0.1'
@@ -102,7 +99,7 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation files('libs/commons-lang-2.6.jar')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation 'com.google.gms:google-services:4.2.0'
+    implementation 'com.google.gms:google-services:4.3.3'
     implementation 'com.google.android.exoplayer:exoplayer:2.10.3'
     implementation('com.crashlytics.sdk.android:crashlytics:2.9.8@aar') {
         transitive = true
@@ -131,7 +128,7 @@ buildscript {
 
         // We recommend changing it to the latest version from our changelog:
         // https://docs.fabric.io/android/changelog.html#fabric-gradle-plugin
-        classpath 'io.fabric.tools:gradle:1.27.0'
+        classpath 'io.fabric.tools:gradle:1.28.0'
     }
 }
 apply plugin: 'com.google.gms.google-services'

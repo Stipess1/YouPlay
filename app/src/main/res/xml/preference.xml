@@ -25,6 +25,7 @@
 
         <CheckBoxPreference
             android:id="@+id/cache_mode"
+            android:enabled="true"
             android:key="cache_mode"
             android:defaultValue="true"
             android:title="@string/cache_mode"

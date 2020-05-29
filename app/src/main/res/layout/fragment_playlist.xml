@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.hfad.youplay.fragments.PlaylistFragment">
+    tools:context="com.stipess.youplay.fragments.PlaylistFragment">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/playlist_list"

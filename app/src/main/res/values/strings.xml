@@ -22,6 +22,7 @@
     <string name="perms_request">Request permissions</string>
     <string name="rationale_ok">OK</string>
     <string name="rationale_cancel">Cancel</string>
+    <string name="rationale_dont_ask_again">Don\'t show again</string>
     <string name="headphones">Headphones disconnected</string>
     <string name="no_space">Not enough storage space to create files</string>
     <string name="cant_extract">An error has occurred while downloading</string>
@@ -60,6 +61,8 @@
     <string name="show_suggestions" translatable="false">Show list</string>
     <string name="current_version">Version</string>
     <string name="delete">Delete</string>
+    <string name="clear">Clear</string>
+    <string name="clear_done">Search history deleted</string>
 
     <!--Playlist-->
     <string name="playlist_delete">Delete the playlist</string>
@@ -75,7 +78,7 @@
     <string name="radio_bitrate">kbps</string>
     <string name="radio_country">Country</string>
     <string name="radio_deleted">Radio deleted</string>
-    <string name="radio_list">List of countries</string>
+    <string name="radio_list">List of countries/regions</string>
     <string name="radio_stations">Stations: </string>
 
     <!--Preferences-->
@@ -91,8 +94,11 @@
     <string name="contribute">Contribute</string>
     <string name="contribute_summary">Help translate YouPlay</string>
 
+    <!--Alert Dialog-->
+    <string name="alert_title">Download not available</string>
+
     <string name="pref_download">Downloads</string>
-    <string name="cache_summary">When enabled YouPlay will automatically cache song to the device.</string>
+    <string name="cache_summary">Download is disabled in this version of YouPlay check out website for more versions.</string>
     <string name="website">Website</string>
     <string name="search_history">Search history</string>
     <string name="version_check">Updates</string>
