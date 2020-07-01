@@ -49,7 +49,7 @@ import com.stipess.youplay.radio.Station;
 import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.NotificationId;
 import com.stipess.youplay.utils.Utils;
-import com.liulishuo.filedownloader.FileDownloader;
+//import com.liulishuo.filedownloader.FileDownloader;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -350,7 +350,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         PendingIntent cancel_btn = PendingIntent.getBroadcast(getApplicationContext(), 114, cancel, 0);
         remoteViews.setOnClickPendingIntent(R.id.cancel_button, cancel_btn);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "222")
                 .setSmallIcon(R.drawable.ic_notification_icon)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -606,7 +606,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         instance = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);
-        FileDownloader.getImpl().unBindService();
+//        FileDownloader.getImpl().unBindService();
         int pid = android.os.Process.myPid();
         android.os.Process.killProcess(pid);
         super.onDestroy();

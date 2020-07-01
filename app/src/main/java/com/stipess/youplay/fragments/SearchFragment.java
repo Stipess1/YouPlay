@@ -475,6 +475,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         // Pogledat jel pjesma vec postoji i da li je live stream
         // Ako se neka pjesma skida, otkazi preuzimanje i postavi drugu pjesma da svira ili skida.
         FileDownloader.getImpl().pauseAll();
+
 //        OkDownload.with().downloadDispatcher().cancelAll();
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId())) {
             audioService.getAudioPlayer().setPlayWhenReady(false);

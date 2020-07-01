@@ -6,7 +6,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 import androidx.loader.content.AsyncTaskLoader;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.JSONArray;
 
 import static com.stipess.youplay.utils.Constants.*;
@@ -70,7 +70,7 @@ public class SuggestionLoader extends AsyncTaskLoader<List<String>>
                             if (array.get(j) instanceof JSONArray)
                             {
                                 String suggestion = ((JSONArray) array.get(j)).getString(0);
-                                String encodeString = StringEscapeUtils.unescapeHtml(suggestion);
+                                String encodeString = StringEscapeUtils.unescapeHtml4(suggestion);
                                 musics.add(encodeString);
                                 Log.d("SearchFragment", "Encoded string: " + encodeString);
                             }

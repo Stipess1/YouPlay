@@ -111,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private YouPlayDatabase db;
     private InputMethodManager imm;
     private AudioPlayer audioPlayer;
+    private static Context context;
     // da nam otvori history prilikom prvom pokretanju
     private boolean firstTime = true;
     /*
@@ -146,6 +147,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             pager.setCurrentItem(1);
             firstTime = false;
         }
+        context = getApplicationContext();
         FileDownloader.setupOnApplicationOnCreate(getApplication());
 
         if(internetConnection() && !noAdApp)
@@ -154,6 +156,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         super.onStart();
     }
 
+
+    public static Context getAppContext() {
+        return context;
+    }
     @Override
     protected void onPause() {
         isRunning = false;
@@ -279,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             audioPlayer.setPlayerState(null);
         }
         size = -1;
-        FileDownloader.getImpl().pauseAll();
+//        FileDownloader.getImpl().pauseAll();
 //        OkDownload.with().downloadDispatcher().cancelAll();
         ThemeManager.setOnThemeChanged(null);
         if(adView != null && !noAdApp)
@@ -551,6 +557,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         });
         queueSet.downloadSequentially(task);
         queueSet.start();
+
 //        DownloadTask.Builder task = new DownloadTask.Builder(link, FileManager.getDownloadFolder());
 //        DownloadTask downloadTask = task.build();
 //        final ProgressDialog downloadDialog = new ProgressDialog(MainActivity.this);

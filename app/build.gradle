@@ -20,8 +20,8 @@ android {
         applicationId "com.stipess.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 53
-        versionName "2.0.9"
+        versionCode 55
+        versionName "2.1.1"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -62,34 +62,32 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    androidTestImplementation('androidx.test.espresso:espresso-core:3.1.0', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
+
+    androidTestImplementation'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.github.bumptech.glide:glide:4.9.0'
-    implementation 'androidx.browser:browser:1.2.0'
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0b4977bb0c7c9928cd8904951cfe94c71b4e81de'
+//    implementation 'androidx.browser:browser:1.2.0'
 
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.google.android.gms:play-services-ads:18.3.0'
     implementation 'com.google.android.gms:play-services-base:17.1.0'
 
-    implementation ('com.mopub:mopub-sdk:5.5.0@aar') {
-        transitive = true
-    }
     implementation 'com.liulishuo.filedownloader:library:1.7.7'
     implementation 'com.google.firebase:firebase-database:18.0.0'
     implementation 'com.google.firebase:firebase-storage:18.0.0'
     implementation 'com.google.firebase:firebase-core:17.2.1'
 
-    implementation 'org.jsoup:jsoup:1.9.2'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:bda83fe6a5b9a8a0751669fbc444fa49d72d0d2f'
+    implementation "com.squareup.okhttp3:okhttp:3.12.11"
+    implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751'
-    implementation 'org.mozilla:rhino:1.7.7.1'
+//    implementation 'org.mozilla:rhino:1.7.12'
 
     implementation 'androidx.multidex:multidex:2.0.1'
 
     testImplementation 'junit:junit:4.12'
+
 
     implementation 'pub.devrel:easypermissions:3.0.0'
 
@@ -97,10 +95,17 @@ dependencies {
     implementation 'androidx.preference:preference:1.0.0'
     implementation 'androidx.appcompat:appcompat:1.0.2'
     implementation 'androidx.cardview:cardview:1.0.0'
-    implementation files('libs/commons-lang-2.6.jar')
+    //implementation files('libs/commons-lang-2.6.jar')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'com.google.gms:google-services:4.3.3'
     implementation 'com.google.android.exoplayer:exoplayer:2.10.3'
+//    implementation (group: 'com.google.apis', name: 'google-api-services-youtube', version: 'v3-rev160-1.21.0') {
+//        exclude group: 'com.google.guava'
+//    }
+//    implementation ('com.google.api-client:google-api-client-android:1.21.0') {
+//        exclude group: 'com.google.guava'
+//    }
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
     implementation('com.crashlytics.sdk.android:crashlytics:2.9.8@aar') {
         transitive = true
     }

@@ -1136,7 +1136,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(urlLoader != null)
             urlLoader.cancel(true);
 
-        urlLoader = new UrlLoader(getYoutubeLink, relatedVideos);
+        urlLoader = new UrlLoader(getYoutubeLink, relatedVideos, audioService.getAudioPlayer().getMusicList());
         urlLoader.setListener(new UrlLoader.Listener() {
             @Override
             public void postExecute(List<String> data) {

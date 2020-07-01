@@ -31,6 +31,8 @@
 
 -keep class org.mozilla.javascript.** { *; }
 
+-keep class org.schabi.newpipe.** { *; }
+
 -keep class org.mozilla.classfile.ClassFileWriter
 -keep class com.google.android.exoplayer2.** { *; }
 
