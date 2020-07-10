@@ -81,7 +81,6 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
             extractor1.fetchPage();
 
             StreamInfoItemsCollector relatedVideos = extractor1.getRelatedStreams();
-            Log.d(TAG, "erori: " + relatedVideos.getErrors().toString());
 
             data.add(extractor1.getThumbnailUrl());
             data.add(extractor1.getAudioStreams().get(0).getUrl());

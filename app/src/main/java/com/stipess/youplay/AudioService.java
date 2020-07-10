@@ -40,6 +40,7 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
+import com.liulishuo.filedownloader.FileDownloader;
 import com.stipess.youplay.listeners.AudioOutputListener;
 import com.stipess.youplay.listeners.ButtonListener;
 import com.stipess.youplay.listeners.NetworkStateListener;
@@ -606,7 +607,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         instance = null;
         unregisterReceiver(outputListener);
         unregisterReceiver(networkStateListener);
-//        FileDownloader.getImpl().unBindService();
+        FileDownloader.getImpl().unBindService();
         int pid = android.os.Process.myPid();
         android.os.Process.killProcess(pid);
         super.onDestroy();

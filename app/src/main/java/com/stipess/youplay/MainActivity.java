@@ -89,10 +89,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = true;
+    public static final boolean noAdApp = false;
     // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
     // i mora biti false za ovo za korisnike koji nemaju reklame
-    public static final boolean isGooglePlay = false;
+    public static final boolean isGooglePlay = true;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
 
@@ -285,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             audioPlayer.setPlayerState(null);
         }
         size = -1;
-//        FileDownloader.getImpl().pauseAll();
+        FileDownloader.getImpl().pauseAll();
 //        OkDownload.with().downloadDispatcher().cancelAll();
         ThemeManager.setOnThemeChanged(null);
         if(adView != null && !noAdApp)

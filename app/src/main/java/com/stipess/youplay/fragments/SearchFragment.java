@@ -198,8 +198,8 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
                             recyclerView.setVisibility(View.VISIBLE);
                             internet.setVisibility(View.GONE);
-//                            if(MainActivity.isGooglePlay)
-//                                buildInfoDialog();
+                            if(MainActivity.isGooglePlay)
+                                buildInfoDialog();
                         }
 
                         @Override

@@ -12,10 +12,12 @@ import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.Utils;
 
 
+import org.schabi.newpipe.extractor.Info;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.ListExtractor;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.ServiceList;
+import org.schabi.newpipe.extractor.playlist.PlaylistInfoItem;
 import org.schabi.newpipe.extractor.search.SearchExtractor;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 
@@ -53,53 +55,55 @@ public class YoutubeMusicLoader extends AsyncTaskLoader<List<Music>> {
 
                 SearchExtractor extractor = ServiceList.YouTube.getSearchExtractor(query);
                 extractor.fetchPage();
-//                extractor.fetchPage();
+                ListExtractor.InfoItemsPage<InfoItem> page = extractor.getInitialPage();
 
-                for(InfoItem item : extractor.getInitialPage().getItems()) {
-                    StreamInfoItem stream = (StreamInfoItem) item;
-                    Music music = new Music();
-                    music.setAuthor(stream.getUploaderName());
-                    music.setViews(Utils.convertViewsToString(stream.getViewCount()));
-                    music.setUrlImage(stream.getThumbnailUrl());
-                    music.setTitle(stream.getName());
-                    String tempUrl = stream.getUrl();
-                    if(tempUrl.contains("https://youtu.be/")) {
-                        tempUrl = tempUrl.substring(17, tempUrl.length());
-                    } else if(tempUrl.contains("https://www.youtube.com/watch?v=")) {
-                        tempUrl = tempUrl.substring(32, tempUrl.length());
-                    } else if(tempUrl.contains("https://m.youtube.com/watch?v=")) {
-                        tempUrl = tempUrl.substring(30, tempUrl.length());
-                    } else if(tempUrl.contains("http://www.youtube.com/v/")) {
-                        tempUrl = tempUrl.substring(25, tempUrl.length());
-                    }
-                    music.setId(tempUrl);
-                    music.setDuration(Utils.convertDuration(stream.getDuration()*1000));
-                    Log.d(TAG,"URL: " + stream.getDuration());
+                for(InfoItem item : page.getItems()) {
+                    // moramo pogledat dali je dobiveni item video ili nesto drugo (channel, playlista...)
+                    if(item instanceof StreamInfoItem) {
+                        StreamInfoItem stream = (StreamInfoItem) item;
+                        Music music = new Music();
+                        music.setAuthor(stream.getUploaderName());
+                        music.setViews(Utils.convertViewsToString(stream.getViewCount()));
+                        music.setUrlImage(stream.getThumbnailUrl());
+                        music.setTitle(stream.getName());
+                        String tempUrl = stream.getUrl();
+                        if(tempUrl.contains("https://youtu.be/")) {
+                            tempUrl = tempUrl.substring(17, tempUrl.length());
+                        } else if(tempUrl.contains("https://www.youtube.com/watch?v=")) {
+                            tempUrl = tempUrl.substring(32, tempUrl.length());
+                        } else if(tempUrl.contains("https://m.youtube.com/watch?v=")) {
+                            tempUrl = tempUrl.substring(30, tempUrl.length());
+                        } else if(tempUrl.contains("http://www.youtube.com/v/")) {
+                            tempUrl = tempUrl.substring(25, tempUrl.length());
+                        }
+                        music.setId(tempUrl);
+                        music.setDuration(Utils.convertDuration(stream.getDuration()*1000));
+                        Log.d(TAG,"URL: " + stream.getDuration());
 
-                    for(Music pjesma : checkList)
-                    {
-                        if(pjesma.getId().equals(music.getId()))
+                        for(Music pjesma : checkList)
                         {
-                            if(pjesma.getDownloaded() == 1)
+                            if(pjesma.getId().equals(music.getId()))
                             {
-                                music.setPath(FileManager.getMediaPath(music.getId()));
-                                music.setDownloaded(1);
+                                if(pjesma.getDownloaded() == 1)
+                                {
+                                    music.setPath(FileManager.getMediaPath(music.getId()));
+                                    music.setDownloaded(1);
+                                }
                             }
                         }
+                        list.add(music);
+                    } else if(item instanceof PlaylistInfoItem) {
+                        PlaylistInfoItem playlist = (PlaylistInfoItem) item;
+
+
                     }
-
-                    list.add(music);
                 }
-
-
                 return list;
             }
             catch (Exception e) {
                 e.printStackTrace();
             }
         }
-
-
 
         return list;
     }
