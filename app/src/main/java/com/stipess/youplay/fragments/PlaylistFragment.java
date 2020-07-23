@@ -51,20 +51,13 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
 
     private List<String> playlists = new ArrayList<>();
     private List<Music> tempList = new ArrayList<>();;
-    private PlaylistAdapter playlistAdapter;
+    public PlaylistAdapter playlistAdapter;
     private RecyclerView recyclerView;
     private DividerItemDecoration dividerItemDecoration;
     public PlaylistTableFragment playlistTableFragment;
-    private OnItemClicked onItemClicked;
 
     public PlaylistFragment() {
         // Required empty public constructor
-    }
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        onItemClicked = (OnItemClicked) getActivity();
     }
 
     @Override
@@ -194,7 +187,6 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
                             playlists.clear();
                             playlists.addAll(YouPlayDatabase.getInstance(getContext()).getAllPlaylists());
                             playlistAdapter.setPlaylists(playlists);
-                            onItemClicked.refreshSpinnerAdapter();
                         } else {
                             Toast.makeText(getContext(), getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
                         }
@@ -213,17 +205,15 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
         }
         else
         {
-
             AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
             builder.setTitle(playlists.get(position))
                     .setItems(getResources().getStringArray(R.array.you_playlist_dialog), new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialogInterface, int i) {
                             if (i == DIALOG_PLAYLIST_DELETE) {
-                                YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).deletePlaylistTable(playlists.get(position), position);
+                                YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).deletePlaylistTable(playlists.get(position));
                                 playlists.remove(position);
-                                playlistAdapter.removePlaylistSong(position);
-                                onItemClicked.refreshSpinnerAdapter();
+                                playlistAdapter.notifyDataSetChanged();
                                 Snackbar snackbar = Snackbar.make(getView(), PlaylistFragment.this.getResources().getString(R.string.playlist_deleted), Snackbar.LENGTH_SHORT);
                                 View view = snackbar.getView();
                                 TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
@@ -261,7 +251,6 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
                                             playlists.clear();
                                             playlists.addAll(YouPlayDatabase.getInstance(PlaylistFragment.this.getContext()).getAllPlaylists());
                                             playlistAdapter.setPlaylists(playlists);
-                                            onItemClicked.refreshSpinnerAdapter();
                                             renameAlert.dismiss();
                                         } else {
                                             Toast.makeText(PlaylistFragment.this.getContext(), PlaylistFragment.this.getResources().getString(R.string.playlist_exists), Toast.LENGTH_SHORT).show();
@@ -310,8 +299,12 @@ public class PlaylistFragment extends BaseFragment implements OnPlaylistSelected
     @Override
     public void onLongClick(String title, View view)
     {
-        int position = playlists.indexOf(title);
-        buildAlertDialog(position, view);
+//        int position = playlists.indexOf(title);
+        FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.addToBackStack(null);
+        fragmentTransaction.commit();
+        playlistAdapter.setEdit(true);
+//        buildAlertDialog(position, view);
     }
 
     @Override

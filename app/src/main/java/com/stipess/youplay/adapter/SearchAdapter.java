@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -24,7 +25,7 @@ import java.util.List;
  * Created by Stjepan on 29.12.2017..
  */
 
-public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder> implements View.OnClickListener, View.OnLongClickListener
+public class SearchAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements View.OnClickListener, View.OnLongClickListener
 {
 
     private Context context;
@@ -32,6 +33,8 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
     private List<Music> data;
     private OnMusicSelected listener;
     private int lastPosition = -1;
+    private final int VIEW_ITEM = 1;
+    private final int VIEW_PROG = 0;
 
     public SearchAdapter(Context context, int resource, List<Music> music)
     {
@@ -45,18 +48,25 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         this.listener = listener;
     }
 
+
     @Override
-    public void onViewAttachedToWindow(ViewHolder holder) {
+    public void onViewAttachedToWindow(@NonNull RecyclerView.ViewHolder holder) {
         holder.setIsRecyclable(false);
     }
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
-        view.setOnLongClickListener(this);
-        view.setOnClickListener(this);
-        return new ViewHolder(view);
+    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        if(viewType == VIEW_ITEM) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(resource, parent, false);
+            view.setOnLongClickListener(this);
+            view.setOnClickListener(this);
+            return new ViewHolder(view);
+        } else {
+            View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.progress_item, parent, false);
+            return new ProgressViewHolder(v);
+        }
+
     }
 
     @Override
@@ -65,34 +75,39 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
-        Music list = data.get(position);
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(list.getViews()).append(" ").append(context.getResources().getString(R.string.you_view));
-        holder.title.setText(list.getTitle());
-        holder.author.setText(list.getAuthor());
-        holder.view.setText(stringBuilder);
-        holder.duration.setText(list.getDuration());
+    public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
+        if(holder instanceof ViewHolder) {
+            Music list = data.get(position);
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(list.getTimeAgo()).append(" • ").append(list.getViewsSearch()).append(" ").append(context.getResources().getString(R.string.you_view));
+            ((ViewHolder)holder).title.setText(list.getTitle());
+            ((ViewHolder)holder).author.setText(list.getAuthor());
+            ((ViewHolder)holder).view.setText(stringBuilder);
+            ((ViewHolder)holder).duration.setText(list.getDuration());
 
-        if(list.getDownloaded() == 1)
-            holder.downloaded.setText(R.string.you_downloaded);
-        else
-            holder.downloaded.setText("");
+            if(list.getDownloaded() == 1)
+                ((ViewHolder)holder).downloaded.setText(R.string.you_downloaded);
+            else
+                ((ViewHolder)holder).downloaded.setText("");
 
-        Glide.with(context).load(list.getUrlImage()).apply(new RequestOptions().override(120, 90)).into(holder.image);
+            Glide.with(context).load(list.getUrlImage()).apply(new RequestOptions().override(120, 90)).into(((ViewHolder)holder).image);
 
-        holder.info.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (listener != null) {
-                    listener.onInfoClicked(holder.getAdapterPosition(), view);
+            ((ViewHolder)holder).info.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (listener != null) {
+                        listener.onInfoClicked(holder.getAdapterPosition(), view);
+                    }
                 }
-            }
-        });
+            });
 
-        setAnimation(holder.image, position);
+            setAnimation(((ViewHolder)holder).itemView, position);
 
-        holder.itemView.setTag(list);
+            holder.itemView.setTag(list);
+        } else {
+            ((ProgressViewHolder) holder).bar.setIndeterminate(true);
+            setAnimation(((ProgressViewHolder)holder).itemView, position);
+        }
     }
 
     @Override
@@ -114,18 +129,21 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         }
     }
 
-    private void setAnimation(View animate, int position)
-    {
+    @Override
+    public int getItemViewType(int position) {
+        return data.get(position) != null ? VIEW_ITEM : VIEW_PROG;
+    }
+
+    private void setAnimation(View animate, int position){
         if(position > lastPosition)
         {
-            Animation animation = AnimationUtils.loadAnimation(context, android.R.anim.fade_in);
+            Animation animation = AnimationUtils.loadAnimation(context, R.anim.item_animation_fall_down);
             animate.startAnimation(animation);
             lastPosition = position;
         }
     }
 
-    public void setData(List<Music> data)
-    {
+    public void setData(List<Music> data){
         this.data.clear();
         this.data.addAll(data);
     }
@@ -140,8 +158,7 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
         private ImageView info;
         private TextView downloaded;
 
-        ViewHolder(View v)
-        {
+        ViewHolder(View v){
             super(v);
             title      = v.findViewById(R.id.title);
             author     = v.findViewById(R.id.author);
@@ -150,6 +167,15 @@ public class SearchAdapter extends RecyclerView.Adapter<SearchAdapter.ViewHolder
             image      = v.findViewById(R.id.image);
             downloaded = v.findViewById(R.id.downloaded);
             info       = v.findViewById(R.id.info);
+        }
+    }
+
+    static class ProgressViewHolder extends RecyclerView.ViewHolder {
+        private ProgressBar bar;
+
+        ProgressViewHolder(View v) {
+            super(v);
+            bar = v.findViewById(R.id.load_more);
         }
     }
 }

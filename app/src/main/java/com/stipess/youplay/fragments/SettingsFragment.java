@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -69,6 +72,27 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preference);
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getContext());
+        boolean pre = pref.getBoolean(SettingsFragment.KEY, false);
+        Window window = getActivity().getWindow();
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && window != null) {
+
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        }
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if(pre) {
+                window.setStatusBarColor(getResources().getColor(R.color.toolbar_color));
+                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+            } else{
+                window.setStatusBarColor(getResources().getColor(R.color.adapter_color));
+                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        }
+
 
         PreferenceManager.setDefaultValues(getActivity(), R.xml.preference, false);
         preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());

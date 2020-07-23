@@ -20,15 +20,19 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -89,10 +93,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private static final String TAG = MainActivity.class.getSimpleName();
     // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = false;
+    public static final boolean noAdApp = true;
     // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
     // i mora biti false za ovo za korisnike koji nemaju reklame
-    public static final boolean isGooglePlay = true;
+    public static final boolean isGooglePlay = false;
 
     private static final String EMAIL = "stjepstjepanovic@gmail.com";
 
@@ -112,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private InputMethodManager imm;
     private AudioPlayer audioPlayer;
     private static Context context;
+    private boolean pre;
     // da nam otvori history prilikom prvom pokretanju
     private boolean firstTime = true;
     /*
@@ -181,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
         PreferenceManager.setDefaultValues(this, R.xml.preference, true);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean pre = preferences.getBoolean(SettingsFragment.KEY, false);
+        pre = preferences.getBoolean(SettingsFragment.KEY, false);
         if(pre)
             setTheme(R.style.BlackTheme);
         else
@@ -302,6 +307,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
             }
 
+
             @Override
             public void onPageSelected(final int position) {
 
@@ -309,10 +315,18 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
                 if(searchView != null)
                     searchView.clearFocus();
+
+                SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                pre = preferences.getBoolean(SettingsFragment.KEY, false);
+
+                Window window = getWindow();
+                window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                    window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
                 switch (position)
                 {
                     case 0:
-                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getApplication());
                         boolean nav = preferences.getBoolean("navigation", false);
 
                         if(nav)
@@ -320,6 +334,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                         else
                         {
                             tabLayout.setBackgroundColor(getResources().getColor(R.color.play_fragment_bars));
+                            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                                window.setStatusBarColor(getResources().getColor(R.color.black_b));
+                                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+                            }
 
                             tabLayout.getTabAt(position).setIcon(R.drawable.music_pressed);
                             tabLayout.getTabAt(1).setIcon(R.drawable.history);
@@ -331,6 +349,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     case 1:
                         tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if(pre)
+                                window.setStatusBarColor(getResources().getColor(R.color.toolbar_color));
+                            else{
+                                window.setStatusBarColor(getResources().getColor(R.color.adapter_color));
+                                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                            }
+                        }
 
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
                         tabLayout.getTabAt(1).setIcon(R.drawable.history_pressed);
@@ -342,6 +368,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     case 2:
                         tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if(pre)
+                                window.setStatusBarColor(getResources().getColor(R.color.toolbar_color));
+                            else{
+                                window.setStatusBarColor(getResources().getColor(R.color.adapter_color));
+                                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                            }
+                        }
 
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
                         tabLayout.getTabAt(1).setIcon(R.drawable.history);
@@ -352,6 +386,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     case 3:
                         tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if(pre)
+                                window.setStatusBarColor(getResources().getColor(R.color.toolbar_color));
+                            else{
+                                window.setStatusBarColor(getResources().getColor(R.color.adapter_color));
+                                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                            }
+                        }
 
                         tabLayout.getTabAt(1).setIcon(R.drawable.history);
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
@@ -363,6 +405,14 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                     case 4:
                         tabLayout.setVisibility(View.VISIBLE);
                         tabLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
+                        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            if(pre)
+                                window.setStatusBarColor(getResources().getColor(R.color.play_fragment_bars));
+                            else {
+                                window.setStatusBarColor(getResources().getColor(R.color.white));
+                                window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+                            }
+                        }
 
                         tabLayout.getTabAt(1).setIcon(R.drawable.history);
                         tabLayout.getTabAt(0).setIcon(R.drawable.music);
@@ -673,8 +723,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             playFragment.setUnshuffled();
         }
 
-
-        playFragment.setSpinner(table);
         playFragment.setMusic(pjesma, temp);
     }
 
@@ -694,7 +742,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     @Override
     public void refreshSuggestions(ArrayList<Music> data, boolean queue) {
-        playFragment.setSpinner(getResources().getString(R.string.you_history));
         playFragment.refreshList(data, queue);
     }
 
@@ -803,6 +850,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public void onBackPressed() {
         FragmentManager fm = getSupportFragmentManager();
+        Log.d(TAG, "Edit pager: " + pager.getCurrentItem());
         switch (pager.getCurrentItem())
         {
             case 1:
@@ -816,20 +864,25 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 }
                 break;
             case 2:
-
-                    if(defaultPlaylistFragment.playlistFragment != null
-                            && defaultPlaylistFragment.playlistFragment.playlistTableFragment != null)
+                    if(defaultPlaylistFragment.playlistFragment != null)
                     {
-                        if(defaultPlaylistFragment.playlistFragment.playlistTableFragment.videoAdapter != null)
-                        {
-                            if(defaultPlaylistFragment.playlistFragment.playlistTableFragment.videoAdapter.getState())
-                                defaultPlaylistFragment.playlistFragment.playlistTableFragment.resetAdapter();
-                            fm.popBackStack();
-                        }
-                    }
-                    else
-                        pager.setCurrentItem(1, true);
 
+                        if(defaultPlaylistFragment.playlistFragment.playlistAdapter.getEdit()) {
+                            fm.popBackStack();
+                            defaultPlaylistFragment.playlistFragment.playlistAdapter.setEdit(false);
+                        }else if(defaultPlaylistFragment.playlistFragment.playlistTableFragment != null) {
+                            if(defaultPlaylistFragment.playlistFragment.playlistTableFragment.videoAdapter != null)
+                            {
+                                if(defaultPlaylistFragment.playlistFragment.playlistTableFragment.videoAdapter.getState())
+                                    defaultPlaylistFragment.playlistFragment.playlistTableFragment.resetAdapter();
+                                fm.popBackStack();
+                            }
+                        } else {
+                            pager.setCurrentItem(1, true);
+                        }
+                        Log.d(TAG, "Edit: " + defaultPlaylistFragment.playlistFragment.playlistAdapter.getEdit());
+
+                    }
                 break;
             case 3:
                 if(radioFragment.radioAdapter != null &&
@@ -861,9 +914,10 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event)
     {
-        Log.d("PlayFragKey", " ON KEY DOWN ");
+
         FragmentManager fm = getSupportFragmentManager();
         int current = pager.getCurrentItem();
+        Log.d("PlayFragKey", " ON KEY DOWN Current: " + current);
 
         if(playFragment.isSlided() && keyCode == KeyEvent.KEYCODE_BACK && current == 0)
         {
@@ -882,6 +936,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
         else if(keyCode == KeyEvent.KEYCODE_BACK && fm.getBackStackEntryCount() != 0)
         {
+            Log.d("PlayFragKey", "OnbackPressed");
             onBackPressed();
             return true;
         }
@@ -911,7 +966,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     public void stream(Station station, ArrayList<Station> stations)
     {
         audioPlayer.setStream(true);
-        playFragment.setSpinner("---");
         playFragment.refreshList(stations);
         playFragment.setStream(station, stations);
     }
@@ -968,10 +1022,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     }
 
     // Kada se napravi lista u playlist fragmenut ova se funkcija zove.
-    @Override
-    public void refreshSpinnerAdapter() {
-        playFragment.refreshSpinnerList();
-    }
 
     @Override
     public void onThemeChanged()

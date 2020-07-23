@@ -1,9 +1,14 @@
 package com.stipess.youplay.adapter;
 
+import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -26,8 +31,18 @@ import com.stipess.youplay.music.Music;
 import com.stipess.youplay.radio.Station;
 import com.stipess.youplay.utils.FileManager;
 
+import org.schabi.newpipe.extractor.comments.CommentsInfoItem;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static com.stipess.youplay.utils.Constants.AUTHOR;
+import static com.stipess.youplay.utils.Constants.DOWNLOADED;
+import static com.stipess.youplay.utils.Constants.DURATION;
+import static com.stipess.youplay.utils.Constants.ID;
+import static com.stipess.youplay.utils.Constants.TITLE;
+import static com.stipess.youplay.utils.Constants.VIEWS;
 
 
 /**
@@ -50,6 +65,10 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     private ListType play;
     private int position = -1;
     private int lastPos;
+    private boolean isEdit = false;
+    private ItemTouchHelper touchHelper;
+    private boolean moved = false;
+    private YouPlayDatabase youPlayDatabase;
 
     public PlaylistAdapter(Context context, int resource, List<Music> list, ListType play)
     {
@@ -57,6 +76,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         this.resource  = resource;
         this.list      = list;
         this.play      = play;
+        youPlayDatabase = YouPlayDatabase.getInstance(context);
     }
 
     public interface OnSwipeListener{
@@ -82,8 +102,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     {
         play = ListType.PLAYLIST_TABLE;
 
-        this.playlists.clear();
-        this.playlists.addAll(playlists);
+        this.playlists = playlists;
 
         notifyDataSetChanged();
     }
@@ -92,12 +111,6 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
     {
         play = ListType.SUGGESTIONS;
         this.notifyDataSetChanged();
-    }
-
-    public void removePlaylistSong(int position)
-    {
-        playlists.remove(position);
-        notifyDataSetChanged();
     }
 
     @NonNull
@@ -125,7 +138,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
 
         SUGGESTIONS,
 
-        PLAYLIST_TABLE
+        PLAYLIST_TABLE,
     }
 
     @Override
@@ -137,14 +150,55 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             @Override
             public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                 // Nezelimo swipe-at pjesmu koja trenutno svira
-                if(viewHolder.getAdapterPosition() == position || play == ListType.PLAYLIST_TABLE || play == ListType.STATIONS)
+                if(play == ListType.PLAYLIST_TABLE && isEdit) {
+                    return makeMovementFlags(ItemTouchHelper.DOWN | ItemTouchHelper.UP, 0);
+                }
+                if(viewHolder.getAdapterPosition() == position || play == ListType.STATIONS)
                     return makeMovementFlags(0,0);
                 return makeMovementFlags(0,
                         ItemTouchHelper.RIGHT);
             }
 
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder viewHolder1) {
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                if(play == ListType.PLAYLIST_TABLE) {
+                    moved = true;
+                    int adapterPos = viewHolder.getAdapterPosition();
+                    int targetPos = target.getAdapterPosition();
+                    if(playlists.size() > 1)
+                    {
+                        Collections.swap(playlists, viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                        adapterPos = viewHolder.getAdapterPosition();
+                        targetPos = target.getAdapterPosition();
+                    }
+
+
+                    notifyItemMoved(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+
+                   SQLiteDatabase db  = youPlayDatabase.getDatabase(YouPlayDatabase.PLAYLIST_DB);
+
+                    String from = playlists.get(adapterPos);
+                    int fromPos = youPlayDatabase.getIdOrder(from, "playlistTables");
+                    Log.d("Playlist", "From: " + from);
+
+                    String to = playlists.get(targetPos);
+                    int toPos = youPlayDatabase.getIdOrder(to, "playlistTables");
+                    Log.d("Playlist", "To: " + to);
+
+                    ContentValues newValues = new ContentValues();
+                    newValues.put(TITLE, from);
+
+                    // nemoze se ovako jer kad se ova linija izvrsi onda postoje "dvije iste baze pod".
+                    db.update("playlistTables", newValues, "_id = ?", new String[]{Integer.toString(toPos)});
+
+                    ContentValues oldValues = new ContentValues();
+                    oldValues.put(TITLE, to);
+
+                    db.update("playlistTables", oldValues, "_id = ?", new String[]{Integer.toString(fromPos)});
+
+                    db.close();
+                    return true;
+                }
                 return false;
             }
 
@@ -160,8 +214,13 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
                 }
             }
         };
-        ItemTouchHelper touchHelper = new ItemTouchHelper(callback);
+        touchHelper = new ItemTouchHelper(callback);
         touchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        touchHelper.attachToRecyclerView(null);
     }
 
     public void setListner(OnPlaylistSelected listner)
@@ -199,6 +258,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         return lastPos;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onBindViewHolder(@NonNull final ViewHolder holder, int position)
     {
@@ -249,6 +309,26 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             final String title = playlists.get(position);
             // vidjet jeli je table updatean sa id od slike!
             String id = db.getPicTable(title);
+
+            if(isEdit) {
+                holder.dragDrop.setVisibility(View.VISIBLE);
+                holder.info.setVisibility(View.GONE);
+
+                holder.dragDrop.setOnTouchListener(new View.OnTouchListener() {
+                    @Override
+                    public boolean onTouch(View view, MotionEvent motionEvent) {
+                        if(motionEvent.getAction() ==  MotionEvent.ACTION_MOVE ||
+                                motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                            touchHelper.startDrag(holder);
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+            } else {
+                holder.dragDrop.setVisibility(View.GONE);
+                holder.info.setVisibility(View.VISIBLE);
+            }
 
             if(id != null)
                 Glide.with(context).load(FileManager.getPictureFile(id)).apply(new RequestOptions().override(80,120)).into(holder.image);
@@ -331,6 +411,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
         private TextView title;
         private TextView duration;
         private ImageView info;
+        private ImageView dragDrop;
 
         ViewHolder(View v)
         {
@@ -339,12 +420,13 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             title    = v.findViewById(R.id.playlist_title);
             duration = v.findViewById(R.id.playlist_duration);
             info     = v.findViewById(R.id.playlist_info);
+            dragDrop = v.findViewById(R.id.drag_drop_playlist);
         }
     }
 
     @Override
     public void onClick(View view) {
-        if(listener != null && play == ListType.PLAYLIST_TABLE)
+        if(listener != null && !isEdit && play == ListType.PLAYLIST_TABLE)
         {
             String title = (String) view.getTag();
             listener.onClick(title, view);
@@ -359,6 +441,15 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
             Station station = (Station) view.getTag();
             onRadioSelected.onClickStation(station, view);
         }
+    }
+
+    public void setEdit(boolean edit) {
+        isEdit = edit;
+        notifyDataSetChanged();
+    }
+
+    public boolean getEdit() {
+        return isEdit;
     }
 
     @Override

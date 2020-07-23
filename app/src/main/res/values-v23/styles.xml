@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="LightTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/adapter_color</item>
+        <item name="colorPrimaryDark">@color/adapter_color</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:textColorPrimary">@color/play_fragment_bars</item>
+        <item name="colorAccent">@color/downloaded</item>
+        <item name="alertDialogTheme">@style/DialogLight</item>
+        <item name="android:colorBackground">@android:color/white</item>
+        <item name="ViewBackground">@android:color/white</item>
+        <item name="shuffle_button">@drawable/shuffle_dark</item>
+        <item name="info_button">@drawable/info</item>
+        <item name="tabLayout">@color/adapter_color</item>
+        <item name="android:textColor">@color/play_fragment_bars</item>
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v14.Material</item>
+    </style>
+</resources>

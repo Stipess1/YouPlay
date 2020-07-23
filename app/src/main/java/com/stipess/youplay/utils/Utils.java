@@ -8,7 +8,6 @@ import com.stipess.youplay.BuildConfig;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.List;
 import java.util.Locale;
 
 /**

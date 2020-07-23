@@ -4,6 +4,7 @@ public class Country
 {
 
     private String name;
+    private String countryCode;
     private int stationCount;
 
     public Country()
@@ -17,6 +18,14 @@ public class Country
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
     }
 
     public int getStationCount() {

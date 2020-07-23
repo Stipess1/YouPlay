@@ -31,21 +31,39 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
+            <TextView
+                android:id="@+id/duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-thin"
+                android:textSize="13sp"
+                android:layout_gravity="bottom|end"
+                android:textColor="@color/white"
+                android:background="@color/transparentBlack"
+                android:paddingStart="3dp"
+                android:paddingEnd="3dp"
+
+                android:layout_margin="5dp"
+                tools:text="2:40" />
+
         </FrameLayout>
 
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
-            android:layout_height="38dp"
+            android:layout_height="wrap_content"
             android:layout_marginStart="125dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="5dp"
+            android:ellipsize="end"
             android:fontFamily="sans-serif"
             android:maxLines="2"
-            android:ellipsize="end"
             android:textSize="15sp"
             android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="DEVITO - BEBE" />
 
         <TextView
             android:id="@+id/author"
@@ -59,39 +77,27 @@
             android:textSize="13sp"
             app:layout_constraintEnd_toStartOf="@+id/info"
             app:layout_constraintStart_toStartOf="@+id/frameLayout"
-            app:layout_constraintTop_toBottomOf="@+id/title" />
+            app:layout_constraintTop_toBottomOf="@+id/title"
+            tools:text="devito anonymo"/>
 
         <TextView
             android:id="@+id/views"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
             android:layout_marginBottom="5dp"
-            android:layout_marginStart="16dp"
             android:clickable="false"
-            android:fontFamily="sans-serif-thin"
             android:ellipsize="end"
+            android:fontFamily="sans-serif"
             android:maxLines="1"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textSize="13sp"
             android:textStyle="normal"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/downloaded"
-            app:layout_constraintStart_toEndOf="@+id/duration" />
+            app:layout_constraintStart_toEndOf="@+id/frameLayout"
+            tools:text="2 godine • 10M pregleda" />
 
-        <TextView
-            android:clickable="false"
-            android:id="@+id/duration"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
-            android:layout_marginStart="125dp"
-            android:fontFamily="sans-serif-thin"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/author"
-            app:layout_constraintVertical_bias="1.0" />
 
         <TextView
             android:id="@+id/downloaded"

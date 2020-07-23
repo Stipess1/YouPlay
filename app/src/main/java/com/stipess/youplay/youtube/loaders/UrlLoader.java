@@ -3,8 +3,6 @@ package com.stipess.youplay.youtube.loaders;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.crashlytics.android.Crashlytics;
 import com.stipess.youplay.AudioService;
 import com.stipess.youplay.extractor.DownloaderTestImpl;
@@ -12,31 +10,14 @@ import com.stipess.youplay.music.Music;
 import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.Utils;
 
-
-import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.NewPipe;
 import org.schabi.newpipe.extractor.StreamingService;
-import org.schabi.newpipe.extractor.downloader.Downloader;
-import org.schabi.newpipe.extractor.downloader.Request;
-import org.schabi.newpipe.extractor.downloader.Response;
-import static org.schabi.newpipe.extractor.ServiceList.YouTube;
-import org.schabi.newpipe.extractor.exceptions.ReCaptchaException;
-import org.schabi.newpipe.extractor.localization.Localization;
 import org.schabi.newpipe.extractor.services.youtube.extractors.YoutubeStreamExtractor;
-import org.schabi.newpipe.extractor.stream.StreamInfo;
 import org.schabi.newpipe.extractor.stream.StreamInfoItem;
 import org.schabi.newpipe.extractor.stream.StreamInfoItemsCollector;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import javax.net.ssl.HttpsURLConnection;
 
 
 public class UrlLoader extends AsyncTask<Void,Void,List<String>>
@@ -84,6 +65,7 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
 
             data.add(extractor1.getThumbnailUrl());
             data.add(extractor1.getAudioStreams().get(0).getUrl());
+
             Log.d(TAG, "Extracted");
 
             if(this.relatedVideos) {

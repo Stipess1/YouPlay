@@ -339,7 +339,7 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         fragmentTransaction.addToBackStack("Radio_Country");
         fragmentTransaction.commit();
         if(internetConnection())
-            stationExtract(country.getName());
+            stationExtract(country.getCountryCode());
         else
             Toast.makeText(getContext(), getResources().getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
     }

@@ -10,19 +10,26 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.media.AudioManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.collection.ArrayMap;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.SimpleItemAnimator;
 
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -48,12 +55,14 @@ import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.material.snackbar.Snackbar;
 import com.stipess.youplay.AudioService;
+import com.stipess.youplay.Ilisteners.OnCommentClicked;
 import com.stipess.youplay.Ilisteners.OnDataChanged;
 import com.stipess.youplay.Ilisteners.OnItemClicked;
 import com.stipess.youplay.Ilisteners.OnMusicSelected;
 import com.stipess.youplay.Ilisteners.OnRadioSelected;
 import com.stipess.youplay.MainActivity;
 import com.stipess.youplay.R;
+import com.stipess.youplay.adapter.CommentAdapter;
 import com.stipess.youplay.adapter.PlaylistAdapter;
 import com.stipess.youplay.database.DatabaseHandler;
 import com.stipess.youplay.database.YouPlayDatabase;
@@ -64,15 +73,21 @@ import com.stipess.youplay.radio.Station;
 import com.stipess.youplay.utils.Constants;
 import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.Utils;
+import com.stipess.youplay.youtube.loaders.CommentsLoader;
 import com.stipess.youplay.youtube.loaders.UrlLoader;
 import com.liulishuo.filedownloader.BaseDownloadTask;
 import com.liulishuo.filedownloader.FileDownloadListener;
 import com.liulishuo.filedownloader.FileDownloadQueueSet;
 import com.liulishuo.filedownloader.FileDownloader;
 
+import org.schabi.newpipe.extractor.ListExtractor;
+import org.schabi.newpipe.extractor.comments.CommentsInfoItem;
+
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import pub.devrel.easypermissions.EasyPermissions;
 
@@ -84,7 +99,7 @@ import static com.stipess.youplay.utils.Utils.*;
 
 
 public class PlayFragment extends BaseFragment implements View.OnClickListener,
-        OnMusicSelected, OnRadioSelected, OnDataChanged, AudioPlayer.PlayerListener {
+        OnMusicSelected, OnRadioSelected, OnDataChanged, AudioPlayer.PlayerListener, OnCommentClicked {
 
     public static final String TAG = PlayFragment.class.getSimpleName();
     private static final String YOUTUBELINK = "https://www.youtube.com/watch?v=";
@@ -97,8 +112,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private FrameLayout volume;
     private FrameLayout alarm;
     private ProgressBar bar;
+    private FrameLayout comments;
+    private FrameLayout playlist;
+    private TextView commentError;
+    private TextView commentResult;
     private ProgressBar suggestionBar;
-    private Spinner spinner;
     public TextView currentlyTitle, durationTime, durationTimeCurrent, autoPlay;
     public SeekBar seekbar;
     public static Runnable runnable;
@@ -110,14 +128,14 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private PlaylistAdapter adapter;
     private ArrayList<Station> stations;
     private OnItemClicked onItemClicked;
-    // Spinner
-    private ArrayList<String> lists = new ArrayList<>();
-    private ArrayAdapter<String> spinnerAdapter;
-    private AsyncTask databaseHandler;
+    // funkcija zadrzava komentare od trenutne pjesme
+    private List<CommentsInfoItem> list = new ArrayList<>();
     private UrlLoader urlLoader;
 
     private Context context;
     private RecyclerView recyclerView;
+    private boolean isCommentsClick = false;
+    private boolean isSuggestionClick = true;
 
     private boolean slided = false;
     private float currentHeight;
@@ -126,8 +144,13 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private AudioService audioService;
     private YouPlayDatabase db;
     private boolean deleteMedia;
-    // trenutno ime table u spinneru
-    private String currentTable = "";
+    private LinearLayoutManager linearLayoutManager;
+    private ArrayMap<String, List<CommentsInfoItem>> cache = new ArrayMap<>();
+    private ArrayMap<String, ListExtractor.InfoItemsPage<CommentsInfoItem>> lastPage = new ArrayMap<>();
+    private ListExtractor.InfoItemsPage<CommentsInfoItem> page;
+    private boolean loading;
+    private CommentAdapter commentAdapter;
+    private boolean isMoreComments = false;
 
     public static Music currentlyPlayingSong;
 
@@ -141,8 +164,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         this.context = context;
         onItemClicked = (OnItemClicked) getActivity();
     }
-
-
 
     public boolean isSlided() {
         return slided;
@@ -174,10 +195,16 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         autoPlay.setOnClickListener(this);
         volume   = view.findViewById(R.id.volume);
         volume.setOnClickListener(this);
+        comments = view.findViewById(R.id.comments);
+        comments.setOnClickListener(this);
+        playlist = view.findViewById(R.id.suggestions);
+        playlist.setOnClickListener(this);
         FrameLayout addToPlaylist = view.findViewById(R.id.add_playlist);
         addToPlaylist.setOnClickListener(this);
         alarm = view.findViewById(R.id.alarm);
         alarm.setOnClickListener(this);
+        commentError = view.findViewById(R.id.comment_no_result);
+        commentResult = view.findViewById(R.id.no_result);
 
         AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
         int streamVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -218,7 +245,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         recyclerView        = view.findViewById(R.id.play_suggestion_list);
         bar                 = view.findViewById(R.id.play_loading_bar);
         suggestionBar       = view.findViewById(R.id.suggestion_loading_bar);
-        spinner             = view.findViewById(R.id.spinner);
 
         currentlyTitle.setSelected(true);
         adapter.setListener(this, this);
@@ -226,15 +252,32 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             @Override
             public void onSwipe(int position) {
                 setCurrentDeleted(position);
-                audioPlayer.setMusicList(new ArrayList<>(tempList));
+//                audioPlayer.setMusicList(new ArrayList<>(tempList));
+                audioPlayer.getMusicList().remove(position);
             }
         });
         recyclerView.setAdapter(adapter);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        linearLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setLayoutManager(linearLayoutManager);
+
         ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                if(!isCommentsClick) return;
 
+                int visibleItemCount = linearLayoutManager.getChildCount();
+                int totalItemCount = linearLayoutManager.getItemCount();
+                int pastVisibleItems = linearLayoutManager.findFirstVisibleItemPosition();
+                if(pastVisibleItems + visibleItemCount >= totalItemCount && !loading && isMoreComments) {
+                    loading = true;
+
+                    Log.d(TAG, "KRAJ LISTE");
+                    loadMoreSongs();
+                }
+            }
+        });
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean input)
@@ -251,6 +294,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             {
                 if(audioService.getAudioPlayer().getPlayWhenReady() && !audioPlayer.isStream())
                 {
+                    audioService.setPlaybackState(PlaybackStateCompat.STATE_PAUSED);
                     audioService.getAudioPlayer().setPlayWhenReady(false);
                     wasPlaying = true;
                 }
@@ -262,6 +306,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 if(!audioPlayer.isStream())
                 {
                     audioService.getAudioPlayer().seekTo(currentProgress);
+                    audioService.setPlaybackState(PlaybackStateCompat.STATE_PLAYING);
                     if(wasPlaying)
                     {
                         audioService.getAudioPlayer().setPlayWhenReady(true);
@@ -293,119 +338,54 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             setDestroyedScreenStream();
         }
 
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                String table = spinner.getSelectedItem().toString();
-                TextView selectedText = (TextView) adapterView.getChildAt(0);
-                if(selectedText != null)
-                    selectedText.setTextColor(Color.WHITE);
-                if(table.equals("---")) return;
-                if(databaseHandler != null) databaseHandler.cancel(true);
-
-                if(!table.equals(getResources().getString(R.string.you_history)) && !currentTable.equals(table))
-                {
-                    currentTable = table;
-                    audioService.setCurrentTable(currentTable);
-                    suggestionBar.setVisibility(View.VISIBLE);
-                    databaseHandler = new DatabaseHandler(DatabaseHandler.UpdateType.GET, new OnDataChanged() {
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
-
-                        }
-
-                        @Override
-                        public void deleteProgress(int length, String title) {
-
-                        }
-
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
-                            if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
-                            {
-                                suggestionBar.setVisibility(View.GONE);
-                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, table, false);
-                            }
-                            suggestionBar.setVisibility(View.GONE);
-                        }
-                    },YouPlayDatabase.PLAYLIST_DB ,table).execute();
-                }
-                else if(!currentTable.equals(table))
-                {
-                    currentTable = table;
-                    audioService.setCurrentTable(currentTable);
-                    suggestionBar.setVisibility(View.VISIBLE);
-                    databaseHandler = new DatabaseHandler(DatabaseHandler.UpdateType.GET, new OnDataChanged() {
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, String databaseName, Music pjesma) {
-
-                        }
-
-                        @Override
-                        public void deleteProgress(int length, String title) {
-
-                        }
-
-                        @Override
-                        public void dataChanged(DatabaseHandler.UpdateType type, ArrayList<Music> pjesme) {
-                            if(pjesme.size() > 0 && !AudioService.getInstance().isDestroyed())
-                            {
-                                suggestionBar.setVisibility(View.GONE);
-                                onItemClicked.onMusicClick(pjesme.get(0), pjesme, getResources().getString(R.string.you_history), false);
-                            }
-                            suggestionBar.setVisibility(View.GONE);
-                        }
-                    }, YouPlayDatabase.YOUPLAY_DB, "SONGS").execute();
-                }
-
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> adapterView) {
-
-            }
-        });
-
 //        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
         return view;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+    private void loadMoreSongs() {
+        recyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                list.add(null);
+                commentAdapter.notifyItemInserted(list.size() - 1);
+            }
+        });
+        String url = Constants.YOUTUBELINK+audioPlayer.getCurrentlyPlaying().getId();
+        CommentsLoader commentsLoader = new CommentsLoader(getContext(), url, page, true);
+        getLoaderManager().restartLoader(77, null, new LoaderManager.LoaderCallbacks<List<CommentsInfoItem>>() {
+            @NonNull
+            @Override
+            public Loader<List<CommentsInfoItem>> onCreateLoader(int id, @Nullable Bundle args) {
+                return commentsLoader;
+            }
 
-        if(lists.isEmpty() && EasyPermissions.hasPermissions(getContext(), MainActivity.PERMISSIONS))
-        {
-            lists.addAll(db.getAllPlaylists());
-            lists.add(0, "---");
-            lists.add(1, getResources().getString(R.string.you_history));
-            spinnerAdapter = new ArrayAdapter<>(getContext(),
-                    android.R.layout.simple_spinner_item, lists);
+            @Override
+            public void onLoadFinished(@NonNull Loader<List<CommentsInfoItem>> loader, List<CommentsInfoItem> data) {
 
-            spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinner.setAdapter(spinnerAdapter);
+                Log.d(TAG, "list size: " + list.size());
+                list.remove(list.size()-1);
+                commentAdapter.notifyItemRemoved(list.size() - 1);
 
-            if(!currentTable.equals(""))
-                setSpinner(currentTable);
-        }
-    }
+                list.addAll(data);
+                if(data.size() > 0)
+                    cache.put(audioPlayer.getCurrentlyPlaying().getId(), new ArrayList<>(list));
+                commentAdapter.notifyDataSetChanged();
+                suggestionBar.setVisibility(View.GONE);
+                page = commentsLoader.getPage();
+                if(data.size() > 0)
+                    lastPage.put(audioPlayer.getCurrentlyPlaying().getId(), page);
 
-    public void refreshSpinnerList()
-    {
-        lists.clear();
-        lists.addAll(db.getAllPlaylists());
-        lists.add(0, "---");
-        lists.add(1, getResources().getString(R.string.you_history));
-        spinnerAdapter.notifyDataSetChanged();
-    }
+                if(data.size() == 0)
+                    isMoreComments = false;
 
-    public void setSpinner(String table)
-    {
-        int position = lists.indexOf(table);
-        currentTable = table;
-        if(audioService != null)
-            audioService.setCurrentTable(currentTable);
-        spinner.setSelection(position);
+                loading = false;
+            }
+
+            @Override
+            public void onLoaderReset(@NonNull Loader<List<CommentsInfoItem>> loader) {
+
+            }
+        }).forceLoad();
     }
 
     /*
@@ -453,7 +433,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             seekbar.setSecondaryProgress(seekbar.getMax());
 
         durationTimeCurrent.setText(convertDuration(audioService.getAudioPlayer().getCurrentPosition()));
-        currentTable = audioService.getCurrentTable();
         playCycle();
     }
 
@@ -554,7 +533,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         if(!db.ifItemExists(pjesma.getId()) && pjesma.getDownloaded() == 0)
         {
             Log.d(TAG, "Prvi if");
-            setSpinner("---");
             downloadSong(pjesma, true);
         }
         // Kad dodamo iz url valid i kad pritisenmo na ne skinutu pjesmu radi samo jedanput.
@@ -564,7 +542,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             deleteAndDownload(pjesma);
             if(!tempList.equals(pjesme))
                 adapter.reloadList(pjesme);
-            setSpinner("---");
+
         }
         else
         {
@@ -648,7 +626,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     }
 
     /**
-     * Kada obrisemo pjesmu prilikom dugog klika u ekranu za reproduciranje
+     * Kada obrisemo pjesmu prilikom swipe u ekranu za reproduciranje
      * moramo obavjestit adapter i time ponovno istaknuti koja pjesma se
      * reproducira
      * @param position pozicija na kojoj se pjesma nalazi
@@ -675,8 +653,11 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         audioPlayer.setPosition(position);
 
         Log.d(TAG, "SCroll " + position) ;
-        if(!slided)
+        if(!slided && isSuggestionClick)
             recyclerView.scrollToPosition(position);
+
+        if(isCommentsClick)
+            onCommentClick(false);
         adapter.setCurrent(position);
 
         if(position >= 0)
@@ -799,7 +780,126 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 else
                     buildAlarmDialog();
                 break;
+            case R.id.suggestions:
+                onSuggestionClick();
+                break;
+            case R.id.comments:
+                onCommentClick(true);
+                break;
         }
+    }
+
+    private void onSuggestionClick() {
+        if(isSuggestionClick) return;
+
+        if(isCommentsClick) {
+            isCommentsClick = false;
+            comments.setForeground(getResources().getDrawable(R.drawable.ic_comment));
+        }
+        commentError.setVisibility(View.GONE);
+        commentResult.setVisibility(View.GONE);
+        isSuggestionClick = true;
+        playlist.setForeground(getResources().getDrawable(R.drawable.ic_playlist_pressed));
+        recyclerView.swapAdapter(null, true);
+        recyclerView.setAdapter(adapter);
+
+    }
+
+    @Override
+    public void onCommentClicked(CommentsInfoItem item, View view) {
+//        View tekst = linearLayoutManager.findViewByPosition(list.indexOf(item));
+        if(view != null) {
+            TextView textView = view.findViewById(R.id.comment_text);
+            if(textView.getMaxLines() == 2 && textView.getText().equals(item.getCommentText()))
+                textView.setMaxLines(Integer.MAX_VALUE);
+            else if(textView.getText().equals(item.getCommentText()))
+                textView.setMaxLines(2);
+        }
+    }
+
+    private void onCommentClick(boolean click) {
+        if(isCommentsClick && click) return;
+
+        if(isSuggestionClick) {
+            isSuggestionClick = false;
+            playlist.setForeground(getResources().getDrawable(R.drawable.ic_playlist));
+        }
+        isCommentsClick = true;
+        comments.setForeground(getResources().getDrawable(R.drawable.ic_comment_pressed));
+        recyclerView.swapAdapter(null, true);
+
+        if(audioPlayer.getCurrentlyPlaying() != null ) {
+            if(!internetConnection()) {
+                commentError.setVisibility(View.VISIBLE);
+                return;
+            }
+
+            if(cache.containsKey(audioPlayer.getCurrentlyPlaying().getId())) {
+                String id = audioPlayer.getCurrentlyPlaying().getId();
+                list.clear();
+                list.addAll(Objects.requireNonNull(cache.get(id)));
+                this.page = lastPage.get(id);
+                if(commentAdapter == null) {
+                    commentAdapter = new CommentAdapter(getContext(), R.layout.comment_adapter_view, list);
+                    commentAdapter.setListener(this);
+                }
+                recyclerView.setAdapter(commentAdapter);
+                commentAdapter.notifyDataSetChanged();
+                return;
+            }
+
+            String url = Constants.YOUTUBELINK+audioPlayer.getCurrentlyPlaying().getId();
+            suggestionBar.setVisibility(View.VISIBLE);
+            CommentsLoader commentsLoader = new CommentsLoader(context, url);
+            getLoaderManager().restartLoader(77, null, new LoaderManager.LoaderCallbacks<List<CommentsInfoItem>>() {
+                @NonNull
+                @Override
+                public Loader<List<CommentsInfoItem>> onCreateLoader(int id, @Nullable Bundle args) {
+                    return commentsLoader;
+                }
+
+                @Override
+                public void onLoadFinished(@NonNull Loader<List<CommentsInfoItem>> loader, List<CommentsInfoItem> data) {
+
+                    list.clear();
+                    list.addAll(data);
+
+                    commentAdapter = new CommentAdapter(getContext(), R.layout.comment_adapter_view, list);
+                    commentAdapter.setListener(PlayFragment.this);
+                    // ako korisnik ponovno stisne na komentare ucitat ce iz liste umjesto da se ponovno ucitava.
+                    if(data.size() > 0) {
+                        cache.put(audioPlayer.getCurrentlyPlaying().getId(), data);
+                        isMoreComments = true;
+                    }
+
+                    recyclerView.setAdapter(commentAdapter);
+                    suggestionBar.setVisibility(View.GONE);
+                    page = commentsLoader.getPage();
+
+                    if(data.size() > 0)
+                        lastPage.put(audioPlayer.getCurrentlyPlaying().getId(), page);
+
+                    if(data.size() == 0)
+                        commentResult.setVisibility(View.VISIBLE);
+                    else
+                        commentResult.setVisibility(View.GONE);
+
+                    loading = false;
+                }
+
+                @Override
+                public void onLoaderReset(@NonNull Loader<List<CommentsInfoItem>> loader) {
+
+                }
+            }).forceLoad();
+        }
+    }
+
+    private boolean internetConnection() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
     private void buildPlaylistDialog(final Music pjesma)
@@ -893,8 +993,10 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         {
             autoPlay.setTextColor(getResources().getColor(R.color.seekbar_progress));
             audioPlayer.setAutoplay(true);
-            if(mediaCompleted)
+            if(mediaCompleted) {
                 audioService.getAudioPlayer().nextSong();
+
+            }
         }
         else
         {
@@ -971,7 +1073,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                     params.topToBottom = R.id.play_pause_layout;
 
                     layout.setLayoutParams(params);
-                    recyclerView.scrollToPosition(audioPlayer.getPosition());
+                    if(isSuggestionClick)
+                        recyclerView.scrollToPosition(audioPlayer.getPosition());
                 }
             });
             va.start();
@@ -1057,7 +1160,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
 
         seekbar.setProgress(0);
         suggestionBar.setVisibility(View.GONE);
-        if(databaseHandler != null) databaseHandler.cancel(true);
         play_pause.setForeground(getResources().getDrawable(R.drawable.pause));
         currentlyTitle.setText(pjesma.getTitle());
         durationTime.setText(pjesma.getDuration());
@@ -1194,10 +1296,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
     private void download(final Music pjesma)
     {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        boolean fastDownload = preferences.getBoolean(getResources().getString(R.string.check_download), false);
         boolean cacheMode = preferences.getBoolean(Constants.CACHE_MODE, true);
 //        boolean cacheMode = false;
-        Log.d(TAG, "FastDownload enabled: " + fastDownload);
         if(cacheMode)
         {
             BaseDownloadTask songTask = FileDownloader.getImpl().create(pjesma.getPath()).setPath(FileManager.getMediaPath(pjesma.getId()));

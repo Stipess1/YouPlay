@@ -17,6 +17,7 @@
     <color name="selectable">#545454</color>
 
     <color name="transparent">#00000000</color>
+    <color name="transparentBlack">#80000000</color>
     <color name="black_b">#000</color>
     <color name="toolbar_color">#313131</color>
     <color name="play_fragment">#393939</color>

@@ -58,6 +58,9 @@ import com.stipess.youplay.youtube.loaders.SuggestionLoader;
 import com.stipess.youplay.youtube.loaders.YoutubeMusicLoader;
 import com.liulishuo.filedownloader.FileDownloader;
 
+import org.schabi.newpipe.extractor.InfoItem;
+import org.schabi.newpipe.extractor.ListExtractor;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -87,11 +90,14 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
     private ConstraintLayout clear;
     private OnItemClicked musicClicked;
     private final List<String> suggestions = new ArrayList<>();
+    private ListExtractor.InfoItemsPage<InfoItem> page;
+    private boolean loading;
 
     private SuggestionAdapter suggestionAdapter;
-    private boolean swapAdapter;
+    private boolean swapAdapter = true;
     private YouPlayDatabase db;
     private AudioService audioService;
+    private String query;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -111,7 +117,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         clear        = view.findViewById(R.id.constraintLayout2);
 
 
-
         videoAdapter = new SearchAdapter(getContext(), R.layout.play_adapter_view, musicList);
         suggestionAdapter = new SuggestionAdapter(getContext(), R.layout.suggestion, suggestions);
 
@@ -123,10 +128,28 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
         Set <String> set = settings.getStringSet(SEARCH_LIST, new HashSet<>());
-
         suggestions.addAll(new ArrayList<>(set));
         recyclerView.swapAdapter(null, true);
         recyclerView.setAdapter(suggestionAdapter);
+
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+
+                Log.d(TAG, "Scrollanje : " + loading + " music size: " + musicList.size() + " swap: " + swapAdapter);
+                if(loading) return;
+
+                int visibleItemCount = linearLayoutManager.getChildCount();
+                int totalItemCount = linearLayoutManager.getItemCount();
+                int pastVisibleItems = linearLayoutManager.findFirstVisibleItemPosition();
+                if(pastVisibleItems + visibleItemCount >= totalItemCount && !swapAdapter && !loading) {
+                    loading = true;
+
+                    Log.d(TAG, "KRAJ LISTE");
+                    loadMoreSongs();
+                }
+            }
+        });
 
         suggestionAdapter.notifyDataSetChanged();
 
@@ -150,35 +173,41 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         Toolbar toolbar = view.findViewById(R.id.toolbar);
         ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
         setupActionBar();
+        searchView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean hasFocus) {
+
+            }
+        });
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
 
             @Override
-            public boolean onQueryTextSubmit(final String query) {
+            public boolean onQueryTextSubmit(final String searchQuery) {
                 if(ifInternetConnection())
                 {
                     PreferenceManager.setDefaultValues(getContext(), R.xml.preference, true);
 
                     SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
                     SharedPreferences.Editor editor = settings.edit();
-                    if(!set.contains(query)) {
-                        set.add(query);
+                    if(!set.contains(searchQuery)) {
+                        set.add(searchQuery);
                         editor.putStringSet(Constants.SEARCH_LIST, set);
                         editor.apply();
                     }
 
                     swapAdapter = false;
-
+                    query = searchQuery;
                     recyclerView.swapAdapter(null, true);
                     recyclerView.setAdapter(videoAdapter);
                     recyclerView.addItemDecoration(dividerItemDecoration);
+                    YoutubeMusicLoader ytLoader = new YoutubeMusicLoader(getContext(), query, audioService.getAudioPlayer().getSearchList());
                     if(audioService == null)
                         initAudioService();
-
                     getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
 
                         @Override
                         public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
-                            return new YoutubeMusicLoader(getContext(), query, audioService.getAudioPlayer().getSearchList());
+                            return ytLoader;
                         }
 
                         @Override
@@ -192,14 +221,14 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
                             musicList.clear();
                             musicList.addAll(data);
-
+                            page = ytLoader.getPage();
                             videoAdapter.notifyDataSetChanged();
                             recyclerView.smoothScrollToPosition(0);
 
                             recyclerView.setVisibility(View.VISIBLE);
                             internet.setVisibility(View.GONE);
-                            if(MainActivity.isGooglePlay)
-                                buildInfoDialog();
+//                            if(MainActivity.isGooglePlay)
+//                                buildInfoDialog();
                         }
 
                         @Override
@@ -263,14 +292,17 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
                     }
                     else if(query.length() < 2 && !suggestions.isEmpty())
                     {
+                        swapAdapter = true;
                         clear.setVisibility(View.VISIBLE);
                         suggestions.clear();
                         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
                         Set <String> set = settings.getStringSet(SEARCH_LIST, new HashSet<>());
                         suggestions.addAll(new ArrayList<>(set));
-                        suggestionAdapter.notifyDataSetChanged();
                         musicList.clear();
                         videoAdapter.notifyDataSetChanged();
+                        recyclerView.swapAdapter(null, true);
+                        recyclerView.setAdapter(suggestionAdapter);
+                        suggestionAdapter.notifyDataSetChanged();
                     }
                 }
                 else
@@ -283,6 +315,59 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         });
         db = YouPlayDatabase.getInstance(getContext());
         return view;
+    }
+
+    private void loadMoreSongs() {
+        recyclerView.post(new Runnable() {
+            @Override
+            public void run() {
+                musicList.add(null);
+                videoAdapter.notifyItemInserted(musicList.size() - 1);
+            }
+        });
+
+        YoutubeMusicLoader ytLoader = new YoutubeMusicLoader(getContext(), audioService.getAudioPlayer().getSearchList(), page, true, query);
+        if(audioService == null)
+            initAudioService();
+
+//        loadMore.setVisibility(View.VISIBLE);
+        getLoaderManager().restartLoader(1, null, new LoaderManager.LoaderCallbacks<List<Music>>() {
+
+            @Override
+            public Loader<List<Music>> onCreateLoader(int id, Bundle args) {
+                return ytLoader;
+            }
+
+            @Override
+            public void onLoadFinished(Loader<List<Music>> loader, List<Music> data) {
+                if(data.size() > 0)
+                    noResult.setVisibility(View.GONE);
+                else
+                    noResult.setVisibility(View.VISIBLE);
+
+                progressBar.setVisibility(View.GONE);
+
+//                musicList.clear();
+                musicList.remove(musicList.size() - 1);
+                videoAdapter.notifyItemRemoved(musicList.size() - 1);
+                musicList.addAll(data);
+                page = ytLoader.getPage();
+                videoAdapter.notifyDataSetChanged();
+//                recyclerView.smoothScrollToPosition(0);
+
+                recyclerView.setVisibility(View.VISIBLE);
+                internet.setVisibility(View.GONE);
+//                            if(MainActivity.isGooglePlay)
+//                                buildInfoDialog();
+//                loadMore.setVisibility(View.GONE);
+                loading = false;
+            }
+
+            @Override
+            public void onLoaderReset(Loader<List<Music>> loader) {
+
+            }
+        }).forceLoad();
     }
 
     private void buildInfoDialog() {

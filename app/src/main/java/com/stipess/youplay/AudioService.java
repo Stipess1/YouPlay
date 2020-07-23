@@ -1,5 +1,6 @@
 package com.stipess.youplay;
 
+import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -9,6 +10,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
@@ -54,6 +56,7 @@ import com.stipess.youplay.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import static com.stipess.youplay.utils.Constants.*;
 
@@ -78,7 +81,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private NotificationManager manager;
     private ServiceCallback serviceCallback;
     private MediaSessionCompat mediaSessionCompat;
-    private String currentTable = "";
 
     private AudioOutputListener outputListener;
     private NetworkStateListener networkStateListener;
@@ -87,6 +89,11 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private boolean isLoss = false;
     private static AudioService instance;
     private boolean isDestroyed;
+
+    private String image = "";
+    private String title = "";
+    private String author = "";
+    private boolean firstTime = true;
 
     public AudioService()
     {
@@ -117,9 +124,12 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
 
         try {
             MediaControllerCompat mediaControllerCompat = new MediaControllerCompat(getApplicationContext(), mediaSessionCompat.getSessionToken());
+//            MediaControllerCompat.setMediaController(getApplication(), mediaSessionCompat.getController());
+
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+
         MediaSessionCompat.Callback mController = new MediaSessionCompat.Callback() {
 
             @Override
@@ -130,7 +140,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     serviceCallback.callback(PLAY_PAUSE);
                 else
                     audioPlayer.playWhenReady();
-                updateNotification("", "");
+                updateNotification("", "", "");
             }
 
             @Override
@@ -141,7 +151,8 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                 else
                     audioPlayer.playWhenReady();
 
-                updateNotification("", "");
+                Log.d(TAG, "PAUSE song");
+                updateNotification("", "", "");
             }
 
             @Override
@@ -151,7 +162,9 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     serviceCallback.callback(NEXT);
                 else {
                     audioPlayer.nextSong();
-                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(),
+                            FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()),
+                            audioPlayer.getCurrentlyPlaying().getAuthor());
                 }
 
             }
@@ -163,9 +176,26 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     serviceCallback.callback(PREVIOUS);
                 else {
                     audioPlayer.previousSong();
-                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                    updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(),
+                            FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()),
+                            audioPlayer.getCurrentlyPlaying().getAuthor());
                 }
 
+            }
+
+            @Override
+            public void onSeekTo(long pos) {
+                audioPlayer.seekTo(pos);
+
+                PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+                        .setState(PlaybackStateCompat.STATE_PLAYING, audioPlayer.getCurrentPosition(), 1.0f)
+                        .setActions(PlaybackStateCompat.ACTION_PLAY |
+                                PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_SEEK_TO |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
+                mediaSessionCompat.setPlaybackState(stateBuilder.build());
             }
 
         };
@@ -177,9 +207,9 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
 
-        remoteViews = new RemoteViews(getApplication().getPackageName(), R.layout.custom_notification);
-        remoteViews.setImageViewResource(R.id.notification_image, R.mipmap.ic_launcher_round);
-        remoteViews.setInt(R.id.notification_layout, "setBackgroundColor", getResources().getColor(R.color.light_black));
+//        remoteViews = new RemoteViews(getApplication().getPackageName(), R.layout.custom_notification);
+//        remoteViews.setImageViewResource(R.id.notification_image, R.mipmap.ic_launcher_round);
+//        remoteViews.setInt(R.id.notification_layout, "setBackgroundColor", getResources().getColor(R.color.light_black));
 
         outputListener       = new AudioOutputListener();
         networkStateListener = new NetworkStateListener();
@@ -195,7 +225,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     public interface ServiceCallback
     {
         void callback(String callback);
-
     }
 
     public void setCallback(ServiceCallback serviceCallback)
@@ -205,16 +234,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
 
     public AudioPlayer getAudioPlayer() {
         return audioPlayer;
-    }
-
-    public String getCurrentTable()
-    {
-        return currentTable;
-    }
-
-    public void setCurrentTable(String currentTable)
-    {
-        this.currentTable = currentTable;
     }
 
     public void setDestroyed(boolean isDestroyed)
@@ -255,80 +274,69 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     }
 
     public void startForegroundService() {
-        startForeground(NOTIFICATION_ID, initNotification("", ""));
-        notification = initNotification("", "");
+        startForeground(NOTIFICATION_ID, initNotification("", "", ""));
+        notification = initNotification("", "", "");
+    }
+
+    public void setPlaybackState(int statePlaying) {
+        PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+                .setState(statePlaying, audioPlayer.getCurrentPosition(), 1.0f)
+                .setActions(PlaybackStateCompat.ACTION_PLAY |
+                        PlaybackStateCompat.ACTION_PAUSE |
+                        PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                        PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                        PlaybackStateCompat.ACTION_SEEK_TO |
+                        PlaybackStateCompat.ACTION_PLAY_PAUSE);
+        mediaSessionCompat.setPlaybackState(stateBuilder.build());
     }
 
 
     /**
      * Funckija se prvi put izvrsi pri pokretanju aplikacije, te svaki puta kada se izabere pjesma ili postaja.
-     * @param text ime postaje/pjesme
+     * @param title ime postaje/pjesme
      * @param image URL od slike
      * @return Notifikacija
      */
-    public Notification initNotification(String text, String image)
-    {
+    public Notification initNotification(String title, String image, String author) {
+        File fileImage = FileManager.getPictureFile(image);
+        if(!title.equals("") && !image.equals("")) {
+            Log.d(TAG, "Author: " + author + " , " + image + " , " + title);
+            this.author = author;
+            this.image = image;
+            this.title = title;
+        }
+        int drawable;
         if(audioPlayer.getPlayWhenReady())
         {
+            drawable = R.drawable.pause;
             audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", R.drawable.pause);
+            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", drawable);
+            if(!this.title.equals("") && !this.image.equals("")) {
+                PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+                        .setState(PlaybackStateCompat.STATE_PLAYING, audioPlayer.getCurrentPosition(), 1.0f)
+                        .setActions(PlaybackStateCompat.ACTION_PLAY |
+                                PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_SEEK_TO |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
+                mediaSessionCompat.setPlaybackState(stateBuilder.build());
+            }
         }
-        else
-            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", R.drawable.play);
-
-        // Provjeri da li dobivena pjesma ima put do pjesme (neke postaje nemaju URL od slike pa se ovaj dio preskoci to kasnije pogledati.
-        if(image.length() > 0)
-        {
-            remoteViews.setInt(R.id.notification_image, "setBackgroundColor", ContextCompat.getColor(getApplicationContext(), R.color.black_b));
-            File fileImage = FileManager.getPictureFile(image);
-
-            if(!fileImage.exists())
-            {
-                try{
-                    Glide.with(this).asBitmap().load(image).into(new SimpleTarget<Bitmap>() {
-                        @Override
-                        public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                            NotificationTarget target = new NotificationTarget(getApplicationContext()
-                                    , R.id.notification_image
-                                    , remoteViews
-                                    , notification
-                                    , NOTIFICATION_ID);
-                            Glide.with(getApplicationContext()).asBitmap().apply(new RequestOptions().error(R.drawable.image_holder)).load(resource).into(target);
-                        }
-
-                        @Override
-                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
-                            NotificationTarget target = new NotificationTarget(getApplicationContext()
-                                    , R.id.notification_image
-                                    , remoteViews
-                                    , notification
-                                    , NOTIFICATION_ID);
-                            Glide.with(getApplicationContext()).asBitmap().load(R.drawable.image_holder).into(target);
-                        }
-                    });
-                }
-                catch (Exception e)
-                {
-                    e.printStackTrace();
-                }
+        else {
+            drawable = R.drawable.play;
+            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", drawable);
+            if(!this.title.equals("") && !this.image.equals("")) {
+                PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+                        .setState(PlaybackStateCompat.STATE_PAUSED, audioPlayer.getCurrentPosition(), 0)
+                        .setActions(PlaybackStateCompat.ACTION_PLAY |
+                                PlaybackStateCompat.ACTION_PAUSE |
+                                PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+                                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+                                PlaybackStateCompat.ACTION_SEEK_TO |
+                                PlaybackStateCompat.ACTION_PLAY_PAUSE);
+                mediaSessionCompat.setPlaybackState(stateBuilder.build());
             }
-            else
-            {
-
-                Glide.with(this).asBitmap().load(fileImage).apply(new RequestOptions().override(60,100)).into(new SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-                        NotificationTarget target = new NotificationTarget(getApplicationContext()
-                                , R.id.notification_image
-                                , remoteViews
-                                , notification
-                                , NOTIFICATION_ID);
-                        Glide.with(getApplicationContext()).asBitmap().load(resource).into(target);
-                    }
-                });
-            }
-
-            remoteViews.setTextViewText(R.id.notification_title, text);
         }
 
         Intent play_pause = new Intent(this, ButtonListener.class);
@@ -351,30 +359,41 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         PendingIntent cancel_btn = PendingIntent.getBroadcast(getApplicationContext(), 114, cancel, 0);
         remoteViews.setOnClickPendingIntent(R.id.cancel_button, cancel_btn);
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "222")
-                .setSmallIcon(R.drawable.ic_notification_icon)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .setAutoCancel(false)
-                .setCustomContentView(remoteViews)
-                .setOngoing(true);
-
-        Intent actionIntent = new Intent(this, MainActivity.class);
-        PendingIntent actionPendingIntent = PendingIntent.getActivity(this, 0, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-        builder.setContentIntent(actionPendingIntent);
-
+        String id = "";
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
         {
             int importance = NotificationManager.IMPORTANCE_LOW;
 
-            String id = "222";
+            id = "5385";
             NotificationChannel channel = new NotificationChannel(id, "YouPlay", importance);
             channel.setDescription("Music player");
+            channel.setShowBadge(false);
 
             NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             notificationManager.createNotificationChannel(channel);
-            builder.setChannelId(id);
+
         }
+
+        Bitmap bitmap = BitmapFactory.decodeFile(FileManager.getPicturePath(this.image));
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "222")
+                .setSmallIcon(R.drawable.ic_notification_icon)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentTitle(this.title)
+                .setContentText(this.author)
+                .setLargeIcon(bitmap)
+                .addAction(R.drawable.previous, "previous", previous_btn)
+                .addAction(drawable, "Play-Pause", play_pause_btn)
+                .addAction(R.drawable.next , "next", next_btn)
+                .addAction(R.drawable.cancel, "cancel", cancel_btn)
+                .setStyle(new androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSessionCompat.getSessionToken()).setShowActionsInCompactView(0,1,2))
+                .setOngoing(true);
+        if(id.equals("5385"))
+            builder.setChannelId(id);
+
+        Intent actionIntent = new Intent(this, MainActivity.class);
+        PendingIntent actionPendingIntent = PendingIntent.getActivity(this, 0, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(actionPendingIntent);
 
         return builder.build();
     }
@@ -401,11 +420,12 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private void setMusic()
     {
         if(!audioPlayer.isStream() && music.getPath() != null) {
-//            Bitmap bitmapImage = BitmapFactory.decodeFile(FileManager.getPicturePath(music.getId()));
+            Bitmap bitmapImage = BitmapFactory.decodeFile(FileManager.getPicturePath(music.getId()));
             MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
                     .putString(MediaMetadataCompat.METADATA_KEY_TITLE, music.getTitle())
                     .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, music.getAuthor())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, Utils.convertToMilis(music.getDuration()));
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, Utils.convertToMilis(music.getDuration()))
+                    .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmapImage);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                 metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, audioPlayer.getMusicList().size());
 
@@ -414,12 +434,20 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
             else
                 metadataCompat.putLong(MediaMetadataCompat.METADATA_KEY_DOWNLOAD_STATUS, MediaDescriptionCompat.STATUS_NOT_DOWNLOADED);
 
+            audioPlayer.playSong(music);
+
+//            PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
+//                    .setState(PlaybackStateCompat.STATE_PLAYING, 1, 1.0f)
+//                    .setActions(PlaybackStateCompat.ACTION_PLAY |
+//                            PlaybackStateCompat.ACTION_PAUSE |
+//                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
+//                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
+//                            PlaybackStateCompat.ACTION_SEEK_TO |
+//                            PlaybackStateCompat.ACTION_PLAY_PAUSE);
             mediaSessionCompat.setMetadata(metadataCompat.build());
 
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
-
-            audioPlayer.playSong(music);
-
+//            mediaSessionCompat.setPlaybackState(stateBuilder.build());
             Answers.getInstance().logCustom(new CustomEvent("Songs played"));
         } else {
             
@@ -434,10 +462,10 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         }
     }
 
-    public void updateNotification(String title, String image)
+    public void updateNotification(String title, String image, String author)
     {
         isLoss = false;
-        notification = initNotification(title, image);
+        notification = initNotification(title, image, author);
         manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if(manager != null)
             manager.notify(NOTIFICATION_ID, notification);
@@ -474,7 +502,9 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     else {
                         audioPlayer.nextSong();
                         if(audioPlayer.getCurrentlyPlaying() != null)
-                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(),
+                                    audioPlayer.getCurrentlyPlaying().getId(),
+                                    audioPlayer.getCurrentlyPlaying().getAuthor());
                     }
                     break;
                 case PREVIOUS_SONG:
@@ -484,7 +514,9 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     else {
                         audioPlayer.previousSong();
                         if(audioPlayer.getCurrentlyPlaying() != null)
-                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(audioPlayer.getCurrentlyPlaying().getId()));
+                            updateNotification(audioPlayer.getCurrentlyPlaying().getTitle(),
+                                    audioPlayer.getCurrentlyPlaying().getId(),
+                                    audioPlayer.getCurrentlyPlaying().getAuthor());
                     }
                     break;
                 case PLAY_PAUSE_SONG:
@@ -494,7 +526,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     else
                         audioPlayer.playWhenReady();
 
-                    updateNotification("", "");
+                    updateNotification("", "", "");
                     break;
                 case EXIT_APP:
                     stopSelf();
@@ -506,7 +538,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                         serviceCallback.callback(AD);
                     break;
                 default:
-                    updateNotification("","");
+                    updateNotification("","", "");
                     break;
             }
 
@@ -534,7 +566,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     else
                         audioPlayer.playWhenReady();
 
-                    updateNotification("","");
+                    updateNotification("","", "");
                     wasPlaying = false;
                 }
                     break;
@@ -548,7 +580,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                     else
                         audioPlayer.playWhenReady();
 
-                    updateNotification("","");
+                    updateNotification("","", "");
 //                    Log.d(TAG, audioManager.getMode() +" MODE");
 //                    switch (audioManager.getMode())
 //                    {
@@ -571,7 +603,7 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                         else
                             audioPlayer.playWhenReady();
 
-                        updateNotification("","");
+                        updateNotification("","", "");
                         Log.d(TAG, "AUDIOFOCUS LOSS ");
                         wasPlaying = true;
                         isLoss = true;
@@ -588,9 +620,9 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         setMusic();
 
         if(audioPlayer.isStream())
-            updateNotification(station.getName(), station.getIcon());
+            updateNotification(station.getName(), station.getIcon(), "");
         else
-            updateNotification(music.getTitle(), music.getId());
+            updateNotification(music.getTitle(), music.getId(), music.getAuthor());
 
     }
 
