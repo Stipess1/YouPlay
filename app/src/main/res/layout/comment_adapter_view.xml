@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:clickable="false"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/comment_image"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/comment_author"
+            android:layout_width="0dp"
+            android:textSize="12sp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:maxLines="1"
+            app:layout_constraintStart_toEndOf="@+id/comment_image"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="IMPERIA" />
+
+        <TextView
+            android:id="@+id/comment_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="5dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textSize="12sp"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/comment_image"
+            app:layout_constraintTop_toBottomOf="@+id/comment_author"
+            tools:text="Znamo ko su sledeic gosti u amig showu" />
+
+        <ImageView
+            android:id="@+id/comment_like"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/ic_like"
+            app:layout_constraintStart_toEndOf="@+id/comment_image"
+            app:layout_constraintTop_toBottomOf="@+id/comment_text" />
+
+        <TextView
+            android:id="@+id/comment_like_number"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:textSize="12sp"
+            android:textColor="@color/suggestions"
+            app:layout_constraintStart_toEndOf="@+id/comment_like"
+            app:layout_constraintTop_toBottomOf="@+id/comment_text"
+            tools:text="1200" />
+
+        <TextView
+            android:id="@+id/comment_date"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:textSize="12sp"
+            android:textColor="@color/suggestions"
+            app:layout_constraintStart_toEndOf="@+id/comment_like_number"
+            app:layout_constraintTop_toBottomOf="@+id/comment_text"
+            tools:text="prije 1 mjesec" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

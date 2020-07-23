@@ -19,6 +19,8 @@ public class Music implements Serializable{
     private String url;
     private String path;
     private int downloaded;
+    private String timeAgo;
+    private String viewsSearch;
 
     public Music(String title, String author, String duration, String id, String views, Bitmap image)
     {
@@ -48,6 +50,23 @@ public class Music implements Serializable{
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    // Samo se koristi u searchu
+    public String getTimeAgo() {
+        return timeAgo;
+    }
+
+    public void setTimeAgo(String timeAgo) {
+        this.timeAgo = timeAgo;
+    }
+
+    public String getViewsSearch() {
+        return viewsSearch;
+    }
+
+    public void setViewsSearch(String viewsSearch) {
+        this.viewsSearch = viewsSearch;
     }
 
     public String getAuthor() {

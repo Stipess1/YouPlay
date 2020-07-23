@@ -89,7 +89,7 @@
     <string name="pref_navigation_summary">When enabled navigation bar won\'t show in play screen</string>
     <string name="switch_summary">Change to dark theme</string>
     <string name="check_download">Download</string>
-    <string name="send_email">Send an email</string>
+    <string name="send_email">Support and suggestions</string>
     <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
     <string name="contribute">Contribute</string>
     <string name="contribute_summary">Help translate YouPlay</string>
@@ -98,7 +98,7 @@
     <string name="alert_title">Download not available</string>
 
     <string name="pref_download">Downloads</string>
-    <string name="cache_summary">Download is disabled in this version of YouPlay check out website for more versions.</string>
+    <string name="cache_summary">Automatically download song after playing.</string>
     <string name="website">Website</string>
     <string name="search_history">Search history</string>
     <string name="version_check">Updates</string>
@@ -122,6 +122,26 @@
     <string name="download_update_error">An error has occurred while trying to download an update.</string>
     <string name="download_error">An error has ouccurred, check if there is internet connection</string>
     <string name="shuffle">Shuffle</string>
+    <string name="comment_no_result">An error has ouccurred</string>
+    <string name="short_thousand">k</string>
+    <string name="short_million">M</string>
+    <string name="short_billion">B</string>
+    <plurals name="weeks">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+    <plurals name="months">
+        <item quantity="one">%d month ago</item>
+        <item quantity="other">%d months ago</item>
+    </plurals>
+    <plurals name="years">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
+    <plurals name="days">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
     <plurals name="songs">
         <item quantity="one">%d Song</item>
         <item quantity="other">%d Songs</item>

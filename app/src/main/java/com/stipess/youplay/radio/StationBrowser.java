@@ -1,6 +1,8 @@
 package com.stipess.youplay.radio;
 
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -13,8 +15,7 @@ import java.util.ArrayList;
 public class StationBrowser extends Browser
 {
 
-    private static final String HOST = "http://www.radio-browser.info/webservice";
-    private static final String STATIONS = "/json/stations/bycountry/";
+    private static final String STATIONS = "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/";
 
     private ListType type;
     private String country;
@@ -48,7 +49,8 @@ public class StationBrowser extends Browser
         {
             try
             {
-                URL url = new URL(HOST+STATIONS+country);
+                URL url = new URL(STATIONS+country);
+                Log.d("StationBrowser", "urL " + url.getPath());
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("User-Agent", "YouPlay");
                 connection.connect();
@@ -64,7 +66,7 @@ public class StationBrowser extends Browser
                         JSONObject object = array.getJSONObject(i);
                         if(object.getInt("lastcheckok") == 1)
                         {
-                            String id = object.getString("id");
+                            String id = object.getString("stationuuid");
                             String name = object.getString("name");
                             String stream = object.getString("url");
                             String countryName = object.getString("country");

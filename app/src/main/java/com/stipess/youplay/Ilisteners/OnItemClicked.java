@@ -25,6 +25,4 @@ public interface OnItemClicked {
     void stream(Station station, ArrayList<Station> stations);
 
     void refreshSearchList(Music pjesma);
-
-    void refreshSpinnerAdapter();
 }

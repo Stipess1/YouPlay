@@ -26,6 +26,7 @@ import com.stipess.youplay.Ilisteners.OnItemClicked;
 import com.stipess.youplay.Ilisteners.OnMusicSelected;
 import com.stipess.youplay.R;
 import com.stipess.youplay.adapter.VideoAdapter;
+import com.stipess.youplay.database.DatabaseHandler;
 import com.stipess.youplay.database.YouPlayDatabase;
 import com.stipess.youplay.music.Music;
 import com.stipess.youplay.player.AudioPlayer;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 
 import static com.stipess.youplay.utils.Constants.DIALOG_NOW_PLAYING;
 import static com.stipess.youplay.utils.Constants.DIALOG_TABLE_DELETE;
+import static com.stipess.youplay.utils.Constants.TABLE_NAME;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -145,8 +147,8 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
                 if(!FileManager.getMediaFile(pjesma.getId()).exists())
                 {
                     pjesma.setDownloaded(0);
-                    data.remove(i);
-                    data.add(i, pjesma);
+                    data.remove(pjesma);
+                    YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
                 }
             }
         }catch (SQLiteException e)
@@ -202,8 +204,9 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
                 if(!FileManager.getMediaFile(pjesma.getId()).exists())
                 {
                     pjesma.setDownloaded(0);
-                    data.remove(i);
-                    data.add(i, pjesma);
+                    data.remove(pjesma);
+                    videoAdapter.deleteMusic(i);
+                    YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
                 }
             }
         }

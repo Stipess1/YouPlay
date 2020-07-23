@@ -274,8 +274,12 @@ public class AudioPlayer implements Player.EventListener{
         position = position + 1;
         if(!isStream) {
             if(position >= musicList.size()) {
-                position = musicList.size() - 1;
-                return;
+                if(replay == Replay.REPLAY_ALL)
+                    position = 0;
+                else {
+                    position = musicList.size() - 1;
+                    return;
+                }
             }
             Music music = musicList.get(position);
             boolean state = playerState != null;
@@ -286,8 +290,10 @@ public class AudioPlayer implements Player.EventListener{
                     if(playerState == null)
                     {
                         playSong(music);
-                        if(getCurrentlyPlaying() != null)
-                            audioService.updateNotification(getCurrentlyPlaying().getTitle(), FileManager.getPicturePath(getCurrentlyPlaying().getId()));
+//                        if(getCurrentlyPlaying() != null)
+//                            audioService.updateNotification(getCurrentlyPlaying().getTitle(),
+//                                    getCurrentlyPlaying().getId(),
+//                                    getCurrentlyPlaying().getAuthor());
                     }
                 } else {
                     if(playerState != null)

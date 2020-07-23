@@ -8,13 +8,14 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class RadioBrowser extends Browser
 {
     private final String TAG = RadioBrowser.class.getSimpleName();
 
-    private static final String HOST = "http://www.radio-browser.info/webservice";
-    private static final String COUNTRIES = "/json/countries";
+    private static final String HOST = "https://de1.api.radio-browser.info";
+    private static final String COUNTRIES = "/json/countrycodes";
 
     private ArrayList<Country> countries = new ArrayList<>();
     private Listener listener;
@@ -51,7 +52,6 @@ public class RadioBrowser extends Browser
                 connection.connect();
 
                 reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-
                 String next;
                 while ((next = reader.readLine()) != null)
                 {
@@ -61,14 +61,15 @@ public class RadioBrowser extends Browser
                         JSONObject object = array.getJSONObject(i);
 
                         String name = object.getString("name");
-                        if(!name.equals("Tibet")) {
-                            int stationCount = object.getInt("stationcount");
-                            Country country = new Country();
+                        Locale obj = new Locale("", name);
 
-                            country.setName(name);
-                            country.setStationCount(stationCount);
-                            countries.add(country);
-                        }
+                        int stationCount = object.getInt("stationcount");
+                        Country country = new Country();
+
+                        country.setCountryCode(obj.getCountry());
+                        country.setName(obj.getDisplayCountry());
+                        country.setStationCount(stationCount);
+                        countries.add(country);
                     }
                 }
                 reader.close();

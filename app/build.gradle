@@ -20,8 +20,8 @@ android {
         applicationId "com.stipess.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 57
-        versionName "2.1.2"
+        versionCode 60
+        versionName "2.1.5"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -66,6 +66,7 @@ dependencies {
     androidTestImplementation'androidx.test.espresso:espresso-core:3.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'com.github.bumptech.glide:glide:4.9.0'
+    implementation 'de.hdodenhof:circleimageview:3.1.0'
 //    implementation 'androidx.browser:browser:1.2.0'
 
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
@@ -78,7 +79,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-storage:18.0.0'
     implementation 'com.google.firebase:firebase-core:17.2.1'
 
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:bda83fe6a5b9a8a0751669fbc444fa49d72d0d2f'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0.19.6'
     implementation "com.squareup.okhttp3:okhttp:3.12.11"
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751'

@@ -466,7 +466,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         cursor.close();
     }
 
-
+    // treba dohvatat id !
     public List<String> getAllPlaylists() throws SQLiteException
     {
         List<String> list = new ArrayList<>();
@@ -489,18 +489,28 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         return list;
     }
 
-    public void deletePlaylistTable(String title, int position) throws SQLiteException
+    public void deletePlaylistTable(String title) throws SQLiteException
     {
         SQLiteDatabase base = getDatabase(PLAYLIST_DB);
         Log.d(TAG, "TABLE: " + title);
         base.execSQL("DROP TABLE " + "[" +title +"]");
 
         Cursor cursor = base.rawQuery("SELECT TITLE FROM playlistTables", null);
-        cursor.moveToPosition(position);
 
-        base.delete("playlistTables", "TITLE = ?", new String[] {cursor.getString(0)});
+        title = title.replaceAll(" ", "_");
+        if(cursor != null && cursor.moveToFirst()) {
+            do {
+                if(cursor.getString(0).equals(title)) {
+                    Log.d(TAG, "Cursor: " + cursor.getString(0));
+                    base.delete("playlistTables", "TITLE = ?", new String[] {title});
+                    break;
+                }
+            }while(cursor.moveToNext());
+        }
 
-        cursor.close();
+
+        if(cursor != null)
+            cursor.close();
         base.close();
     }
 
@@ -648,6 +658,29 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         return false;
     }
 
+    public String getTitlePlaylist(String title) {
+        SQLiteDatabase db = getDatabase(PLAYLIST_DB);
+
+        String query = "SELECT _id, TITLE FROM playlistTables";
+        Cursor cursor = db.rawQuery(query, null);
+
+        if(cursor != null && cursor.moveToFirst()) {
+            do {
+                if(cursor.getString(1).equals(title)) {
+                    String pos = cursor.getString(1);
+                    cursor.close();
+                    db.close();
+                    return pos;
+                }
+            } while(cursor.moveToNext());
+        }
+        if(cursor != null) {
+            cursor.close();
+            db.close();
+        }
+        return "";
+    }
+
     public int getIdOrder(String id, String table) throws SQLiteException
     {
         SQLiteDatabase db;
@@ -660,8 +693,11 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         }
         else
             db = getDatabase(PLAYLIST_DB);
-
-        String query = "SELECT _id, ID FROM "+table;
+        String query = "";
+        if(table.equals(Constants.TABLE_NAME))
+            query = "SELECT _id, ID FROM "+table;
+        else
+            query = "SELECT _id, TITLE FROM playlistTables";
         Cursor cursor = db.rawQuery(query, null);
 
         if(cursor != null && cursor.moveToFirst())
@@ -671,14 +707,16 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                 {
                     String pos = cursor.getString(0);
                     cursor.close();
-
+                    db.close();
                     return Integer.parseInt(pos);
                 }
 
             }while(cursor.moveToNext());
         }
-        if(cursor != null)
+        if(cursor != null) {
             cursor.close();
+            db.close();
+        }
 
         return -1;
     }
