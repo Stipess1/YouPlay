@@ -1,5 +1,6 @@
 # YouPlay
 **An open-source YouTube audio & radio player for the Android.**
+
 [![IO shield](https://img.shields.io/github/v/release/Stipess1/YouPlay)](https://github.com/Stipess1/YouPlay/releases) [![IO shield](https://img.shields.io/github/license/Stipess1/YouPlay)](https://www.gnu.org/licenses/gpl.html)
 
 ## Description
