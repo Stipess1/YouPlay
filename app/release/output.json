@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 [{"outputType":{"type":"APK"},"apkData":{"type":"MAIN","splits":[],"versionCode":70,"versionName":"2.1.7","enabled":true,"outputFile":"YouPlay.apk","fullName":"release","baseName":"release","dirName":""},"path":"YouPlay.apk","properties":{}}]
+=======
+[{"outputType":{"type":"APK"},"apkData":{"type":"MAIN","splits":[],"versionCode":60,"versionName":"2.1.5","enabled":true,"outputFile":"YouPlay.apk","fullName":"release","baseName":"release","dirName":""},"path":"YouPlay.apk","properties":{}}]
+>>>>>>> d84faa5995d06e5d4a55b9d4d9784e1bcfd65838

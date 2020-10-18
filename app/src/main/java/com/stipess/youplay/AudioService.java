@@ -426,7 +426,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
             mediaSessionCompat.setMetadata(metadataCompat.build());
 
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
-
         } else {
             
             MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()
