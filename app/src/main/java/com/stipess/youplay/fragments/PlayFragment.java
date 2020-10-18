@@ -783,7 +783,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             case R.id.comments:
                 onCommentClick(true);
                 break;
-<<<<<<< HEAD
+
         }
     }
 
@@ -895,7 +895,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             }).forceLoad();
         }
     }
-    
+
     private boolean internetConnection() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
