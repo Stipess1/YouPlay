@@ -35,13 +35,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.media.session.MediaButtonReceiver;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.NotificationTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.CustomEvent;
 import com.liulishuo.filedownloader.FileDownloader;
 import com.stipess.youplay.listeners.AudioOutputListener;
 import com.stipess.youplay.listeners.ButtonListener;
@@ -310,7 +303,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         {
             drawable = R.drawable.pause;
             audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
-            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", drawable);
             if(!this.title.equals("") && !this.image.equals("")) {
                 PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
                         .setState(PlaybackStateCompat.STATE_PLAYING, audioPlayer.getCurrentPosition(), 1.0f)
@@ -325,7 +317,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         }
         else {
             drawable = R.drawable.play;
-            remoteViews.setInt(R.id.play_pause_button, "setBackgroundResource", drawable);
             if(!this.title.equals("") && !this.image.equals("")) {
                 PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
                         .setState(PlaybackStateCompat.STATE_PAUSED, audioPlayer.getCurrentPosition(), 0)
@@ -342,22 +333,18 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
         Intent play_pause = new Intent(this, ButtonListener.class);
         play_pause.putExtra(ButtonListener.BUTTON, PLAY_PAUSE);
         PendingIntent play_pause_btn = PendingIntent.getBroadcast(getApplicationContext(), 111, play_pause, 0);
-        remoteViews.setOnClickPendingIntent(R.id.play_pause_button, play_pause_btn);
 
         Intent next = new Intent(this, ButtonListener.class);
         next.putExtra(ButtonListener.BUTTON, NEXT);
         PendingIntent next_btn = PendingIntent.getBroadcast(getApplicationContext(), 112, next, 0);
-        remoteViews.setOnClickPendingIntent(R.id.next_button, next_btn);
 
         Intent previous = new Intent(this, ButtonListener.class);
         previous.putExtra(ButtonListener.BUTTON, PREVIOUS);
         PendingIntent previous_btn = PendingIntent.getBroadcast(getApplicationContext(), 113, previous, 0);
-        remoteViews.setOnClickPendingIntent(R.id.previous_button, previous_btn);
 
         Intent cancel = new Intent(this, ButtonListener.class);
         cancel.putExtra(ButtonListener.BUTTON, EXIT);
         PendingIntent cancel_btn = PendingIntent.getBroadcast(getApplicationContext(), 114, cancel, 0);
-        remoteViews.setOnClickPendingIntent(R.id.cancel_button, cancel_btn);
 
         String id = "";
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -436,19 +423,10 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
 
             audioPlayer.playSong(music);
 
-//            PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder()
-//                    .setState(PlaybackStateCompat.STATE_PLAYING, 1, 1.0f)
-//                    .setActions(PlaybackStateCompat.ACTION_PLAY |
-//                            PlaybackStateCompat.ACTION_PAUSE |
-//                            PlaybackStateCompat.ACTION_SKIP_TO_NEXT |
-//                            PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS |
-//                            PlaybackStateCompat.ACTION_SEEK_TO |
-//                            PlaybackStateCompat.ACTION_PLAY_PAUSE);
             mediaSessionCompat.setMetadata(metadataCompat.build());
 
             setMediaPlaybackState(PlaybackStateCompat.STATE_PLAYING);
-//            mediaSessionCompat.setPlaybackState(stateBuilder.build());
-            Answers.getInstance().logCustom(new CustomEvent("Songs played"));
+
         } else {
             
             MediaMetadataCompat.Builder metadataCompat = new MediaMetadataCompat.Builder()

@@ -39,14 +39,6 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.CustomEvent;
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdSize;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
-import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.tabs.TabLayout;
@@ -110,8 +102,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private boolean bound = false;
     private boolean isRunning = false;
     public ViewPager pager;
-    private AdView adView;
-    private InterstitialAd interstitialAd;
     private YouPlayDatabase db;
     private InputMethodManager imm;
     private AudioPlayer audioPlayer;
@@ -155,23 +145,15 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         context = getApplicationContext();
         FileDownloader.setupOnApplicationOnCreate(getApplication());
 
-        if(internetConnection() && !noAdApp)
-            initAds();
-
         super.onStart();
     }
 
 
-    public static Context getAppContext() {
-        return context;
-    }
     @Override
     protected void onPause() {
         isRunning = false;
         hideKeyboard();
 
-        if(adView != null && !noAdApp)
-            adView.pause();
         super.onPause();
     }
 
@@ -198,8 +180,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_main);
 
-        if(noAdApp)
-            Answers.getInstance().logCustom(new CustomEvent("Premium User"));
 
         if(pre)
             ThemeManager.setTheme(ThemeManager.Theme.DARK_THEME);
@@ -293,8 +273,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         FileDownloader.getImpl().pauseAll();
 //        OkDownload.with().downloadDispatcher().cancelAll();
         ThemeManager.setOnThemeChanged(null);
-        if(adView != null && !noAdApp)
-            adView.destroy();
         super.onDestroy();
     }
 
@@ -709,10 +687,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(pjesme != null)
             temp.addAll(pjesme);
 
-        // ako je korisnik stisno pjesmu u search pokrenu reklamu
-        if(pjesme == null && table.equals("---"))
-            buildExitAd();
-
         audioPlayer.setStream(false);
         if(shuffled) {
             audioPlayer.setMusicList(temp);
@@ -751,49 +725,8 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         if(pager != null && pager.getAdapter() != null) {
             pager.getAdapter().notifyDataSetChanged();
         }
-        if(adView != null && !noAdApp)
-            adView.resume();
+
         putCurrentIcon();
-    }
-
-    private void initAds() {
-        Log.d(TAG, "Init Ads");
-        MobileAds.initialize(this, "ca-app-pub-8163593086331416~1383581317");
-        interstitialAd = new InterstitialAd(this);
-        interstitialAd.setAdUnitId("ca-app-pub-8163593086331416/2950430964");
-        interstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdClosed() {
-                interstitialAd.loadAd(new AdRequest.Builder().build());
-//                moveTaskToBack(true);
-            }
-        });
-        interstitialAd.loadAd(new AdRequest.Builder().build());
-
-        adView = findViewById(R.id.ad);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.setAdListener(new AdListener(){
-            @Override
-            public void onAdLoaded() {
-                super.onAdLoaded();
-                adView.setVisibility(View.VISIBLE);
-                size = AdSize.BANNER.getHeightInPixels(getApplicationContext());
-
-                if(playFragment.isSlided())
-                {
-                    ConstraintLayout layout = findViewById(R.id.play_list_layout);
-                    if(layout != null)
-                    {
-                        layout.getLayoutParams().height -= size;
-                        layout.setLayoutParams(layout.getLayoutParams());
-                    }
-                    adLoaded = true;
-                }
-            }
-
-        });
-        adView.loadAd(adRequest);
-
     }
 
     private boolean internetConnection() {
@@ -954,14 +887,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         return false;
     }
 
-    private void buildExitAd()
-    {
-        if(interstitialAd != null && !noAdApp) {
-            interstitialAd.setImmersiveMode(false);
-            interstitialAd.show();
-        }
-    }
-
     @Override
     public void stream(Station station, ArrayList<Station> stations)
     {
@@ -1010,8 +935,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 playFragment.playPauseSong(false);
                 break;
             case Constants.AD:
-                if(!noAdApp)
-                    initAds();
                 searchFragment.ifInternetConnection();
                 break;
             case Constants.EXIT:

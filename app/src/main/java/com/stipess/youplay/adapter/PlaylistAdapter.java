@@ -153,7 +153,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.ViewHo
                 if(play == ListType.PLAYLIST_TABLE && isEdit) {
                     return makeMovementFlags(ItemTouchHelper.DOWN | ItemTouchHelper.UP, 0);
                 }
-                if(viewHolder.getAdapterPosition() == position || play == ListType.STATIONS)
+                if(viewHolder.getAdapterPosition() == position || play == ListType.STATIONS || play == ListType.PLAYLIST_TABLE)
                     return makeMovementFlags(0,0);
                 return makeMovementFlags(0,
                         ItemTouchHelper.RIGHT);

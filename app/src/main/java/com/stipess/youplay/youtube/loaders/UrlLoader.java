@@ -3,7 +3,6 @@ package com.stipess.youplay.youtube.loaders;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.stipess.youplay.AudioService;
 import com.stipess.youplay.extractor.DownloaderTestImpl;
 import com.stipess.youplay.music.Music;
@@ -107,7 +106,6 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
 
             }
 
-            Crashlytics.setString("last_action", "downloading: " + getYoutubeLink);
 
             return data;
         }
@@ -115,8 +113,6 @@ public class UrlLoader extends AsyncTask<Void,Void,List<String>>
         {
             e.printStackTrace();
         }
-        Crashlytics.setString("last_action", "downloading failed: " + getYoutubeLink);
-        Crashlytics.log("An error has occurred: " + getYoutubeLink);
         return null;
     }
 

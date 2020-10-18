@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Environment;
 import android.util.Log;
 
-import com.crashlytics.android.Crashlytics;
 import com.stipess.youplay.music.Music;
 import com.stipess.youplay.utils.Constants;
 import com.stipess.youplay.utils.FileManager;
@@ -331,9 +330,6 @@ public class YouPlayDatabase extends SQLiteOpenHelper
      */
     public SQLiteDatabase getDatabase(String database) throws SQLiteException
     {
-        Crashlytics.setBool("File_exists", FileManager.getRootPath().exists());
-        Crashlytics.setString("More_info", "freeSpace: " + Utils.freeSpace(true) + " Path: "
-                + FileManager.getRootPath().getAbsolutePath());
         try{
             return SQLiteDatabase.openOrCreateDatabase(getPath(database), null);
         }catch (Exception e) {

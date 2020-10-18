@@ -55,7 +55,7 @@ public class CommentsLoader extends AsyncTaskLoader<List<CommentsInfoItem>> {
             extractor.fetchPage();
             ListExtractor.InfoItemsPage<CommentsInfoItem> page;
             if(nextPage) {
-                page = extractor.getPage(this.page.getNextPageUrl());
+                page = extractor.getPage(this.page.getNextPage());
             } else {
                 page = extractor.getInitialPage();
             }

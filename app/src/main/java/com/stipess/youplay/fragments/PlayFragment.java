@@ -45,14 +45,11 @@ import android.widget.ImageView;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.crashlytics.android.answers.Answers;
-import com.crashlytics.android.answers.CustomEvent;
 import com.google.android.material.snackbar.Snackbar;
 import com.stipess.youplay.AudioService;
 import com.stipess.youplay.Ilisteners.OnCommentClicked;
@@ -796,6 +793,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
             isCommentsClick = false;
             comments.setForeground(getResources().getDrawable(R.drawable.ic_comment));
         }
+        suggestionBar.setVisibility(View.GONE);
         commentError.setVisibility(View.GONE);
         commentResult.setVisibility(View.GONE);
         isSuggestionClick = true;
@@ -861,30 +859,32 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                 @Override
                 public void onLoadFinished(@NonNull Loader<List<CommentsInfoItem>> loader, List<CommentsInfoItem> data) {
 
-                    list.clear();
-                    list.addAll(data);
+                    if(isCommentsClick) {
+                        list.clear();
+                        list.addAll(data);
 
-                    commentAdapter = new CommentAdapter(getContext(), R.layout.comment_adapter_view, list);
-                    commentAdapter.setListener(PlayFragment.this);
-                    // ako korisnik ponovno stisne na komentare ucitat ce iz liste umjesto da se ponovno ucitava.
-                    if(data.size() > 0) {
-                        cache.put(audioPlayer.getCurrentlyPlaying().getId(), data);
-                        isMoreComments = true;
+                        commentAdapter = new CommentAdapter(getContext(), R.layout.comment_adapter_view, list);
+                        commentAdapter.setListener(PlayFragment.this);
+                        // ako korisnik ponovno stisne na komentare ucitat ce iz liste umjesto da se ponovno ucitava.
+                        if(data.size() > 0) {
+                            cache.put(audioPlayer.getCurrentlyPlaying().getId(), data);
+                            isMoreComments = true;
+                        }
+
+                        recyclerView.setAdapter(commentAdapter);
+                        suggestionBar.setVisibility(View.GONE);
+                        page = commentsLoader.getPage();
+
+                        if(data.size() > 0)
+                            lastPage.put(audioPlayer.getCurrentlyPlaying().getId(), page);
+
+                        if(data.size() == 0)
+                            commentResult.setVisibility(View.VISIBLE);
+                        else
+                            commentResult.setVisibility(View.GONE);
                     }
-
-                    recyclerView.setAdapter(commentAdapter);
-                    suggestionBar.setVisibility(View.GONE);
-                    page = commentsLoader.getPage();
-
-                    if(data.size() > 0)
-                        lastPage.put(audioPlayer.getCurrentlyPlaying().getId(), page);
-
-                    if(data.size() == 0)
-                        commentResult.setVisibility(View.VISIBLE);
-                    else
-                        commentResult.setVisibility(View.GONE);
-
                     loading = false;
+
                 }
 
                 @Override
@@ -1325,7 +1325,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         updateTable(pjesma);
                         onItemClicked.refreshSearchList(pjesma);
                         onItemClicked.refreshPlaylist();
-                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
                     }
                 }
 
@@ -1410,7 +1409,7 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
                         pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
                         updateTable(pjesma);
                         onItemClicked.refreshSearchList(pjesma);
-                        Answers.getInstance().logCustom(new CustomEvent("Songs downloaded"));
+
                     }
                 }
 

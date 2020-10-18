@@ -79,7 +79,7 @@ public class YoutubeMusicLoader extends AsyncTaskLoader<List<Music>> {
                 SearchExtractor extractor = ServiceList.YouTube.getSearchExtractor(query);
                 extractor.fetchPage();
 
-                page = extractor.getPage(page.getNextPageUrl());
+                page = extractor.getPage(page.getNextPage());
                 addToList(page);
 
             } else {
