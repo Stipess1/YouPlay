@@ -38,9 +38,6 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.applovin.adview.AppLovinInterstitialActivity" android:configChanges="orientation|screenSize"/>
-        <activity android:name="com.applovin.adview.AppLovinConfirmationActivity" android:configChanges="orientation|screenSize"/>
-
         <provider
             android:authorities="com.stipess.youplay.provider"
             android:name="androidx.core.content.FileProvider"
@@ -50,17 +47,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
-
-        <meta-data android:name="applovin.sdk.key"
-            android:value="RR2iSZgJvTDE9FxAZZvaXdwPXoBkTtDVvv9ZJHFFzG5bJsJPMnhEeOqVor0a6eAk00IfhuK6RmID6_N-xBW16H"  />
-
-        <meta-data
-            android:name="com.google.android.gms.ads.ca-app-pub-8163593086331416~1012493107"
-            android:value="[ca-app-pub-8163593086331416~1383581317]"/>
-
-        <meta-data
-            android:name="com.google.android.gms.ads.AD_MANAGER_APP"
-            android:value="true" />
 
         <receiver
             android:name="com.stipess.youplay.listeners.ButtonListener"

@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "com.stipess.youplay",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "properties": [],
+      "versionCode": 71,
+      "versionName": "2.1.8",
+      "enabled": true,
+      "outputFile": "YouPlay.apk"
+    }
+  ]
+}

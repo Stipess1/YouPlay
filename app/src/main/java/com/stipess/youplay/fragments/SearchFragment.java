@@ -243,8 +243,7 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
                             recyclerView.setVisibility(View.VISIBLE);
                             internet.setVisibility(View.GONE);
-//                            if(MainActivity.isGooglePlay)
-//                                buildInfoDialog();
+
                         }
 
                         @Override
@@ -373,8 +372,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
                 recyclerView.setVisibility(View.VISIBLE);
                 internet.setVisibility(View.GONE);
-//                            if(MainActivity.isGooglePlay)
-//                                buildInfoDialog();
 //                loadMore.setVisibility(View.GONE);
                 loading = false;
             }
@@ -384,43 +381,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
 
             }
         }).forceLoad();
-    }
-
-    private void buildInfoDialog() {
-        SharedPreferences settings = getActivity().getSharedPreferences("website", 0);
-        SharedPreferences.Editor editor = settings.edit();
-
-        if(settings.getBoolean("skipMessage", true)) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-            builder.setTitle(getResources().getString(R.string.alert_title))
-                    .setMessage(getResources().getString(R.string.cache_summary));
-            builder.setPositiveButton(R.string.rationale_ok, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.cancel();
-                    dialogInterface.dismiss();
-                }
-            });
-            builder.setNeutralButton(R.string.website, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    dialogInterface.dismiss();
-                    Intent website1 = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE+"#download"));
-                    startActivity(website1);
-                }
-            });
-            builder.setNegativeButton(R.string.rationale_dont_ask_again, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    editor.putBoolean("skipMessage", false);
-                    editor.apply();
-                    dialogInterface.dismiss();
-                    dialogInterface.cancel();
-
-                }
-            });
-            builder.create().show();
-        }
     }
 
     @Override
@@ -577,7 +537,6 @@ public class SearchFragment extends BaseFragment implements OnMusicSelected, OnS
         // Ako se neka pjesma skida, otkazi preuzimanje i postavi drugu pjesma da svira ili skida.
         FileDownloader.getImpl().pauseAll();
 
-//        OkDownload.with().downloadDispatcher().cancelAll();
         if(!db.ifItemExists(pjesma.getId()) && !db.isDownloaded(pjesma.getId())) {
             audioService.getAudioPlayer().setPlayWhenReady(false);
             musicClicked.onMusicClick(pjesma, null, "---", false);

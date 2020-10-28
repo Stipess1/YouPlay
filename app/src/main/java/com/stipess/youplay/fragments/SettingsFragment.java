@@ -20,7 +20,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
-import androidx.fragment.app.Fragment;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceScreen;
@@ -29,8 +28,6 @@ import androidx.preference.SwitchPreference;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.stipess.youplay.AudioService;
 import com.stipess.youplay.BuildConfig;
 import com.stipess.youplay.Ilisteners.OnThemeChanged;
@@ -220,33 +217,7 @@ public class SettingsFragment extends BasePreferenceFragmentCompat{
             builder.setPositiveButton(R.string.update, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
-
-                    final String[] downloadLink = new String[1];
-                    if(MainActivity.noAdApp && !MainActivity.isGooglePlay)
-                    {
-                        FirebaseApp.initializeApp(getContext());
-                        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-                        StorageReference reference = firebaseStorage.getReference();
-                        reference.child("youplay/YouPlay.apk").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                            @Override
-                            public void onSuccess(Uri uri) {
-                                downloadLink[0] = uri.toString();
-                                download(downloadLink[0]);
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.d("YouPlayAndroid", "Fails: " + e.toString());
-                                e.printStackTrace();
-                            }
-                        });
-                        dialogInterface.cancel();
-                    }
-                    else
-                    {
-                        downloadLink[0] = Constants.DOWNLOAD_LINK;
-                        download(downloadLink[0]);
-                    }
+                    download(Constants.DOWNLOAD_LINK);
                 }
             });
             builder.setNegativeButton(R.string.rationale_cancel, new DialogInterface.OnClickListener() {

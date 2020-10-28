@@ -44,7 +44,6 @@ public class SettingsActivity extends AppCompatActivity implements OnThemeChange
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         Toolbar toolbar = findViewById(R.id.settings_toolbar);
-//        RelativeLayout relativeLayout = findViewById(R.id.settings_layout);
 
         setSupportActionBar(toolbar);
 
@@ -55,8 +54,6 @@ public class SettingsActivity extends AppCompatActivity implements OnThemeChange
         fragment.setListener(this);
 
         toolbar.setTitleTextColor(getResources().getColor(ThemeManager.getFontTheme()));
-//        toolbar.setBackgroundColor(getResources().getColor(ThemeManager.getToolbarTheme()));
-//        relativeLayout.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
 
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.content_frame, fragment)
@@ -78,11 +75,9 @@ public class SettingsActivity extends AppCompatActivity implements OnThemeChange
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId())
-        {
-            case android.R.id.home:
-                finish();
-                return true;
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

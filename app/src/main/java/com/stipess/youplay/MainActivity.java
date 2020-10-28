@@ -27,29 +27,20 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.stipess.youplay.Ilisteners.OnItemClicked;
 import com.stipess.youplay.Ilisteners.OnThemeChanged;
 import com.stipess.youplay.adapter.RadioAdapter;
-import com.stipess.youplay.apprater.AppRater;
-import com.stipess.youplay.apprater.GoogleMarket;
 import com.stipess.youplay.database.YouPlayDatabase;
 import com.stipess.youplay.fragments.DefaultPlaylistFragment;
 import com.stipess.youplay.fragments.HistoryFragment;
@@ -102,13 +93,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         , EasyPermissions.PermissionCallbacks, OnThemeChanged, OnItemClicked {
 
     private static final String TAG = MainActivity.class.getSimpleName();
-    // kada je true daj link od verzije bez reklama, ostalo daj sa reklamom.
-    public static final boolean noAdApp = true;
-    // Kada je false znaci da ova verzija nebi trebala bit na google playu niti na galaxy store.
-    // i mora biti false za ovo za korisnike koji nemaju reklame
-    public static final boolean isGooglePlay = false;
-
-    private static final String EMAIL = "stjepstjepanovic@gmail.com";
 
     private TabLayout tabLayout;
     private HistoryFragment historyFragment;
@@ -123,7 +107,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     private YouPlayDatabase db;
     private InputMethodManager imm;
     private AudioPlayer audioPlayer;
-    private static Context context;
     private boolean pre;
     // da nam otvori history prilikom prvom pokretanju
     private boolean firstTime = true;
@@ -160,7 +143,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             pager.setCurrentItem(1);
             firstTime = false;
         }
-        context = getApplicationContext();
         FileDownloader.setupOnApplicationOnCreate(getApplication());
 
         super.onStart();
@@ -193,8 +175,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             setTheme(R.style.LightTheme);
 
         super.onCreate(savedInstanceState);
-//        Fabric.with(this, new Crashlytics());
-//        Crashlytics.setUserEmail(EMAIL);
+
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_main);
 
@@ -289,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
         }
         size = -1;
         FileDownloader.getImpl().pauseAll();
-//        OkDownload.with().downloadDispatcher().cancelAll();
+
         ThemeManager.setOnThemeChanged(null);
         super.onDestroy();
     }
@@ -298,11 +279,9 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
     {
         pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels)
-            {
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
             }
-
 
             @Override
             public void onPageSelected(final int position) {
@@ -481,7 +460,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
 
     private void buildAlertDialog(boolean needsUpdate, String version)
     {
-
         if(needsUpdate)
         {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -491,34 +469,7 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
                     dialogInterface.dismiss();
-
-                    final String[] downloadLink = new String[1];
-                    if(noAdApp && !isGooglePlay)
-                    {
-                        FirebaseApp.initializeApp(getApplicationContext());
-                        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-                        StorageReference reference = firebaseStorage.getReference();
-                        reference.child("youplay/YouPlay.apk").getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                            @Override
-                            public void onSuccess(Uri uri) {
-                                downloadLink[0] = uri.toString();
-                                Log.d(TAG, "URL: " + downloadLink[0]);
-                                download(downloadLink[0]);
-                            }
-                        }).addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.d("YouPlayAndroid", "Fails: " + e.toString());
-                                e.printStackTrace();
-                            }
-                        });
-
-                    }
-                    else
-                    {
-                        downloadLink[0] = Constants.DOWNLOAD_LINK;
-                        download(downloadLink[0]);
-                    }
+                    download(Constants.DOWNLOAD_LINK);
                 }
             });
             builder.setNegativeButton(R.string.rationale_cancel, new DialogInterface.OnClickListener() {
@@ -529,13 +480,6 @@ public class MainActivity extends AppCompatActivity implements AudioService.Serv
             });
             builder.create().show();
 
-        }
-        else{
-            if(isGooglePlay) {
-                AppRater.setMarket(new GoogleMarket());
-                AppRater.setPackageName("com.stipess.youplay");
-                AppRater.app_launched(this);
-            }
         }
     }
 
