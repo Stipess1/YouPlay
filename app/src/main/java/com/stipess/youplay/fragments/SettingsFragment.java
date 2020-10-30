@@ -22,16 +22,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.FileProvider;
 import androidx.preference.CheckBoxPreference;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceScreen;
 import androidx.preference.SwitchPreference;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.FirebaseApp;
 import com.stipess.youplay.AudioService;
 import com.stipess.youplay.BuildConfig;
 import com.stipess.youplay.Ilisteners.OnThemeChanged;
-import com.stipess.youplay.MainActivity;
 import com.stipess.youplay.R;
 import com.stipess.youplay.fragments.preference.BasePreferenceFragmentCompat;
 import com.stipess.youplay.utils.Constants;
@@ -64,7 +61,7 @@ import com.liulishuo.filedownloader.FileDownloader;
  * You should have received a copy of the GNU General Public License
  * along with YouPlay.  If not, see <http://www.gnu.org/licenses/>.
  */
-public class SettingsFragment extends BasePreferenceFragmentCompat{
+public class SettingsFragment extends PreferenceFragmentCompat {
 
     private SharedPreferences preferences;
     private SharedPreferences.OnSharedPreferenceChangeListener listener;

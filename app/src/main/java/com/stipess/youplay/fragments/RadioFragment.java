@@ -78,6 +78,7 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
     private RadioBrowser browser;
     private StationBrowser stationBrowser;
     public TextView searchCountry;
+    private TextView connection;
     public RadioAdapter radioAdapter;
     private ArrayList<Country> countriesList = new ArrayList<>();
     private ArrayList<Station> stationsList = new ArrayList<>();
@@ -130,12 +131,10 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_radio, container, false);
 
-        AppBarLayout divideLayout = view.findViewById(R.id.app_layout);
         recyclerView = view.findViewById(R.id.radio_view);
-        TextView connection = view.findViewById(R.id.internet_connection);
+        connection = view.findViewById(R.id.internet_connection);
         searchCountry = view.findViewById(R.id.search_country);
         progressBar = view.findViewById(R.id.radio_loading_bar);
-        LinearLayout linearLayout = view.findViewById(R.id.radio_bar_layout);
         searchCountry.setOnClickListener(this);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
@@ -215,12 +214,16 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
     {
         if(internetConnection())
         {
+            connection.setVisibility(View.GONE);
             searchCountry.setVisibility(View.GONE);
             offsetRecyclerView();
             countryExtract();
         }
-        else
+        else {
             Toast.makeText(getContext(), getResources().getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
+            connection.setVisibility(View.VISIBLE);
+        }
+
     }
 
     public void offsetRecyclerView()
@@ -245,17 +248,9 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         }
     }
 
-    private boolean internetConnection() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
-    }
-
     private void countryExtract()
     {
 
-//        connection.setVisibility(View.GONE);
         if(browser == null)
         {
             browser = new RadioBrowser(RadioBrowser.ListType.COUNTRIES);
@@ -354,10 +349,15 @@ public class RadioFragment extends BaseFragment implements OnRadioSelected, View
         FragmentTransaction fragmentTransaction = getActivity().getSupportFragmentManager().beginTransaction();
         fragmentTransaction.addToBackStack("Radio_Country");
         fragmentTransaction.commit();
-        if(internetConnection())
+        if(internetConnection()) {
+            connection.setVisibility(View.GONE);
             stationExtract(country.getCountryCode());
-        else
+        }
+        else {
+            connection.setVisibility(View.VISIBLE);
             Toast.makeText(getContext(), getResources().getString(R.string.no_internet_connection), Toast.LENGTH_SHORT).show();
+        }
+
     }
 
     @Override

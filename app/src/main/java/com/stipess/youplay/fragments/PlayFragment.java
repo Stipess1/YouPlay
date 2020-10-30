@@ -915,13 +915,6 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         }
     }
 
-    private boolean internetConnection() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
-    }
-
     private void buildPlaylistDialog(final Music pjesma)
     {
         final List<String> titles = YouPlayDatabase.getInstance(getContext()).getAllPlaylists();

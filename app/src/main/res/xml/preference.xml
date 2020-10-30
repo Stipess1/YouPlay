@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
         android:title="@string/pref_appearance">
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:id="@+id/switch_pref"
             android:key="@string/switch_key"
             android:defaultValue="false"
@@ -12,6 +14,7 @@
             android:title="@string/switch_theme"/>
 
         <SwitchPreference
+            app:iconSpaceReserved="false"
             android:id="@+id/navigation"
             android:key="navigation"
             android:defaultValue="false"
@@ -24,6 +27,7 @@
         android:title="@string/pref_download">
 
         <CheckBoxPreference
+            app:iconSpaceReserved="false"
             android:id="@+id/cache_mode"
             android:enabled="true"
             android:key="cache_mode"
@@ -39,6 +43,7 @@
         android:title="@string/pref_sound">
 
         <CheckBoxPreference
+            app:iconSpaceReserved="false"
             android:key="sound_mode"
             android:defaultValue="false"
             android:title="@string/pref_focus_mode"
@@ -49,25 +54,30 @@
     <PreferenceCategory
         android:title="@string/about">
         <PreferenceScreen
+            app:iconSpaceReserved="false"
             android:key="@string/current_version"
             android:title="@string/current_version"/>
 
         <PreferenceScreen
+            app:iconSpaceReserved="false"
             android:key="version_check"
             android:title="@string/version_check"
             android:summary="@string/version_summary"/>
 
         <PreferenceScreen
+            app:iconSpaceReserved="false"
             android:key="website"
             android:title="@string/website"
             android:summary="https://youplayandroid.com/"/>
 
         <PreferenceScreen
+            app:iconSpaceReserved="false"
             android:key="contribute"
             android:title="@string/contribute"
             android:summary="@string/contribute_summary"/>
 
         <PreferenceScreen
+            app:iconSpaceReserved="false"
             android:key="send_email"
             android:title="@string/send_email"
             android:summary="stipess@youplayandroid.com"/>

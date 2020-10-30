@@ -86,7 +86,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private AudioManager audioManager;
     private static final int NOTIFICATION_ID = NotificationId.getID();
 
-    public RemoteViews remoteViews;
     private ArrayList<Station> stations;
     private Music music;
     private Station station;
@@ -106,7 +105,6 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
     private String image = "";
     private String title = "";
     private String author = "";
-    private boolean firstTime = true;
 
     public AudioService()
     {
