@@ -30,7 +30,6 @@ import com.stipess.youplay.AudioService;
 import com.stipess.youplay.BuildConfig;
 import com.stipess.youplay.Ilisteners.OnThemeChanged;
 import com.stipess.youplay.R;
-import com.stipess.youplay.fragments.preference.BasePreferenceFragmentCompat;
 import com.stipess.youplay.utils.Constants;
 import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.ThemeManager;
@@ -320,7 +319,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
 
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-//        setPreferencesFromResource(R.xml.preference, rootKey);
+
     }
 
 

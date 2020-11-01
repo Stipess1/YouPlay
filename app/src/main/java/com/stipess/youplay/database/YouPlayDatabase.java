@@ -12,9 +12,7 @@ import android.util.Log;
 import com.stipess.youplay.music.Music;
 import com.stipess.youplay.utils.Constants;
 import com.stipess.youplay.utils.FileManager;
-import com.stipess.youplay.utils.Order;
 import com.stipess.youplay.radio.Station;
-import com.stipess.youplay.utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -155,7 +153,7 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         }
 
         ContentValues values = new ContentValues();
-        values.put("ORDER_BY", Order.ORDER_LATEST);
+        values.put("ORDER_BY", Constants.ORDER_LATEST);
 
         dbSettings.insert("settings", null, values);
 
@@ -390,12 +388,12 @@ public class YouPlayDatabase extends SQLiteOpenHelper
         SQLiteDatabase db = getDatabase(SETTINGS_DB);
         String query = "SELECT ORDER_BY FROM settings";
 
-        if(db == null) return Order.ORDER_LATEST;
+        if(db == null) return Constants.ORDER_LATEST;
         Cursor cursor = db.rawQuery(query, null);
         cursor.moveToFirst();
 
         if(cursor.getCount() == 0)
-            settingsOrderBy(Order.ORDER_LATEST);
+            settingsOrderBy(Constants.ORDER_LATEST);
 
         String order = cursor.getString(0);
 

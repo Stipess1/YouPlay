@@ -16,6 +16,8 @@ public class Constants {
     public static final String MEDIA_FORMAT = ".jpg";
     public static final String NO_MEDIA = ".nomedia";
     public static final String DATABASE = "database";
+    public static final String ORDER_LATEST = "DESC";
+    public static final String ORDER_OLDEST = "ASC";
 
     public static final String TABLE_NAME = "SONGS";
     public static final String ID = "ID";

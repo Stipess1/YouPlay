@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.webkit.URLUtil;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,7 +29,6 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,8 +47,8 @@ import com.stipess.youplay.database.DatabaseHandler;
 import com.stipess.youplay.database.YouPlayDatabase;
 import com.stipess.youplay.Ilisteners.OnMusicSelected;
 import com.stipess.youplay.music.Music;
+import com.stipess.youplay.utils.Constants;
 import com.stipess.youplay.utils.FileManager;
-import com.stipess.youplay.utils.Order;
 import com.stipess.youplay.utils.ThemeManager;
 import com.liulishuo.filedownloader.FileDownloader;
 
@@ -404,11 +402,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         if(id == R.id.latest)
         {
             YouPlayDatabase db = YouPlayDatabase.getInstance();
-            if(db.getOrder().equals(Order.ORDER_OLDEST))
+            if(db.getOrder().equals(Constants.ORDER_OLDEST))
             {
                 Collections.reverse(musicList);
                 adapter.notifyDataSetChanged();
-                YouPlayDatabase.getInstance(getContext()).settingsOrderBy(Order.ORDER_LATEST);
+                YouPlayDatabase.getInstance(getContext()).settingsOrderBy(Constants.ORDER_LATEST);
                 if(PlayFragment.currentlyPlayingSong != null)
                     onItemClicked.refreshSuggestions(musicList, true);
 
@@ -427,11 +425,11 @@ public class HistoryFragment extends BaseFragment implements OnMusicSelected,
         else if(id == R.id.oldest)
         {
             YouPlayDatabase db = YouPlayDatabase.getInstance();
-            if(db.getOrder().equals(Order.ORDER_LATEST))
+            if(db.getOrder().equals(Constants.ORDER_LATEST))
             {
                 Collections.reverse(musicList);
                 adapter.notifyDataSetChanged();
-                YouPlayDatabase.getInstance(getContext()).settingsOrderBy(Order.ORDER_OLDEST);
+                YouPlayDatabase.getInstance(getContext()).settingsOrderBy(Constants.ORDER_OLDEST);
                 if(PlayFragment.currentlyPlayingSong != null)
                     onItemClicked.refreshSuggestions(musicList, true);
 

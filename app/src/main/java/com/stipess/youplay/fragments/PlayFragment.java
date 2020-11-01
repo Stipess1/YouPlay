@@ -8,10 +8,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.media.AudioManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -38,8 +35,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.webkit.URLUtil;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.NumberPicker;
@@ -86,7 +81,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-import pub.devrel.easypermissions.EasyPermissions;
 
 import static com.stipess.youplay.utils.Constants.APP_NAME;
 import static com.stipess.youplay.utils.Constants.FORMAT;
@@ -267,9 +261,8 @@ public class PlayFragment extends BaseFragment implements View.OnClickListener,
         adapter.setOnSwipeListener(new PlaylistAdapter.OnSwipeListener() {
             @Override
             public void onSwipe(int position) {
-                setCurrentDeleted(position);
-//                audioPlayer.setMusicList(new ArrayList<>(tempList));
                 audioPlayer.getMusicList().remove(position);
+                setCurrentDeleted(position);
             }
         });
         recyclerView.setAdapter(adapter);
