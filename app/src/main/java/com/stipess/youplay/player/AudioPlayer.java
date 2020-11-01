@@ -246,7 +246,6 @@ public class AudioPlayer implements Player.EventListener{
         exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
-//        audioService.updateNotification(music.getTitle(), FileManager.getPicturePath(music.getId()));
     }
 
     public void playSong(Station station) {
@@ -259,7 +258,6 @@ public class AudioPlayer implements Player.EventListener{
         exoPlayer.setAudioStreamType(C.STREAM_TYPE_MUSIC);
         exoPlayer.prepare(mediaSource);
         exoPlayer.setPlayWhenReady(true);
-//        audioService.updateNotification(station.getName(), FileManager.getPicturePath(station.getId()));
     }
 
     public void setPlayerState(PlayerListener playerState) {

@@ -577,7 +577,11 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                    pjesma.setAuthor(data.getString(data.getColumnIndex("AUTHOR")));
                    pjesma.setId(data.getString(data.getColumnIndex("ID")));
                    pjesma.setViews(data.getString(data.getColumnIndex("VIEWS")));
-                   pjesma.setDownloaded(data.getInt(data.getColumnIndex("DOWNLOADED")));
+                   if(FileManager.getMediaFile(pjesma.getId()).exists())
+                       pjesma.setDownloaded(1);
+                   else
+                       pjesma.setDownloaded(0);
+
                    pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
 
                    /*
