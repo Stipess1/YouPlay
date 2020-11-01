@@ -129,8 +129,8 @@
     <string name="apprater_no_thanks">Ne hvala</string>
     <string name="config_changed">Konfiguracija promjenjena, ponovno pokrenite aplikaciju</string>
     <string name="shuffle">Miješanje</string>
-    <string name="contribute">Doprinos</string>
-    <string name="contribute_summary">Pomozite prevesti YouPlay</string>
+    <string name="contribute">GitHub</string>
+    <string name="contribute_summary">YouPlay GitHub repository.</string>
     <string name="alert_title">Preuzimanje nije dostupno</string>
     <string name="clear">Očisti</string>
     <string name="clear_done">Povijest pretraživanja obrisana</string>

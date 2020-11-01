@@ -91,8 +91,8 @@
     <string name="check_download">Download</string>
     <string name="send_email">Support and suggestions</string>
     <string name="email_summary" translatable="false">stipess@youplayandroid.com</string>
-    <string name="contribute">Contribute</string>
-    <string name="contribute_summary">Help translate YouPlay</string>
+    <string name="contribute">GitHub</string>
+    <string name="contribute_summary">YouPlay GitHub repository.</string>
 
     <!--Alert Dialog-->
     <string name="alert_title">Download not available</string>

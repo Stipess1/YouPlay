@@ -159,7 +159,7 @@ public class SettingsFragment extends PreferenceFragmentCompat {
         contribute.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Intent website = new Intent(Intent.ACTION_VIEW, Uri.parse(BuildConfig.YOUPLAY_WEBSITE+"/contribute"));
+                Intent website = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Stipess1/YouPlay"));
                 startActivity(website);
                 return true;
             }
