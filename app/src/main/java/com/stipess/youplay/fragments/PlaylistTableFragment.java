@@ -155,22 +155,22 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_playlist_table, container, false);
         recyclerView = view.findViewById(R.id.playlist_recyclerView);
-        try{
-            data = YouPlayDatabase.getInstance(getContext()).getDataTable(title);
-            for(int i = 0; i < data.size(); i++)
-            {
-                Music pjesma = data.get(i);
-                if(!FileManager.getMediaFile(pjesma.getId()).exists())
-                {
-                    pjesma.setDownloaded(0);
-                    data.remove(pjesma);
-                    YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
-                }
-            }
-        }catch (SQLiteException e)
-        {
-            Toast.makeText(getContext(), getString(R.string.playlist_error, title), Toast.LENGTH_SHORT).show();
-        }
+//        try{
+//            data = YouPlayDatabase.getInstance(getContext()).getDataTable(title);
+//            for(int i = 0; i < data.size(); i++)
+//            {
+//                Music pjesma = data.get(i);
+//                if(!FileManager.getMediaFile(pjesma.getId()).exists())
+//                {
+//                    pjesma.setDownloaded(0);
+//                    data.remove(pjesma);
+//                    YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
+//                }
+//            }
+//        }catch (SQLiteException e)
+//        {
+//            Toast.makeText(getContext(), getString(R.string.playlist_error, title), Toast.LENGTH_SHORT).show();
+//        }
 
         recyclerView.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
         view.setBackgroundColor(getResources().getColor(ThemeManager.getTheme()));
@@ -214,17 +214,17 @@ public class PlaylistTableFragment extends BaseFragment implements OnMusicSelect
         data.clear();
         try{
             data.addAll(YouPlayDatabase.getInstance(getContext()).getDataTable(title));
-            for(int i = 0; i < data.size(); i++)
-            {
-                Music pjesma = data.get(i);
-                if(!FileManager.getMediaFile(pjesma.getId()).exists())
-                {
-                    pjesma.setDownloaded(0);
-                    data.remove(pjesma);
-                    videoAdapter.deleteMusic(i);
-                    YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
-                }
-            }
+//            for(int i = 0; i < data.size(); i++)
+//            {
+//                Music pjesma = data.get(i);
+//                if(!FileManager.getMediaFile(pjesma.getId()).exists())
+//                {
+//                    pjesma.setDownloaded(0);
+//                    data.remove(pjesma);
+//                    videoAdapter.deleteMusic(i);
+//                    //YouPlayDatabase.getInstance(getContext()).deleteTableMusic(title, i);
+//                }
+//            }
         }
         catch (SQLiteException e)
         {

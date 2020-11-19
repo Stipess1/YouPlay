@@ -357,7 +357,11 @@ public class YouPlayDatabase extends SQLiteOpenHelper
                 pjesma.setAuthor(data.getString(data.getColumnIndex("AUTHOR")));
                 pjesma.setDuration(data.getString(data.getColumnIndex("DURATION")));
                 pjesma.setViews(data.getString(data.getColumnIndex("VIEWS")));
-                pjesma.setDownloaded(data.getInt(data.getColumnIndex("DOWNLOADED")));
+                if(FileManager.getMediaFile(pjesma.getId()).exists())
+                    pjesma.setDownloaded(1);
+                else
+                    pjesma.setDownloaded(0);
+
                 pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
                 music.add(pjesma);
             }
@@ -584,10 +588,6 @@ public class YouPlayDatabase extends SQLiteOpenHelper
 
                    pjesma.setPath(FileManager.getMediaPath(pjesma.getId()));
 
-                   /*
-                   Posto sam bio prepametan i spremljo duzinu pjesme u string jer youtube tako prikazuje
-                   onda cemo ovako oduzet jednu sekund i stavit u listu.
-                    */
                    String split = data.getString(data.getColumnIndex("DURATION"));
                    String [] formatted = split.split(":");
                    if(formatted.length >= 2) {

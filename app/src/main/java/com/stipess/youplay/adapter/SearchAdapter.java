@@ -94,6 +94,8 @@ public class SearchAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>
         if(holder instanceof ViewHolder) {
             Music list = data.get(position);
             StringBuilder stringBuilder = new StringBuilder();
+            if(list.getTimeAgo() == null)
+                list.setTimeAgo("");
             stringBuilder.append(list.getTimeAgo()).append(" • ").append(list.getViewsSearch()).append(" ").append(context.getResources().getString(R.string.you_view));
             ((ViewHolder)holder).title.setText(list.getTitle());
             ((ViewHolder)holder).author.setText(list.getAuthor());

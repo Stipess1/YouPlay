@@ -80,8 +80,6 @@ public class AudioPlayer implements Player.EventListener{
     private boolean isAlarm = false;
 
     private boolean isStream = false;
-    // Koju listu player trenutno reproducira
-    private String currentTable;
 
     private Context context;
 

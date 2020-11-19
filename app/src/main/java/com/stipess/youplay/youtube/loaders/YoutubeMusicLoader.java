@@ -137,7 +137,8 @@ public class YoutubeMusicLoader extends AsyncTaskLoader<List<Music>> {
                 }
                 music.setId(tempUrl);
                 music.setDuration(Utils.convertDuration(stream.getDuration()*1000));
-                music.setTimeAgo(convertToTimeAgo(Objects.requireNonNull(stream.getTextualUploadDate())));
+                if(stream.getTextualUploadDate() != null)
+                    music.setTimeAgo(convertToTimeAgo(Objects.requireNonNull(stream.getTextualUploadDate())));
                 music.setViewsSearch(coolFormat(stream.getViewCount(), 0));
 
                 for(Music pjesma : checkList)
