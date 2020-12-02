@@ -2,14 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'io.fabric'
 
 android {
-    signingConfigs {
-        config {
-            keyAlias 'Stipess1'
-            keyPassword 'Gromovi2'
-            storeFile file('G:/android-key/stjepan_app.jks')
-            storePassword 'Gromovi2'
-        }
-    }
+
     compileSdkVersion 28
     buildToolsVersion '28.0.3'
     lintOptions {
@@ -20,12 +13,12 @@ android {
         applicationId "com.stipess.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 71
-        versionName "2.1.8"
+        versionCode 72
+        versionName "2.1.9"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        signingConfig signingConfigs.config
+        
     }
     dexOptions {
         javaMaxHeapSize "4g"
@@ -74,7 +67,7 @@ dependencies {
     implementation 'com.liulishuo.filedownloader:library:1.7.7'
     implementation 'com.google.firebase:firebase-core:18.0.0'
 
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0.20.2'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0.20.5'
     implementation "com.squareup.okhttp3:okhttp:3.12.11"
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751'
