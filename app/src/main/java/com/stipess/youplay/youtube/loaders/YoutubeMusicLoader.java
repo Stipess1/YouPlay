@@ -2,7 +2,6 @@ package com.stipess.youplay.youtube.loaders;
 
 
 import android.content.Context;
-import android.util.Log;
 
 import androidx.loader.content.AsyncTaskLoader;
 
@@ -12,8 +11,6 @@ import com.stipess.youplay.music.Music;
 import com.stipess.youplay.utils.FileManager;
 import com.stipess.youplay.utils.Utils;
 
-
-import org.schabi.newpipe.extractor.Info;
 import org.schabi.newpipe.extractor.InfoItem;
 import org.schabi.newpipe.extractor.ListExtractor;
 import org.schabi.newpipe.extractor.NewPipe;
