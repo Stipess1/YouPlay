@@ -13,8 +13,8 @@ android {
         applicationId "com.stipess.youplay"
         minSdkVersion 19
         targetSdkVersion 28
-        versionCode 72
-        versionName "2.1.9"
+        versionCode 73
+        versionName "2.2.0"
         buildConfigField 'String', 'YOUPLAY_WEBSITE', '"https://youplayandroid.com"'
         multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -25,8 +25,8 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
-            useProguard true
+            minifyEnabled false
+            useProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
@@ -35,8 +35,8 @@ android {
             }
         }
         debug {
-            minifyEnabled true
-            useProguard true
+            minifyEnabled false
+            useProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
@@ -48,6 +48,7 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
     }
     productFlavors {
     }
@@ -67,7 +68,7 @@ dependencies {
     implementation 'com.liulishuo.filedownloader:library:1.7.7'
     implementation 'com.google.firebase:firebase-core:18.0.0'
 
-    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0.20.5'
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:0.20.8'
     implementation "com.squareup.okhttp3:okhttp:3.12.11"
     implementation 'org.jsoup:jsoup:1.13.1'
     implementation 'com.github.TeamNewPipe:nanojson:1d9e1aea9049fc9f85e68b43ba39fe7be1c1f751'
@@ -87,6 +88,7 @@ dependencies {
     implementation 'com.google.gms:google-services:4.3.4'
     implementation 'com.google.android.exoplayer:exoplayer:2.11.7'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.9'
 
 }
 

@@ -392,7 +392,8 @@ public class AudioService extends JobIntentService implements AudioManager.OnAud
                 .addAction(R.drawable.next , "next", next_btn)
                 .addAction(R.drawable.cancel, "cancel", cancel_btn)
                 .setStyle(new androidx.media.app.NotificationCompat.MediaStyle().setMediaSession(mediaSessionCompat.getSessionToken()).setShowActionsInCompactView(0,1,2))
-                .setOngoing(true);
+                .setOngoing(true)
+                .setShowWhen(false);
         if(id.equals("5385"))
             builder.setChannelId(id);
 
